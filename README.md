@@ -1,8 +1,9 @@
-# Plant Health App
+# Plant Health Webiste
 
-![Image](https://github.com/user-attachments/assets/6a959826-4b93-4b3a-9ae3-a60e5c25173f)
+![image](https://github.com/user-attachments/assets/2bee67b5-9e6c-4713-9df1-cf73ca5f2106)
 
-Plant Health App is a web application that leverages **Computer Vision** to analyze plant health through images. It is built using **Django** for the back-end and **Bootstrap**, **HTML**, **CSS**, and **JavaScript** for the front-end. The project integrates the **ResNet18** deep learning model to identify 21 types of plant diseases, supporting **Farmers**, **Experts**, and **Admins** in managing and advising on plant health. The application uses **Microsoft SQL Server** as the database back-end and includes a **Jupyter Notebook** for model training documentation.
+
+Plant Health is a web application that leverages **Computer Vision** to analyze plant health through images. It is built using **Django** for the back-end and **Bootstrap**, **HTML**, **CSS**, and **JavaScript** for the front-end. The project integrates the **ResNet18** deep learning model to identify 21 types of plant diseases, supporting **Farmers**, **Experts**, and **Admins** in managing and advising on plant health. The application uses **Microsoft SQL Server** as the database back-end and includes a **Jupyter Notebook** for model training documentation.
 
 ## Table of Contents
 - [Features](#features)
