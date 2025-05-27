@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Không Gian Nông Nghiệp Của Bạn{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Không Gian Nông Nghiệp Của Bạn</h2>
+    <p>Chào mừng, {{ user.username }}!</p>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Cột trái cho các chức năng -->
+        <div class="col-md-3">
+            <div class="card mb-3 custom-green">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <a href="{% url 'prediction' %}" class="text-decoration-none">Tải ảnh cây trồng</a>
+                    </h5>
+                </div>
+            </div>
+            <div class="card mb-3 custom-green">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <a href="{% url 'prediction_history' %}" class="text-decoration-none">Lịch sử dự đoán</a>
+                    </h5>
+                </div>
+            </div>
+            <div class="card mb-3 custom-green">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <a href="{% url 'ask_expert' %}" class="text-decoration-none">Hỏi chuyên gia</a>
+                    </h5>
+                </div>
+            </div>
+            <div class="card mb-3 custom-green">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <a href="{% url 'my_questions' %}" class="text-decoration-none">Câu hỏi của tôi</a>
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột giữa cho thông tin -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="mt-4">Câu hỏi đã được trả lời</h3>
+                    {% if question_data %}
+                        <ul class="list-group">
+                            {% for item in question_data %}
+                                <li class="list-group-item">
+                                    <strong>Câu hỏi:</strong> {{ item.question.question_text }}<br>
+                                    <strong>Trả lời:</strong> {{ item.answer.answer_text }}<br>
+                                    <small>Trả lời bởi {{ item.answer.expert.username }} vào {{ item.question.created_at|date:"d/m/Y H:i" }}</small>
+                                    {% if item.question.plant_image %}
+                                        <br><img src="{{ item.question.plant_image.image.url }}" alt="Plant Image" style="max-width: 100px;">
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Chưa có câu hỏi nào được trả lời.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

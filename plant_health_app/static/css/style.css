@@ -1,0 +1,554 @@
+/* Root variables for light and dark mode */
+:root {
+    --primary-color: #68D69D;
+    --text-color: #1A3C34;
+    --background-color: #f4f4f4;
+    --card-background: white;
+    --text-light: white;
+    --error-bg: #f8d7da;
+    --error-text: #721c24;
+    --success-bg: #d4edda;
+    --success-text: #155724;
+    --info-bg: #d1ecf1;
+    --info-text: #0c5460;
+    --dashboard-green: #68D69D;
+    --custom-btn-bg: #1A3C34;
+    --custom-btn-hover: #14332C;
+}
+
+[data-theme="dark"] {
+    --primary-color: #3a8c61;
+    --text-color: #e0e0e0;
+    --background-color: #1A3C34;
+    --card-background: #2a4a44;
+    --text-light: #e0e0e0;
+    --dashboard-green: #3a8c61;
+    --custom-btn-bg: #2a4a44;
+    --custom-btn-hover: #1f3a36;
+    --info-bg: #2a4a44;
+}
+
+/* Reset default styles */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color) !important;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    color: var(--text-color);
+}
+
+/* Modal Styles */
+.modal {
+    z-index: 1055 !important;
+}
+.modal-backdrop {
+    z-index: 1045 !important;
+}
+
+/* Header Styles */
+header {
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1000;
+}
+
+/* Logo Styles */
+header .logo img {
+    vertical-align: middle;
+    width: 60px;
+    height: auto;
+}
+
+header .logo span {
+    color: #000000;
+    font-size: 1.8rem;
+    font-weight: bold;
+    white-space: nowrap;
+    line-height: 60px;
+}
+
+[data-theme="dark"] header .logo span {
+    color: #ffffff;
+}
+
+/* Navigation Links */
+nav .nav-link {
+    color: var(--text-color) !important;
+    text-decoration: none;
+    margin-left: 20px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+}
+
+/* Biểu tượng người dùng */
+nav .bi-person-circle {
+    font-size: 1.1rem;
+    line-height: 1.5;
+    vertical-align: middle;
+}
+
+/* Dark Mode Toggle Button */
+.theme-toggle {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-left: 20px;
+    line-height: 2.3;
+    display: flex;
+    align-items: center;
+}
+
+.theme-toggle:hover {
+    color: var(--text-light);
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    background-color: var(--primary-color) !important;
+    border: none;
+}
+
+[data-theme="dark"] .dropdown-menu {
+    background-color: var(--primary-color) !important;
+}
+
+.dropdown-item {
+    color: var(--text-color) !important;
+    font-weight: bold;
+}
+
+.dropdown-item:hover {
+    background-color: var(--primary-color) !important;
+    color: var(--text-color) !important;
+}
+
+/* Main Content */
+main {
+    flex: 1 0 auto;
+    padding-top: 80px;
+    padding-bottom: 20px;
+    position: relative;
+    z-index: auto;
+}
+
+/* Hero Section (Homepage) */
+.hero-section {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 40px 20px;
+    background-color: var(--primary-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.hero-section h1 {
+    color: var(--text-color);
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+.hero-section p.lead {
+    color: var(--text-color) !important;
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+}
+
+.hero-section .custom-btn {
+    background-color: var(--custom-btn-bg);
+    color: var(--text-light);
+    padding: 10px 20px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.125rem;
+    display: inline-block;
+}
+
+.hero-section .custom-btn:hover {
+    background-color: var(--custom-btn-hover);
+    color: var(--text-light);
+    text-decoration: none;
+}
+
+.hero-section a.custom-link {
+    color: var(--text-color);
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.hero-section a.custom-link:hover {
+    text-decoration: underline;
+    color: #E8F5E9;
+}
+
+.hero-section a.highlight-link {
+    color: #007bff;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.hero-section a.highlight-link:hover {
+    text-decoration: underline;
+    color: #0056b3;
+}
+
+/* Auth Container */
+.auth-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: var(--card-background);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.auth-container h2 {
+    color: #000000;
+    margin-bottom: 20px;
+}
+
+[data-theme="dark"] .auth-container h2 {
+    color: #ffffff;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #000000;
+}
+
+[data-theme="dark"] .form-group label {
+    color: #ffffff !important;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    background-color: var(--card-background);
+    color: #000000;
+}
+
+[data-theme="dark"] .form-group input, [data-theme="dark"] .form-group select, [data-theme="dark"] .form-group textarea {
+    background-color: var(--card-background) !important;
+    color: #ffffff !important;
+}
+
+/* Button Styles */
+.btn {
+    background-color: var(--primary-color);
+    color: #000000;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 16px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+[data-theme="dark"] .btn {
+    color: #ffffff;
+}
+
+.btn:hover {
+    background-color: var(--primary-color);
+}
+
+.btn-success {
+    background-color: #28a745;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    color: #000000;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Messages */
+.messages p, .alert {
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.messages .error, .messages .danger, .alert-danger {
+    background-color: var(--error-bg);
+    color: var(--error-text);
+}
+
+.messages .success, .alert-success {
+    background-color: var(--success-bg);
+    color: var(--success-text);
+}
+
+.alert-info {
+    background-color: var(--info-bg);
+    color: var(--info-text);
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: var(--info-bg) !important;
+    color: #ffffff !important;
+}
+
+/* Container trong main */
+main .container {
+    position: relative;
+    z-index: auto;
+    background-color: var(--background-color) !important;
+}
+
+/* Row và Col */
+.row {
+    background-color: var(--background-color) !important;
+}
+
+.col-md-4, .col-md-6 {
+    background-color: var(--background-color) !important;
+}
+
+/* Card */
+.card {
+    position: relative;
+    z-index: auto;
+    background-color: var(--card-background);
+    margin-bottom: 20px;
+}
+
+/* Hình ảnh trong card hoặc main */
+.card img, main img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Kết quả dự đoán */
+main .card-title {
+    color: #000000;
+    margin: 0 !important;
+}
+
+[data-theme="dark"] main .card-title {
+    color: #ffffff;
+}
+
+main .card-body p {
+    color: #000000;
+    margin: 10px 0;
+}
+
+[data-theme="dark"] main .card-body p {
+    color: #ffffff;
+}
+
+/* Footer */
+footer {
+    background-color: var(--primary-color);
+    padding: 10px 0;
+    text-align: center;
+}
+
+footer p {
+    color: #000000;
+    margin: 0;
+}
+
+[data-theme="dark"] footer p {
+    color: #ffffff;
+}
+
+/* Dashboard Custom Styles */
+.custom-green {
+    background-color: var(--dashboard-green);
+}
+
+.custom-green a {
+    color: #000000;
+    text-decoration: none;
+}
+
+[data-theme="dark"] .custom-green a {
+    color: #ffffff;
+}
+
+.custom-green a:hover {
+    text-decoration: underline;
+    color: #f8f9fa !important;
+}
+
+.list-group-item {
+    background-color: var(--card-background);
+    color: #000000;
+}
+
+[data-theme="dark"] .list-group-item {
+    color: #ffffff;
+}
+
+.list-group-item small {
+    color: #000000;
+}
+
+[data-theme="dark"] .list-group-item small {
+    color: #ffffff;
+}
+
+.card-body h3, .container h2, .container h1, .container h4, .container h5 {
+    color: #000000;
+}
+
+[data-theme="dark"] .card-body h3, [data-theme="dark"] .container h2, [data-theme="dark"] .container h1, [data-theme="dark"] .container h4, [data-theme="dark"] .container h5 {
+    color: #ffffff;
+}
+
+/* Table Styles */
+.table {
+    color: #000000;
+}
+
+[data-theme="dark"] .table {
+    color: #ffffff;
+}
+
+.table-dark {
+    background-color: #343a40;
+    color: var(--text-light);
+}
+
+.badge, .text-muted {
+    color: #000000;
+}
+
+[data-theme="dark"] .badge, [data-theme="dark"] .text-muted {
+    color: #ffffff;
+}
+
+/* Form and Input Specific Styles */
+.form-control, .form-select {
+    color: #000000;
+    background-color: var(--card-background) !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+[data-theme="dark"] .form-control, [data-theme="dark"] .form-select {
+    color: #ffffff !important;
+    background-color: var(--card-background) !important;
+}
+
+/* Style cho các tùy chọn trong dropdown */
+.form-select option {
+    color: #000000;
+    background-color: white !important;
+}
+
+[data-theme="dark"] .form-select option {
+    color: #ffffff !important;
+    background-color: var(--card-background) !important;
+}
+
+/* Đảm bảo mũi tên dropdown hiển thị đúng */
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
+[data-theme="dark"] .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+
+/* Prediction Page Specific */
+#image-preview {
+    max-width: 100%;
+}
+
+/* Manage Page Specific */
+.input-group .btn {
+    width: auto;
+}
+
+/* Image Sizes for Specific Pages */
+.answer-question img, .expert-questions img, .my-questions img {
+    max-width: 100px;
+}
+
+.ask-expert img, .disease-library img {
+    max-width: 200px;
+}
+
+.result img {
+    max-width: 300px;
+}
+
+/* Textarea Styles */
+textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Feedback and Result Pages */
+.result h3, .result p {
+    color: #000000;
+}
+
+[data-theme="dark"] .result h3, [data-theme="dark"] .result p {
+    color: #ffffff;
+}

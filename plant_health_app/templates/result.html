@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Prediction Result{% endblock %}
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-sm-10">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h1 class="card-title mb-4">Kết quả dự đoán</h1>
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    <div class="result">
+                        <h3 class="mb-3">Hình ảnh đã tải lên:</h3>
+                        <img src="{{ image_url }}" alt="Uploaded Image" class="img-fluid rounded mb-3">
+                        <h3 class="mb-2">Dự đoán:</h3>
+                        {% if prediction %}
+                            <p class="mb-2"><strong>Bệnh:</strong> {{ prediction.disease }}</p>
+                            <p class="mb-4"><strong>Độ tin cậy:</strong> {{ prediction.confidence|floatformat:1 }}%</p>
+                        {% else %}
+                            <p class="text-warning">Không thể dự đoán bệnh. Vui lòng thử lại.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Form tải ảnh mới -->
+                    <h3 class="mt-4">Tải lên hình ảnh mới</h3>
+                    <form method="post" enctype="multipart/form-data" action="{% url 'result' %}">
+                        {% csrf_token %}
+                        <div class="form-group mb-3">
+                            <input type="file" name="plant_image" accept=".jpg,.jpeg,.png" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Dự đoán lại</button>
+                    </form>
+
+                    <div class="mt-4">
+                        <a href="{% url 'prediction' %}" class="btn btn-primary">Quay lại trang dự đoán</a>
+                        <a href="{% url 'prediction_history' %}" class="btn btn-secondary">Xem lịch sử dự đoán</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

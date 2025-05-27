@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-sm-8">
+            <div class="auth-container">
+                <h2 class="text-center mb-4">Tạo tài khoản</h2>
+                {% if messages %}
+                    <div class="messages mb-3">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <form method="POST" action="{% url 'register' %}">
+                    {% csrf_token %}
+                    <div class="form-group mb-3">
+                        <label for="username" class="form-label">Tên đăng nhập:</label>
+                        <input type="text" id="username" name="username" class="form-control" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="email" class="form-label">Email:</label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="password" class="form-label">Mật khẩu:</label>
+                        <input type="password" id="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="confirm_password" class="form-label">Xác nhận mật khẩu:</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="user_type" class="form-label">Vai trò:</label>
+                        <select id="user_type" name="user_type" class="form-select" required>
+                            <option value="" disabled selected>Chọn vai trò</option>
+                            <option value="Farmer">Nông dân</option>
+                            <option value="Expert">Chuyên gia</option>
+                        </select>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Đăng ký</button>
+                    </div>
+                </form>
+                <p class="text-center mt-3">Bạn đã có tài khoản? <a href="{% url 'login' %}" class="text-primary fw-bold">Đăng nhập tại đây</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

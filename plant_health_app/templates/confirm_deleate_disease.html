@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Xác nhận Xóa Bệnh{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Xác nhận Xóa Bệnh</h2>
+    <p>Bạn có chắc chắn muốn xóa bệnh "{{ disease.name }}" không?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Xóa</button>
+        <a href="{% url 'disease_list' %}" class="btn btn-secondary">Hủy</a>
+    </form>
+</div>
+{% endblock %}

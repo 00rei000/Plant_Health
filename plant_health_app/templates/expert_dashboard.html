@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Trang Quản Lý Chuyên Gia{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Trang Quản Lý Chuyên Gia</h2>
+    <p>Chào mừng, {{ user.username }}!</p>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Cột trái cho các chức năng -->
+        <div class="col-md-3">
+            <div class="card mb-3 custom-green">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <a href="{% url 'expert_questions' %}" class="text-decoration-none">Câu hỏi từ nông dân</a>
+                    </h5>
+                </div>
+            </div>
+            <div class="card mb-3 custom-green">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <a href="{% url 'prediction_history' %}" class="text-decoration-none">Xem lịch sử dự đoán</a>
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột giữa cho thông tin -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="mt-4">Thông Tin Hoạt Động</h3>
+                    <p>Chưa có thông tin hoạt động để hiển thị.</p>
+                    <!-- Nếu có dữ liệu như danh sách câu hỏi đã trả lời, bạn có thể thêm vòng lặp tương tự farmer_dashboard -->
+                    {% comment %}
+                    Ví dụ nếu có danh sách câu hỏi đã trả lời:
+                    {% if answered_questions %}
+                        <ul class="list-group">
+                            {% for question in answered_questions %}
+                                <li class="list-group-item">
+                                    <strong>Câu hỏi:</strong> {{ question.question_text }}<br>
+                                    <strong>Trả lời:</strong> {{ question.answer_text }}<br>
+                                    <small>Trả lời vào {{ question.created_at|date:"d/m/Y H:i" }}</small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Chưa có câu hỏi nào được trả lời.</p>
+                    {% endif %}
+                    {% endcomment %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

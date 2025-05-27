@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Cập nhật Bệnh{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Cập nhật Bệnh: {{ disease.name }}</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="name">Tên bệnh:</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ disease.name }}" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Mô tả:</label>
+            <textarea class="form-control" id="description" name="description" required>{{ disease.description }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="symptoms">Triệu chứng:</label>
+            <textarea class="form-control" id="symptoms" name="symptoms" required>{{ disease.symptoms }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="treatment">Phương pháp điều trị:</label>
+            <textarea class="form-control" id="treatment" name="treatment" required>{{ disease.treatment }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="image">Ảnh minh họa (để trống nếu không thay đổi):</label>
+            <input type="file" class="form-control-file" id="image" name="image" accept="image/*">
+            {% if disease.image %}
+                <p>Ảnh hiện tại: <img src="{{ disease.image.url }}" alt="{{ disease.name }}" style="max-height: 100px;"></p>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Cập nhật</button>
+        <a href="{% url 'disease_list' %}" class="btn btn-secondary mt-2">Hủy</a>
+    </form>
+</div>
+{% endblock %}

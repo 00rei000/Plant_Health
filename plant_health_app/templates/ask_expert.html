@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Hỏi chuyên gia{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Hỏi chuyên gia</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group mb-3">
+            <label for="plant_image_id" class="form-label">Chọn ảnh (nếu có):</label>
+            <select id="plant_image_id" name="plant_image_id" class="form-select">
+                <option value="">Không chọn ảnh</option>
+                {% for image in plant_images %}
+                    <option value="{{ image.id }}">{{ image.disease }} - {{ image.uploaded_at }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group mb-3">
+            <label for="question_text" class="form-label">Câu hỏi:</label>
+            <textarea id="question_text" name="question_text" class="form-control" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Gửi câu hỏi</button>
+    </form>
+</div>
+{% endblock %}

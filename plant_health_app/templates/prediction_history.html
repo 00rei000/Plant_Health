@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Prediction History{% endblock %}
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="mb-4 text-center">Lịch sử dự đoán</h1>
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            {% if user.is_authenticated %}
+                {% if plant_images %}
+                    {% for image in plant_images %}
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 text-center">
+                                        <img src="{{ image.image.url }}" alt="Prediction Image" class="img-fluid rounded">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <h5>Kết quả: {{ image.disease }}</h5>
+                                        <p>Loại cây: {{ image.plant_type }}</p>
+                                        <p>Độ tin cậy: {{ image.confidence|floatformat:2 }}%</p>
+                                        <p>Thời gian: {{ image.uploaded_at|date:"d/m/Y H:i" }}</p>
+                                        <a href="{% url 'result' %}" class="btn btn-info btn-sm">Xem chi tiết</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center">Bạn chưa có dự đoán nào.</p>
+                    <div class="text-center mt-3">
+                        <a href="{% url 'prediction' %}" class="btn btn-primary">Tải lên ảnh mới</a>
+                    </div>
+                {% endif %}
+            {% else %}
+                <p class="text-center">Vui lòng đăng nhập để xem lịch sử dự đoán.</p>
+                <div class="text-center mt-3">
+                    <a href="{% url 'login' %}" class="btn btn-primary">Đăng nhập</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

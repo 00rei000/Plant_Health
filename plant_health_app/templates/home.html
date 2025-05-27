@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="hero-section py-5 text-center">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-3">Plant Health App</h1>
+        <p class="lead mb-4">Phân tích sức khỏe cây trồng thông minh bằng công nghệ AI.  
+            Tải lên hình ảnh và nhận kết quả ngay lập tức!</p>
+        
+        <img src="{% static 'images/plants.png' %}" alt="Plant Health Illustration" class="img-fluid mb-4" style="max-height: 300px;">
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'prediction' %}" class="custom-btn">Tải lên hình ảnh</a>
+        {% else %}
+            <p class="mb-3">Hãy <a href="{% url 'login' %}" class="highlight-link">ĐĂNG NHẬP</a> hoặc 
+            <a href="{% url 'register' %}" class="highlight-link">ĐĂNG KÝ</a> để sử dụng toàn bộ chức năng.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

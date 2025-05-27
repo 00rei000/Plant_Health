@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Câu hỏi từ nông dân{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Câu hỏi từ nông dân</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <h3>Câu hỏi chưa trả lời</h3>
+    {% if unanswered_questions %}
+        <ul class="list-group mb-4">
+            {% for question in unanswered_questions %}
+                <li class="list-group-item">
+                    {{ question.question_text }} (từ {{ question.user.username|default:"Người dùng ẩn danh" }})
+                    {% if question.plant_image and question.plant_image.image %}
+                        <br><img src="{{ question.plant_image.image.url }}" alt="Plant Image" class="img-fluid">
+                    {% else %}
+                        <p>Không có hình ảnh.</p>
+                    {% endif %}
+                    <a href="{% url 'answer_question' question.id %}" class="btn btn-primary btn-sm mt-2">Trả lời</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Không có câu hỏi nào chưa được trả lời.</p>
+    {% endif %}
+
+    <h3>Câu hỏi bạn đã trả lời</h3>
+    {% if answered_questions %}
+        <ul class="list-group">
+            {% for question in answered_questions %}
+                <li class="list-group-item">
+                    <strong>Câu hỏi:</strong> {{ question.question_text }}<br>
+                    <strong>Câu trả lời của bạn:</strong><br>
+                    {% for answer in question.answers.all %}
+                        {% if answer.expert == request.user %}
+                            <p>{{ answer.answer_text }} <small>({{ answer.created_at|date:"d/m/Y H:i" }})</small></p>
+                            <a href="{% url 'answer_question' question.id %}" class="btn btn-warning btn-sm">Sửa</a>
+                            <form action="{% url 'delete_answer' answer.id %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa câu trả lời này?');">Xóa</button>
+                            </form>
+                        {% endif %}
+                    {% empty %}
+                        <p>Không có câu trả lời nào.</p>
+                    {% endfor %}
+                    <small>Từ {{ question.user.username|default:"Người dùng ẩn danh" }} vào {{ question.created_at|date:"d/m/Y H:i" }}</small>
+                    {% if question.plant_image and question.plant_image.image %}
+                        <br><img src="{{ question.plant_image.image.url }}" alt="Plant Image" class="img-fluid">
+                    {% else %}
+                        <p>Không có hình ảnh.</p>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Bạn chưa trả lời câu hỏi nào.</p>
+    {% endif %}
+</div>
+{% endblock %}

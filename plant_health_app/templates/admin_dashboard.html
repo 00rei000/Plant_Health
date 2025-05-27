@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Trang Quản Lý Hệ Thống{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Trang Quản Lý Hệ Thống</h2>
+    <p>Chào mừng, {{ user.username }}! Bạn đang quản lý với tư cách <strong>Admin</strong>.</p>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Cột trái cho các chức năng -->
+        <div class="col-md-3">
+            <div class="card mb-3 custom-green">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <a href="#users-section" class="text-decoration-none">Quản lý Người dùng</a>
+                    </h5>
+                </div>
+            </div>
+            <div class="card mb-3 custom-green">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <a href="#predictions-section" class="text-decoration-none">Lịch sử Dự đoán</a>
+                    </h5>
+                </div>
+            </div>
+            <div class="card mb-3 custom-green">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <a href="#feedbacks-section" class="text-decoration-none">Quản lý Phản hồi</a>
+                    </h5>
+                </div>
+            </div>
+            <div class="card mb-3 custom-green">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <a href="{% url 'home' %}" class="text-decoration-none">Quay lại Trang chính</a>
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột giữa cho thông tin tổng quan và chi tiết -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="mt-4">Tổng quan Hệ Thống</h3>
+                    <ul class="list-group">
+                        <li class="list-group-item"><strong>Tổng số Người dùng:</strong> {{ users.paginator.count }}</li>
+                        <li class="list-group-item"><strong>Tổng số Dự đoán:</strong> {{ prediction_history.paginator.count }}</li>
+                        <li class="list-group-item"><strong>Tổng số Phản hồi:</strong> {{ feedbacks.paginator.count }}</li>
+                        <li class="list-group-item"><strong>Thời gian hiện tại:</strong> {{ current_date|date:"d/m/Y H:i" }} ({{ current_date|date:"l" }})</li>
+                    </ul>
+
+                    <!-- Bảng danh sách người dùng -->
+                    <h3 id="users-section" class="mt-5">Danh sách Người dùng</h3>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Tên đăng nhập</th>
+                                    <th>Email</th>
+                                    <th>Tuổi</th>
+                                    <th>Số điện thoại</th>
+                                    <th>Quốc tịch</th>
+                                    <th>Ngày tham gia</th>
+                                    <th>Trạng thái</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.email|default:"Không có" }}</td>
+                                    <td>{{ user.profile_info.age|default:"Không có" }}</td>
+                                    <td>{{ user.profile_info.phone_number|default:"Không có" }}</td>
+                                    <td>{{ user.profile_info.nationality|default:"Không có" }}</td>
+                                    <td>{{ user.date_joined|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        {% if user.is_superuser %}
+                                            <span class="badge bg-success">Admin</span>
+                                        {% elif 'Expert' in user.groups.all|join:',' %}
+                                            <span class="badge bg-info">Expert</span>
+                                        {% elif 'Farmer' in user.groups.all|join:',' %}
+                                            <span class="badge bg-warning">Farmer</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Người dùng</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if not user.is_superuser %}
+                                            <form method="post" action="{% url 'delete_user' user.id %}" style="display:inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa người dùng {{ user.username }}?')">Xóa</button>
+                                            </form>
+                                        {% else %}
+                                            <span class="text-muted">Không thể xóa</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">Không có người dùng nào.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Phân trang cho Users -->
+                    <div class="d-flex justify-content-between mt-3">
+                        <div>
+                            {% if users.has_previous %}
+                                <a href="?user_page={{ users.previous_page_number }}&prediction_page={{ prediction_history.number }}&feedback_page={{ feedbacks.number }}#users-section" class="btn btn-outline-primary">← Trang trước</a>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {% if users.has_next %}
+                                <a href="?user_page={{ users.next_page_number }}&prediction_page={{ prediction_history.number }}&feedback_page={{ feedbacks.number }}#users-section" class="btn btn-outline-primary">Trang sau →</a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Bảng lịch sử dự đoán -->
+                    <h3 id="predictions-section" class="mt-5">Lịch sử Dự đoán</h3>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Hình ảnh</th>
+                                    <th>Người dùng</th>
+                                    <th>Bệnh</th>
+                                    <th>Độ tin cậy</th>
+                                    <th>Ngày tải lên</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for image in prediction_history %}
+                                <tr>
+                                    <td><img src="{{ image.image.url }}" alt="Plant Image" class="img-fluid" style="max-width: 100px;"></td>
+                                    <td>{{ image.user.username|default:"Ẩn danh" }}</td>
+                                    <td>{{ image.disease|default:"Chưa dự đoán" }}</td>
+                                    <td>{{ image.confidence|floatformat:1|default:"N/A" }}%</td>
+                                    <td>{{ image.uploaded_at|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <form method="post" action="{% url 'delete_prediction' image.id %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa ảnh này?')">Xóa</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">Không có lịch sử dự đoán.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Phân trang cho Predictions -->
+                    <div class="d-flex justify-content-between mt-3">
+                        <div>
+                            {% if prediction_history.has_previous %}
+                                <a href="?user_page={{ users.number }}&prediction_page={{ prediction_history.previous_page_number }}&feedback_page={{ feedbacks.number }}#predictions-section" class="btn btn-outline-primary">← Trang trước</a>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {% if prediction_history.has_next %}
+                                <a href="?user_page={{ users.number }}&prediction_page={{ prediction_history.next_page_number }}&feedback_page={{ feedbacks.number }}#predictions-section" class="btn btn-outline-primary">Trang sau →</a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Bảng phản hồi -->
+                    <h3 id="feedbacks-section" class="mt-5">Danh sách Phản hồi</h3>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Người dùng</th>
+                                    <th>Nội dung</th>
+                                    <th>Ngày gửi</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for feedback in feedbacks %}
+                                <tr>
+                                    <td>{{ feedback.user.username|default:"Ẩn danh" }}</td>
+                                    <td>{{ feedback.feedback_text|truncatewords:20 }}</td>
+                                    <td>{{ feedback.created_at|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'edit_feedback' feedback.id %}" class="btn btn-primary btn-sm">Chỉnh sửa</a>
+                                        <form method="post" action="{% url 'delete_feedback' feedback.id %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa phản hồi này?')">Xóa</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">Không có phản hồi nào.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Phân trang cho Feedbacks -->
+                    <div class="d-flex justify-content-between mt-3">
+                        <div>
+                            {% if feedbacks.has_previous %}
+                                <a href="?user_page={{ users.number }}&prediction_page={{ prediction_history.number }}&feedback_page={{ feedbacks.previous_page_number }}#feedbacks-section" class="btn btn-outline-primary">← Trang trước</a>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {% if feedbacks.has_next %}
+                                <a href="?user_page={{ users.number }}&prediction_page={{ prediction_history.number }}&feedback_page={{ feedbacks.next_page_number }}#feedbacks-section" class="btn btn-outline-primary">Trang sau →</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript để cuộn mượt đến section -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const hash = window.location.hash;
+    if (hash) {
+        const targetSection = document.querySelector(hash);
+        if (targetSection) {
+            window.scrollTo({
+                top: targetSection.offsetTop - 80,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    document.querySelectorAll('a[href*="#"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetSection = document.querySelector(targetId);
+            if (targetSection) {
+                window.scrollTo({
+                    top: targetSection.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+                window.history.pushState(null, null, targetId);
+            }
+        });
+    });
+
+    document.querySelectorAll('.btn-outline-primary').forEach(button => {
+        button.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            if (href.includes('#')) {
+                e.preventDefault();
+                window.location.href = href;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

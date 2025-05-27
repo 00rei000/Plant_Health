@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Câu hỏi của tôi{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Câu hỏi của tôi</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    {% if questions %}
+        <ul class="list-group">
+            {% for question in questions %}
+                <li class="list-group-item">
+                    <strong>Câu hỏi:</strong> {{ question.question_text }}<br>
+                    {% if question.answer_text %}
+                        <strong>Trả lời:</strong> {{ question.answer_text }}<br>
+                        <small>Trả lời bởi {{ question.expert.username }} vào {{ question.created_at|date:"d/m/Y H:i" }}</small>
+                    {% else %}
+                        <strong>Trạng thái:</strong> Chưa được trả lời
+                    {% endif %}
+                    {% if question.plant_image %}
+                        <br><img src="{{ question.plant_image.image.url }}" alt="Plant Image" class="img-fluid">
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Bạn chưa gửi câu hỏi nào.</p>
+    {% endif %}
+    <a href="{% url 'ask_expert' %}" class="btn btn-primary mt-3">Gửi câu hỏi mới</a>
+</div>
+{% endblock %}

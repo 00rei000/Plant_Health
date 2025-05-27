@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Trả lời câu hỏi{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Trả lời câu hỏi</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    <p><strong>Câu hỏi:</strong> {{ question.question_text }}</p>
+    {% if question.plant_image %}
+        <img src="{{ question.plant_image.image.url }}" alt="Plant Image" class="img-fluid">
+    {% endif %}
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group mb-3">
+            <label for="answer_text" class="form-label">Câu trả lời:</label>
+            <textarea id="answer_text" name="answer_text" class="form-control" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Gửi trả lời</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Health App - {% block title %}{% endblock %}</title>
+    
+    <!-- Load static files -->
+    {% load static %}
+    <!-- Bootstrap 5.3.0 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Favicon -->
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar cố định trên cùng -->
+    <header class="py-3 border-bottom fixed-top">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="logo">
+                    <a href="{% if user.is_authenticated %}
+                                {% if user.is_staff %}{% url 'admin_dashboard' %}
+                                {% elif 'Expert' in user.groups.all|join:',' %}{% url 'expert_dashboard' %}
+                                {% elif 'Farmer' in user.groups.all|join:',' %}{% url 'farmer_dashboard' %}
+                                {% else %}{% url 'home' %}
+                                {% endif %}
+                              {% else %}
+                                {% url 'home' %}
+                              {% endif %}" 
+                       title="Quay về dashboard" 
+                       class="d-flex align-items-center text-decoration-none"
+                       aria-label="Quay về trang chủ Plant Health">
+                        <img src="{% static 'images/logo.png' %}" 
+                             alt="Logo Plant Health" 
+                             width="50" 
+                             class="me-2 logo-img"
+                             data-light="{% static 'images/logo.png' %}"
+                             data-dark="{% static 'images/logo.png' %}">
+                        <span>Plant Health</span>
+                    </a>
+                </div>
+                <nav class="navbar navbar-expand-lg">
+                    <button class="navbar-toggler" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#navbarNav" 
+                            aria-controls="navbarNav" 
+                            aria-expanded="false" 
+                            aria-label="Chuyển đổi điều hướng">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-auto">
+                            <!-- Feedback -->
+                            <li class="nav-item">
+                                <a href="{% url 'feedback' %}" 
+                                   class="nav-link" 
+                                   aria-label="Gửi phản hồi">FEEDBACK</a>
+                            </li>
+                            <!-- Prediction Dropdown -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" 
+                                   href="{% url 'prediction' %}" 
+                                   id="predictionDropdown" 
+                                   role="button" 
+                                   data-bs-toggle="dropdown" 
+                                   aria-expanded="false"
+                                   aria-label="Dự đoán sức khỏe cây trồng">
+                                    PREDICTION
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="predictionDropdown">
+                                    <li><a class="dropdown-item" 
+                                           href="{% url 'prediction' %}"
+                                           aria-label="Tạo dự đoán mới">Make Prediction</a></li>
+                                    <li><a class="dropdown-item" 
+                                           href="{% url 'prediction_history' %}"
+                                           aria-label="Xem lịch sử dự đoán">Prediction History</a></li>
+                                </ul>
+                            </li>
+                            <!-- Disease Library -->
+                            <li class="nav-item">
+                                <a href="{% url 'disease_list' %}" 
+                                   class="nav-link"
+                                   aria-label="Thư viện bệnh">DISEASE</a>
+                            </li>
+                            <!-- Manage (Only for Admins) -->
+                            {% if user.is_staff %}
+                            <li class="nav-item">
+                                <a href="{% url 'manage' %}" 
+                                   class="nav-link"
+                                   aria-label="Quản lý hệ thống">MANAGE</a>
+                            </li>
+                            {% endif %}
+                            <!-- User Dropdown -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" 
+                                   href="#" 
+                                   id="userDropdown" 
+                                   role="button" 
+                                   data-bs-toggle="dropdown" 
+                                   aria-expanded="false"
+                                   aria-label="Tài khoản người dùng">
+                                    <i class="bi bi-person-circle"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" 
+                                    aria-labelledby="userDropdown">
+                                    {% if user.is_authenticated %}
+                                        <li><a class="dropdown-item" 
+                                               href="{% url 'profile' %}"
+                                               aria-label="Xem hồ sơ">Profile</a></li>
+                                        <li><a class="dropdown-item" 
+                                               href="{% url 'change_password' %}"
+                                               aria-label="Đổi mật khẩu">Change Password</a></li>
+                                        <li><a class="dropdown-item" 
+                                               href="{% url 'logout' %}"
+                                               aria-label="Đăng xuất">Logout</a></li>
+                                    {% else %}
+                                        <li><a class="dropdown-item" 
+                                               href="{% url 'login' %}"
+                                               aria-label="Đăng nhập">Login</a></li>
+                                    {% endif %}
+                                </ul>
+                            </li>
+                            <!-- Dark Mode Toggle -->
+                            <li class="nav-item">
+                                <button class="theme-toggle" 
+                                        aria-label="Chuyển đổi chế độ sáng tối">
+                                    <i class="bi bi-moon-stars-fill"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="container my-4">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-3">
+        <p>© Plant Health App {{ current_date|date:"Y" }}</p>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <!-- Load JavaScript -->
+    <script src="{% static 'js/upload.js' %}"></script>
+
+    <!-- Dark Mode và Modal Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Dark Mode
+            const themeToggle = document.querySelector('.theme-toggle');
+            const logoImg = document.querySelector('.logo-img');
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            logoImg.src = currentTheme === 'dark' ? logoImg.dataset.dark : logoImg.dataset.light;
+            themeToggle.querySelector('i').className = currentTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+
+            themeToggle.addEventListener('click', () => {
+                const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                logoImg.src = newTheme === 'dark' ? logoImg.dataset.dark : logoImg.dataset.light;
+                themeToggle.querySelector('i').className = newTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+            });
+
+            // Xử lý đóng modal
+            document.querySelectorAll('.btn-close, .btn-secondary').forEach(button => {
+                button.addEventListener('click', () => {
+                    const modal = button.closest('.modal');
+                    if (modal) {
+                        modal.classList.remove('show');
+                        modal.style.display = 'none';
+                        document.querySelector('.modal-backdrop')?.remove();
+                        document.body.classList.remove('modal-open');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('hidden.bs.modal', () => {
+                    document.querySelector('.modal-backdrop')?.remove();
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

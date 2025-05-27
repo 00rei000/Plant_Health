@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Hồ Sơ Của Tôi{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Hồ Sơ Của Tôi</h2>
+    <p>Chào mừng, {{ user.username }}!</p>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Cột trái cho các chức năng -->
+        <div class="col-md-3">
+            {% if is_staff %}
+                <div class="card mb-3 custom-green">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <a href="{% url 'manage' %}" class="text-decoration-none">Quản lý Người dùng</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="card mb-3 custom-green">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <a href="{% url 'admin_dashboard' %}#predictions-section" class="text-decoration-none">Lịch sử Dự đoán</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="card mb-3 custom-green">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <a href="{% url 'admin_dashboard' %}#feedbacks-section" class="text-decoration-none">Quản lý Phản hồi</a>
+                        </h5>
+                    </div>
+                </div>
+            {% elif is_expert %}
+                <div class="card mb-3 custom-green">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <a href="{% url 'expert_questions' %}" class="text-decoration-none">Câu hỏi từ nông dân</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="card mb-3 custom-green">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <a href="{% url 'disease_library' %}" class="text-decoration-none">Quản lý thư viện bệnh</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="card mb-3 custom-green">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <a href="{% url 'prediction_history' %}" class="text-decoration-none">Xem lịch sử dự đoán</a>
+                        </h5>
+                    </div>
+                </div>
+            {% elif is_farmer %}
+                <div class="card mb-3 custom-green">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <a href="{% url 'prediction' %}" class="text-decoration-none">Tải ảnh cây trồng</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="card mb-3 custom-green">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <a href="{% url 'prediction_history' %}" class="text-decoration-none">Lịch sử dự đoán</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="card mb-3 custom-green">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <a href="{% url 'ask_expert' %}" class="text-decoration-none">Hỏi chuyên gia</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="card mb-3 custom-green">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <a href="{% url 'disease_library' %}" class="text-decoration-none">Thư viện bệnh</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="card mb-3 custom-green">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <a href="{% url 'my_questions' %}" class="text-decoration-none">Câu hỏi của tôi</a>
+                        </h5>
+                    </div>
+                </div>
+            {% endif %}
+            <div class="card mb-3 custom-green">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        {% if is_staff %}
+                            <a href="{% url 'admin_dashboard' %}" class="text-decoration-none">Quay lại Trang chính</a>
+                        {% elif is_expert %}
+                            <a href="{% url 'expert_dashboard' %}" class="text-decoration-none">Quay lại Trang chính</a>
+                        {% elif is_farmer %}
+                            <a href="{% url 'farmer_dashboard' %}" class="text-decoration-none">Quay lại Trang chính</a>
+                        {% endif %}
+                    </h5>
+                </div>
+            </div>
+            <div class="card mb-3 custom-green">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <a href="{% url 'change_password' %}" class="text-decoration-none">Đổi Mật Khẩu</a>
+                    </h5>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột giữa cho thông tin hồ sơ -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="mt-4">Thông Tin Hồ Sơ</h3>
+                    <p><strong>Tên đăng nhập:</strong> {{ user.username }}</p>
+                    <form method="post" class="mb-5">
+                        {% csrf_token %}
+                        <div class="form-group mb-3">
+                            <label for="id_email" class="form-label">Email</label>
+                            {{ email_form.email }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Cập nhật Email</button>
+                    </form>
+
+                    <h4 class="mt-4">Thông Tin Cá Nhân</h4>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group mb-3">
+                            <label for="id_age" class="form-label">Tuổi</label>
+                            {{ profile_form.age }}
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="id_phone_number" class="form-label">Số điện thoại</label>
+                            {{ profile_form.phone_number }}
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="id_nationality" class="form-label">Quốc tịch</label>
+                            {{ profile_form.nationality }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Cập nhật Thông Tin</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

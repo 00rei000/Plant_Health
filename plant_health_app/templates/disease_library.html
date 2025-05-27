@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Thư viện Bệnh{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Thư viện Bệnh</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Hiển thị danh sách bệnh -->
+    <div class="row">
+        {% for disease in diseases %}
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    {% if disease.image_url %}
+                        <img src="{{ disease.image_url|default:'/static/images/placeholder.jpg' }}" class="card-img-top" alt="{{ disease.name }}" style="max-height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="card-img-top" style="max-height: 200px; background-color: var(--card-background); display: flex; align-items: center; justify-content: center;">Không có ảnh</div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ disease.name }}</h5>
+
+                        <!-- Cắt ngắn Mô tả -->
+                        <p class="card-text">
+                            <strong>Mô tả:</strong>
+                            {% if disease.description|length > 100 %}
+                                {{ disease.description|slice:":100" }}...
+                            {% else %}
+                                {{ disease.description }}
+                            {% endif %}
+                        </p>
+
+                        <!-- Cắt ngắn Triệu chứng -->
+                        <p class="card-text">
+                            <strong>Triệu chứng:</strong>
+                            {% if disease.symptoms|length > 100 %}
+                                {{ disease.symptoms|slice:":100" }}...
+                            {% else %}
+                                {{ disease.symptoms }}
+                            {% endif %}
+                        </p>
+
+                        <!-- Cắt ngắn Phương pháp điều trị -->
+                        <p class="card-text">
+                            <strong>Phương pháp điều trị:</strong>
+                            {% if disease.treatment|length > 100 %}
+                                {{ disease.treatment|slice:":100" }}...
+                            {% else %}
+                                {{ disease.treatment }}
+                            {% endif %}
+                        </p>
+
+                        {% if disease.created_by %}
+                            <p class="card-text"><small>Được tạo bởi: {{ disease.created_by.username }} vào {{ disease.created_at|date:"d/m/Y H:i" }}</small></p>
+                        {% else %}
+                            <p class="card-text"><small>Được tạo bởi: Không xác định vào {{ disease.created_at|date:"d/m/Y H:i" }}</small></p>
+                        {% endif %}
+
+                        <!-- Nút Xem chi tiết -->
+                        <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#diseaseModal{{ disease.id }}">
+                            Xem chi tiết
+                        </button>
+
+                        {% if is_expert_or_admin %}
+                            <a href="{% url 'update_disease' disease.id %}" class="btn btn-warning btn-sm">Cập nhật</a>
+                            <a href="{% url 'delete_disease' disease.id %}" class="btn btn-danger btn-sm">Xóa</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal chi tiết bệnh -->
+            <div class="modal fade" id="diseaseModal{{ disease.id }}" tabindex="-1" aria-labelledby="diseaseModalLabel{{ disease.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="diseaseModalLabel{{ disease.id }}">{{ disease.name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                        </div>
+                        <div class="modal-body">
+                            {% if disease.image_url %}
+                                <img src="{{ disease.image_url|default:'/static/images/placeholder.jpg' }}" class="img-fluid mb-3" alt="{{ disease.name }}" style="max-height: 300px; object-fit: cover; width: 100%;">
+                            {% else %}
+                                <div class="text-center mb-3" style="background-color: var(--card-background); height: 300px; display: flex; align-items: center; justify-content: center;">Không có ảnh</div>
+                            {% endif %}
+                            <p><strong>Mô tả:</strong> {{ disease.description }}</p>
+                            <p><strong>Triệu chứng:</strong> {{ disease.symptoms }}</p>
+                            <p><strong>Phương pháp điều trị:</strong> {{ disease.treatment }}</p>
+                            {% if disease.created_by %}
+                                <p><small>Được tạo bởi: {{ disease.created_by.username }} vào {{ disease.created_at|date:"d/m/Y H:i" }}</small></p>
+                            {% else %}
+                                <p><small>Được tạo bởi: Không xác định vào {{ disease.created_at|date:"d/m/Y H:i" }}</small></p>
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Form thêm bệnh -->
+    {% if is_expert_or_admin %}
+        <h3 class="mt-5">Thêm Bệnh Mới</h3>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="name">Tên bệnh:</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Mô tả:</label>
+                <textarea class="form-control" id="description" name="description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="symptoms">Triệu chứng:</label>
+                <textarea class="form-control" id="symptoms" name="symptoms" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="treatment">Phương pháp điều trị:</label>
+                <textarea class="form-control" id="treatment" name="treatment" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="image">Ảnh minh họa:</label>
+                <input type="file" class="form-control-file" id="image" name="image" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary mt-2">Thêm bệnh</button>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}
