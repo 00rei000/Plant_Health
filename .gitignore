@@ -1,0 +1,58 @@
+# Python and Django
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.sqlite3
+*.sqlite3-journal
+
+# Anaconda virtual environment
+.conda/
+*.egg-info/
+conda-meta/
+*.conda-lock
+
+# Django media, AI models, and collected static files
+media/
+plant_health_app/models/best_model.pth
+plant_health_app/models/plant_disease_model.pth
+staticfiles/
+
+# Jupyter Notebook checkpoints
+*.ipynb_checkpoints/
+
+# Environment variables and sensitive configuration
+.env
+.env.*
+!.env.example
+
+# Django local settings
+local_settings.py
+settings.py.bak
+
+# Logs and temporary files
+*.log
+*.pid
+*.seed
+*.swp
+
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Database backups
+*.bak
+*.dump
+
+# Temporary and build files
