@@ -3,19 +3,23 @@ from django.contrib.auth import authenticate, login as auth_login, logout, updat
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import PasswordChangeForm
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import JsonResponse
 from django.contrib import messages
 from django.utils import timezone
 from django.conf import settings
 from django.db.models import Q
-from django.core.paginator import Paginator
-from .models import Plant, PlantImage, Feedback, Question, DiseaseLibrary, Answer, UserProfile
+
+from django.urls import reverse  # Thêm import reverse để sử dụng hàm reverse
 from django import forms
+
+from .models import PlantImage, Feedback, Question, DiseaseLibrary, Answer, UserProfile, PredictionHistory, Notification
 import os
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
 from PIL import Image
-from .utils import PLANT_TYPE_MAPPING  # Import PLANT_TYPE_MAPPING
+from .utils import PLANT_TYPE_MAPPING
 
 # Định nghĩa danh sách nhãn lớp (21 lớp)
 CLASSES = [
@@ -44,7 +48,7 @@ def load_model():
     global model
     if model is None:
         model = models.resnet18(weights=None)
-        num_classes = len(CLASSES)  # Đảm bảo num_classes = 21
+        num_classes = len(CLASSES)
         model.fc = nn.Linear(model.fc.in_features, num_classes)
         model_path = os.path.join(os.path.dirname(__file__), 'models', 'best_model.pth')
         model.load_state_dict(torch.load(model_path, map_location=device))
@@ -54,15 +58,10 @@ def load_model():
 
 def predict_disease(image_path):
     try:
-        # Tải mô hình nếu chưa được tải
         model = load_model()
-
-        # Mở và tiền xử lý ảnh
         image = Image.open(image_path).convert('RGB')
         image = data_transforms(image)
         image = image.unsqueeze(0)
-
-        # Dự đoán
         with torch.no_grad():
             image = image.to(device)
             outputs = model(image)
@@ -70,10 +69,7 @@ def predict_disease(image_path):
             confidence, predicted = torch.max(probabilities, 1)
             disease = CLASSES[predicted.item()]
             confidence = confidence.item() * 100
-
-        # Lấy plant_type từ ánh xạ
         plant_type = PLANT_TYPE_MAPPING.get(disease.lower(), 'Unknown')
-
         return disease, confidence, plant_type
     except Exception as e:
         raise Exception(f"Lỗi khi dự đoán: {str(e)}")
@@ -99,7 +95,7 @@ def is_farmer_or_expert(user):
 def home(request):
     if request.method == 'GET':
         return render(request, 'home.html', {})
-    return redirect('home')  # Hoặc xử lý khác nếu không phải GET
+    return redirect('home')
 
 def login(request):
     if request.method == 'POST':
@@ -122,7 +118,7 @@ def login(request):
         if request.GET.get('next'):
             messages.warning(request, 'Vui lòng đăng nhập để sử dụng tính năng này.')
         return render(request, 'login.html')
-    return redirect('login')  # Hoặc xử lý khác nếu không phải GET/POST
+    return redirect('login')
 
 def register(request):
     if request.method == 'POST':
@@ -147,6 +143,14 @@ def register(request):
                 UserProfile.objects.create(user=user)
                 group = Group.objects.get(name=user_type)
                 user.groups.add(group)
+                # Thông báo cho admin khi có người dùng mới đăng ký
+                admins = User.objects.filter(is_staff=True)
+                for admin in admins:
+                    Notification.objects.create(
+                        recipient=admin,
+                        message=f"Người dùng mới {username} đã đăng ký với vai trò {user_type}.",
+                        link=reverse('admin_dashboard')
+                    )
                 messages.success(request, 'Đăng ký thành công! Vui lòng đăng nhập.')
                 return redirect('login')
             except Group.DoesNotExist:
@@ -155,8 +159,7 @@ def register(request):
                 messages.error(request, f'Lỗi khi đăng ký: {str(e)}')
     elif request.method == 'GET':
         return render(request, 'register.html')
-    return redirect('register')  # Hoặc xử lý khác nếu không phải GET/POST
-
+    return redirect('register')
 
 @login_required
 def prediction(request):
@@ -170,7 +173,7 @@ def prediction(request):
                 return render(request, 'prediction.html')
 
             try:
-                plant_image = PlantImage(image=image, user=request.user)
+                plant_image = PredictionHistory(image=image, user=request.user)
                 plant_image.save()
 
                 image_path = plant_image.image.path
@@ -179,6 +182,15 @@ def prediction(request):
                 plant_image.confidence = confidence
                 plant_image.plant_type = plant_type
                 plant_image.save()
+
+                # Thông báo cho admin khi có dự đoán mới
+                admins = User.objects.filter(is_staff=True)
+                for admin in admins:
+                    Notification.objects.create(
+                        recipient=admin,
+                        message=f"Người dùng {request.user.username} đã thực hiện dự đoán bệnh: {disease}.",
+                        link=reverse('admin_dashboard')
+                    )
 
                 return render(request, 'result.html', {
                     'image_url': plant_image.image.url,
@@ -191,7 +203,7 @@ def prediction(request):
             messages.error(request, 'Vui lòng chọn một ảnh để dự đoán.')
     elif request.method == 'GET':
         return render(request, 'prediction.html')
-    return redirect('prediction')  # Hoặc xử lý khác nếu không phải GET/POST
+    return redirect('prediction')
 
 @login_required
 def result(request):
@@ -205,7 +217,7 @@ def result(request):
                 return render(request, 'result.html')
 
             try:
-                plant_image = PlantImage(image=image, user=request.user)
+                plant_image = PredictionHistory(image=image, user=request.user)
                 plant_image.save()
 
                 image_path = plant_image.image.path
@@ -214,6 +226,15 @@ def result(request):
                 plant_image.confidence = confidence
                 plant_image.plant_type = plant_type
                 plant_image.save()
+
+                # Thông báo cho admin khi có dự đoán mới
+                admins = User.objects.filter(is_staff=True)
+                for admin in admins:
+                    Notification.objects.create(
+                        recipient=admin,
+                        message=f"Người dùng {request.user.username} đã thực hiện dự đoán bệnh: {disease}.",
+                        link=reverse('admin_dashboard')
+                    )
 
                 return render(request, 'result.html', {
                     'image_url': plant_image.image.url,
@@ -225,7 +246,7 @@ def result(request):
         else:
             messages.error(request, 'Vui lòng chọn một ảnh để dự đoán.')
     elif request.method == 'GET':
-        latest_image = PlantImage.objects.filter(user=request.user).order_by('-uploaded_at').first()
+        latest_image = PredictionHistory.objects.filter(user=request.user).order_by('-uploaded_at').first()
         if latest_image:
             if not latest_image.disease:
                 disease, confidence, plant_type = predict_disease(latest_image.image.path)
@@ -239,22 +260,19 @@ def result(request):
             })
         messages.info(request, 'Bạn chưa upload ảnh nào.')
         return redirect('prediction')
-    return redirect('result')  # Hoặc xử lý khác nếu không phải GET/POST
+    return redirect('result')
 
 @login_required
 @user_passes_test(is_farmer)
 def farmer_dashboard(request):
     if request.method == 'GET':
-        # Lấy các câu hỏi của người dùng có ít nhất một câu trả lời
         answered_questions = Question.objects.filter(
             user=request.user,
             answers__isnull=False
         ).distinct().order_by('-created_at')[:5]
 
-        # Tạo danh sách câu hỏi với câu trả lời mới nhất
         question_data = []
         for question in answered_questions:
-            # Lấy câu trả lời mới nhất
             latest_answer = question.answers.order_by('-created_at').first()
             if latest_answer:
                 question_data.append({
@@ -266,36 +284,49 @@ def farmer_dashboard(request):
             'title': 'Bảng điều khiển Nông dân',
             'question_data': question_data
         })
-    return redirect('farmer_dashboard')  # Hoặc xử lý khác nếu không phải GET
+    return redirect('farmer_dashboard')
 
 @login_required
 @user_passes_test(is_expert)
 def expert_dashboard(request):
     if request.method == 'GET':
         return render(request, 'expert_dashboard.html')
-    return redirect('expert_dashboard')  # Hoặc xử lý khác nếu không phải GET
+    return redirect('expert_dashboard')
 
 @login_required
 @user_passes_test(is_expert)
 def expert_questions(request):
     if request.method == 'GET':
-        unanswered_questions = Question.objects.filter(answers__isnull=True).order_by('-created_at')
-        answered_questions = Question.objects.filter(answers__expert=request.user).distinct().order_by('-created_at')
+        questions = Question.objects.filter(Q(is_public=True) | Q(designated_expert=request.user)).order_by('-created_at')
+        question_data = []
+        for question in questions:
+            latest_answer = question.answers.order_by('-created_at').first()
+            user_answer = question.answers.filter(expert=request.user).first()
+            question_data.append({
+                'question': question,
+                'latest_answer': latest_answer,
+                'answer_count': question.answers.count(),
+                'user_has_answered': bool(user_answer)
+            })
+        paginator = Paginator(question_data, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
         return render(request, 'expert_questions.html', {
-            'unanswered_questions': unanswered_questions,
-            'answered_questions': answered_questions
+            'question_data': page_obj
         })
-    return redirect('expert_questions')  # Hoặc xử lý khác nếu không phải GET
-
+    return redirect('expert_questions')
 @login_required
 def prediction_history(request):
     if request.method == 'GET':
-        plant_images = PlantImage.objects.filter(user=request.user).order_by('-uploaded_at')
+        predictions = PredictionHistory.objects.filter(user=request.user).order_by('-uploaded_at')
+        paginator = Paginator(predictions, 9)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
         return render(request, 'prediction_history.html', {
-            'title': 'Prediction History',
-            'plant_images': plant_images
+            'title': 'Lịch sử dự đoán',
+            'plant_images': page_obj
         })
-    return redirect('prediction_history')  # Hoặc xử lý khác nếu không phải GET
+    return redirect('prediction_history')
 
 @login_required
 def feedback_view(request):
@@ -306,21 +337,28 @@ def feedback_view(request):
             if request.user.is_authenticated:
                 feedback.user = request.user
             feedback.save()
+            # Thông báo cho admin khi có feedback mới
+            admins = User.objects.filter(is_staff=True)
+            for admin in admins:
+                Notification.objects.create(
+                    recipient=admin,
+                    message=f"Người dùng {request.user.username} đã gửi phản hồi: {feedback_text[:50]}...",
+                    link=reverse('admin_dashboard')
+                )
             messages.success(request, 'Phản hồi của bạn đã được gửi!')
-
             if request.user.is_authenticated:
-                if request.user.groups.filter(name='Farmer').exists():
+                if request.user.groups.filter(name='Farmer').exists():  # Sửa: user -> request.user
                     return redirect('farmer_dashboard')
-                elif request.user.groups.filter(name='Expert').exists():
+                elif request.user.groups.filter(name='Expert').exists():  # Sửa: user -> request.user
                     return redirect('expert_dashboard')
-                elif request.user.groups.filter(name='Admin').exists() or request.user.is_staff:
+                elif request.user.is_staff:  # Sửa: user -> request.user
                     return redirect('admin_dashboard')
             return redirect('home')
         else:
             messages.error(request, 'Vui lòng nhập nội dung phản hồi.')
     elif request.method == 'GET':
         return render(request, 'feedback.html')
-    return redirect('feedback_view')  # Hoặc xử lý khác nếu không phải GET/POST
+    return redirect('feedback_view')
 
 @login_required
 def logout_view(request):
@@ -329,7 +367,7 @@ def logout_view(request):
     return redirect('login')
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: u.is_superuser)
 def admin_dashboard(request):
     if request.method == 'GET':
         users_list = User.objects.all().order_by('-date_joined')
@@ -341,17 +379,32 @@ def admin_dashboard(request):
 
         user_paginator = Paginator(users_list, 5)
         user_page_number = request.GET.get('user_page', 1)
-        user_page_obj = user_paginator.get_page(user_page_number)
+        try:
+            user_page_obj = user_paginator.page(user_page_number)
+        except PageNotAnInteger:
+            user_page_obj = user_paginator.page(1)
+        except EmptyPage:
+            user_page_obj = user_paginator.page(user_paginator.num_pages)
 
-        predictions = PlantImage.objects.all().order_by('-uploaded_at')
+        predictions = PredictionHistory.objects.all().order_by('-uploaded_at')
         prediction_paginator = Paginator(predictions, 5)
         prediction_page_number = request.GET.get('prediction_page', 1)
-        prediction_page_obj = prediction_paginator.get_page(prediction_page_number)
+        try:
+            prediction_page_obj = prediction_paginator.page(prediction_page_number)
+        except PageNotAnInteger:
+            prediction_page_obj = prediction_paginator.page(1)
+        except EmptyPage:
+            prediction_page_obj = prediction_paginator.page(prediction_paginator.num_pages)
 
         feedbacks = Feedback.objects.all().order_by('-created_at')
         feedback_paginator = Paginator(feedbacks, 5)
         feedback_page_number = request.GET.get('feedback_page', 1)
-        feedback_page_obj = feedback_paginator.get_page(feedback_page_number)
+        try:
+            feedback_page_obj = feedback_paginator.page(feedback_page_number)
+        except PageNotAnInteger:
+            feedback_page_obj = feedback_paginator.page(1)
+        except EmptyPage:
+            feedback_page_obj = feedback_paginator.page(feedback_paginator.num_pages)
 
         context = {
             'users': user_page_obj,
@@ -360,7 +413,7 @@ def admin_dashboard(request):
             'current_date': timezone.now(),
         }
         return render(request, 'admin_dashboard.html', context)
-    return redirect('admin_dashboard')  # Hoặc xử lý khác nếu không phải GET
+    return redirect('admin_dashboard')
 
 @login_required
 @user_passes_test(is_admin)
@@ -378,8 +431,8 @@ def delete_user(request, user_id):
         return redirect('admin_dashboard')
     elif request.method == 'GET':
         user = get_object_or_404(User, id=user_id)
-        return render(request, 'confirm_delete_user.html', {'user': user})  # Cần tạo template confirm_delete_user.html
-    return redirect('admin_dashboard')  # Hoặc xử lý khác nếu không phải GET/POST
+        return render(request, 'confirm_delete_user.html', {'user': user})
+    return redirect('admin_dashboard')
 
 @login_required
 @user_passes_test(is_admin)
@@ -396,8 +449,8 @@ def delete_prediction(request, image_id):
         return redirect('admin_dashboard')
     elif request.method == 'GET':
         plant_image = get_object_or_404(PlantImage, id=image_id)
-        return render(request, 'confirm_delete_prediction.html', {'plant_image': plant_image})  # Cần tạo template
-    return redirect('admin_dashboard')  # Hoặc xử lý khác nếu không phải GET/POST
+        return render(request, 'confirm_delete_prediction.html', {'plant_image': plant_image})
+    return redirect('admin_dashboard')
 
 @login_required
 @user_passes_test(is_admin)
@@ -417,7 +470,7 @@ def edit_feedback(request, feedback_id):
             'title': 'Chỉnh sửa phản hồi',
             'feedback': feedback,
         })
-    return redirect('admin_dashboard')  # Hoặc xử lý khác nếu không phải GET/POST
+    return redirect('admin_dashboard')
 
 @login_required
 @user_passes_test(is_admin)
@@ -432,11 +485,11 @@ def delete_feedback(request, feedback_id):
         return redirect('admin_dashboard')
     elif request.method == 'GET':
         feedback = get_object_or_404(Feedback, id=feedback_id)
-        return render(request, 'confirm_delete_feedback.html', {'feedback': feedback})  # Cần tạo template
-    return redirect('admin_dashboard')  # Hoặc xử lý khác nếu không phải GET/POST
+        return render(request, 'confirm_delete_feedback.html', {'feedback': feedback})
+    return redirect('admin_dashboard')
 
 @login_required
-@user_passes_test(is_admin)
+@user_passes_test(lambda u: u.is_superuser)
 def manage(request):
     if request.method == 'GET':
         selected_table = request.GET.get('table', 'users')
@@ -460,11 +513,11 @@ def manage(request):
             data = users_page
         elif selected_table == 'prediction_history':
             if search_query:
-                prediction_history = PlantImage.objects.filter(
+                prediction_history = PredictionHistory.objects.filter(
                     Q(disease__icontains=search_query) | Q(user__username__icontains=search_query)
                 ).order_by('-uploaded_at')
             else:
-                prediction_history = PlantImage.objects.all().order_by('-uploaded_at')
+                prediction_history = PredictionHistory.objects.all().order_by('-uploaded_at')
             prediction_paginator = Paginator(prediction_history, 20)
             prediction_page_number = request.GET.get('prediction_page', 1)
             prediction_page = prediction_paginator.get_page(prediction_page_number)
@@ -489,7 +542,7 @@ def manage(request):
             'feedbacks': feedback_page if selected_table == 'feedback' else None,
             'search_query': search_query,
         })
-    return redirect('manage')  # Hoặc xử lý khác nếu không phải GET
+    return redirect('manage')
 
 @login_required
 @user_passes_test(is_farmer)
@@ -497,21 +550,101 @@ def ask_expert(request):
     if request.method == 'POST':
         plant_image_id = request.POST.get('plant_image_id')
         question_text = request.POST.get('question_text')
+        is_public = request.POST.get('is_public') == 'public'
+        expert_identifier = request.POST.get('expert_identifier') if not is_public else None
+
         if question_text:
             plant_image = get_object_or_404(PlantImage, id=plant_image_id, user=request.user) if plant_image_id else None
-            Question.objects.create(user=request.user, plant_image=plant_image, question_text=question_text)
+            designated_expert = None
+
+            if not is_public and expert_identifier:
+                try:
+                    designated_expert = User.objects.get(Q(username=expert_identifier) | Q(email=expert_identifier))
+                    if not designated_expert.groups.filter(name='Expert').exists():
+                        messages.error(request, 'Người dùng được chỉ định không phải là chuyên gia.')
+                        return render(request, 'ask_expert.html', {'plant_images': PlantImage.objects.filter(user=request.user)})
+                except User.DoesNotExist:
+                    messages.error(request, 'Không tìm thấy chuyên gia với tên người dùng hoặc email này.')
+                    return render(request, 'ask_expert.html', {'plant_images': PlantImage.objects.filter(user=request.user)})
+
+            question = Question.objects.create(
+                user=request.user,
+                plant_image=plant_image,
+                question_text=question_text,
+                is_public=is_public,
+                designated_expert=designated_expert
+            )
+
+            if is_public:
+                experts = User.objects.filter(groups__name='Expert')
+                for expert in experts:
+                    Notification.objects.create(
+                        recipient=expert,
+                        message=f"Nông dân {request.user.username} đã đặt câu hỏi công khai: {question_text[:50]}...",
+                        link=reverse('expert_questions')
+                    )
+            else:
+                Notification.objects.create(
+                    recipient=designated_expert,
+                    message=f"Nông dân {request.user.username} đã đặt câu hỏi riêng tư: {question_text[:50]}...",
+                    link=reverse('expert_questions')
+                )
+
             messages.success(request, 'Câu hỏi đã được gửi.')
+            return redirect('my_questions')
         else:
             messages.error(request, 'Vui lòng nhập câu hỏi.')
     elif request.method == 'GET':
         plant_images = PlantImage.objects.filter(user=request.user)
         return render(request, 'ask_expert.html', {'plant_images': plant_images})
-    return redirect('ask_expert')  # Hoặc xử lý khác nếu không phải GET/POST
+    return redirect('ask_expert')
+
+@login_required
+def upload_plant_image(request):
+    if request.method == 'POST' and request.FILES.get('image'):
+        try:
+            image = request.FILES['image']
+            
+            # Kiểm tra định dạng file
+            ext = os.path.splitext(image.name)[1].lower()
+            if ext not in ['.jpg', '.jpeg', '.png', '.gif']:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Định dạng ảnh không hỗ trợ. Vui lòng chọn JPG, PNG hoặc GIF.'
+                })
+
+            # Lưu ảnh
+            plant_image = PlantImage(
+                user=request.user,
+                image=image,
+                uploaded_at=timezone.now()
+            )
+            plant_image.save()
+
+            return JsonResponse({
+                'success': True,
+                'id': plant_image.id,
+                'image_url': plant_image.image.url,
+                'uploaded_at': plant_image.uploaded_at.strftime('%d/%m/%Y %H:%M')
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Lỗi server: {str(e)}'
+            })
+    return JsonResponse({
+        'success': False,
+        'error': 'Yêu cầu không hợp lệ.'
+    })
 
 @login_required
 @user_passes_test(is_expert)
 def answer_question(request, question_id):
     question = get_object_or_404(Question, id=question_id)
+    if not question.is_public and question.designated_expert != request.user:
+        messages.error(request, 'Bạn không có quyền trả lời câu hỏi riêng tư này.')
+        return redirect('expert_questions')
+
     answer = Answer.objects.filter(question=question, expert=request.user).first()
     is_editing = bool(answer)
 
@@ -523,10 +656,15 @@ def answer_question(request, question_id):
                 answer.save()
                 messages.success(request, 'Câu trả lời đã được cập nhật.')
             else:
-                Answer.objects.create(
+                answer = Answer.objects.create(
                     question=question,
                     expert=request.user,
                     answer_text=answer_text
+                )
+                Notification.objects.create(
+                    recipient=question.user,
+                    message=f"Chuyên gia {request.user.username} đã trả lời câu hỏi của bạn: {question.question_text[:50]}...",
+                    link=reverse('my_questions')
                 )
                 messages.success(request, 'Câu trả lời đã được gửi.')
             return redirect('expert_questions')
@@ -538,7 +676,7 @@ def answer_question(request, question_id):
             'answer': answer,
             'is_editing': is_editing
         })
-    return redirect('expert_questions')  # Hoặc xử lý khác nếu không phải GET/POST
+    return redirect('expert_questions')
 
 @login_required
 @user_passes_test(is_expert)
@@ -551,18 +689,14 @@ def delete_answer(request, answer_id):
         answer.delete()
         messages.success(request, 'Câu trả lời đã được xóa.')
     elif request.method == 'GET':
-        return render(request, 'confirm_delete_answer.html', {'answer': answer})  # Cần tạo template
-    return redirect('expert_questions')  # Hoặc xử lý khác nếu không phải GET/POST
+        return render(request, 'confirm_delete_answer.html', {'answer': answer}) 
+    return redirect('expert_questions')
 
 @login_required
 def disease_library(request):
-    """
-    View để thêm bệnh mới (chỉ cho expert).
-    """
     if request.method == 'POST':
-        if not is_expert(request.user):
-            messages.error(request, 'Bạn không có quyền thêm bệnh.')
-            print("User is not expert:", request.user.username)
+        if not is_admin_or_expert(request.user):
+            messages.error(request, 'Bạn không có quyền thêm bệnh.')  # Sửa lỗi thiếu dấu nháy
             return redirect('disease_list')
         
         name = request.POST.get('name')
@@ -570,8 +704,6 @@ def disease_library(request):
         symptoms = request.POST.get('symptoms')
         treatment = request.POST.get('treatment')
         image = request.FILES.get('image')
-        
-        print(f"POST data: name={name}, description={description}, symptoms={symptoms}, treatment={treatment}, image={image}")
         
         if name and description and symptoms and treatment:
             try:
@@ -585,67 +717,62 @@ def disease_library(request):
                 if image:
                     disease.image = image
                     disease.save()
-                    print(f"Saved image: {disease.image.name}")
+                # Thông báo cho admin khi có bệnh mới được thêm
+                admins = User.objects.filter(is_staff=True)
+                for admin in admins:
+                    Notification.objects.create(
+                        recipient=admin,
+                        message=f"Bệnh mới {name} đã được thêm bởi {request.user.username}.",
+                        link=reverse('disease_list')
+                    )
                 messages.success(request, 'Đã thêm bệnh mới.')
-                print(f"Created disease: {disease.name}, ID: {disease.id}")
+                return redirect('disease_list')
             except Exception as e:
                 messages.error(request, f'Lỗi khi lưu bệnh: {str(e)}')
-                print(f"Error saving disease: {str(e)}")
         else:
             missing_fields = []
-            if not name:
-                missing_fields.append('name')
-            if not description:
-                missing_fields.append('description')
-            if not symptoms:
-                missing_fields.append('symptoms')
-            if not treatment:
-                missing_fields.append('treatment')
-            messages.error(request, f'Vui lòng điền đầy đủ thông tin. Thiếu: {", ".join(missing_fields)}.')
-            print(f"Missing fields: {missing_fields}")
-    else:
-        print("Non-POST request received")
+            if not name: missing_fields.append('tên bệnh')
+            if not description: missing_fields.append('mô tả')
+            if not symptoms: missing_fields.append('triệu chứng')
+            if not treatment: missing_fields.append('cách điều trị')
+            messages.error(request, f'Vui lòng điền đầy đủ thông tin. Thiếu: {", ".join(missing_fields)}')
+        
+        diseases = DiseaseLibrary.objects.exclude(name__iexact='healthy')
+        return render(request, 'disease_library.html', {
+            'diseases': diseases,
+            'is_expert_or_admin': is_admin_or_expert(request.user),
+            'form_data': request.POST,
+        })
     
-    return redirect('disease_list')
+    diseases = DiseaseLibrary.objects.exclude(name__iexact='healthy')
+    return render(request, 'disease_library.html', {
+        'diseases': diseases,
+        'is_expert_or_admin': is_admin_or_expert(request.user),
+    })
 
 @login_required
 def disease_list(request):
-    """
-    View để hiển thị danh sách bệnh.
-    """
-    diseases = DiseaseLibrary.objects.all()
-    # Kiểm tra ID duy nhất
-    disease_ids = [disease.id for disease in diseases]
-    if len(disease_ids) != len(set(disease_ids)):
-        print("Cảnh báo: Tồn tại ID trùng lặp trong danh sách bệnh!")
-    else:
-        print("Tất cả ID bệnh là duy nhất:", disease_ids)
+    if request.method == 'POST':
+        return redirect('disease_library')
     
-    for disease in diseases:
+    diseases = DiseaseLibrary.objects.exclude(name__iexact='healthy').order_by('name')
+    paginator = Paginator(diseases, 9)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    for disease in page_obj:
         if disease.image:
             disease.image_url = f'{settings.MEDIA_URL}{disease.image.name}'
         else:
-            # Đường dẫn ảnh mặc định
-            default_image_path = 'plant_images/images/train/disease/img.jpg'
-            full_default_path = os.path.join(settings.MEDIA_ROOT, default_image_path)
-            if os.path.exists(full_default_path):
-                disease.image_url = f'{settings.MEDIA_URL}{default_image_path}'
-            else:
-                # Nếu ảnh mặc định không tồn tại, gán một URL placeholder an toàn
-                disease.image_url = '/static/images/placeholder.jpg'
-                print(f"Ảnh mặc định không tồn tại: {full_default_path}")
+            disease.image_url = '/static/images/placeholder.jpg'
     
     return render(request, 'disease_library.html', {
-        'diseases': diseases,
-        'is_expert_or_admin': is_admin_or_expert(request.user)
+        'diseases': page_obj,
     })
 
 @login_required
 @user_passes_test(is_admin_or_expert)
 def update_disease(request, disease_id):
-    """
-    View để cập nhật thông tin bệnh (chỉ cho expert và admin).
-    """
     disease = get_object_or_404(DiseaseLibrary, id=disease_id)
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -672,9 +799,6 @@ def update_disease(request, disease_id):
 @login_required
 @user_passes_test(is_admin_or_expert)
 def delete_disease(request, disease_id):
-    """
-    View để xóa bệnh (chỉ cho expert và admin).
-    """
     disease = get_object_or_404(DiseaseLibrary, id=disease_id)
     if request.method == 'POST':
         disease.delete()
@@ -685,15 +809,32 @@ def delete_disease(request, disease_id):
     })
 
 @login_required
-@user_passes_test(is_farmer)
 def my_questions(request):
     if request.method == 'GET':
         questions = Question.objects.filter(user=request.user).order_by('-created_at')
+        question_data = []
+        for question in questions:
+            answers = question.answers.order_by('created_at')  # Sớm nhất lên đầu
+            recent_answers = question.answers.order_by('-created_at')[:3]  # Lấy 3 câu trả lời gần nhất
+            # Phân trang câu trả lời
+            answers_paginator = Paginator(answers, 20)  
+            answer_page_number = request.GET.get(f'answer_page_{question.id}', 1)
+            answers_page = answers_paginator.get_page(answer_page_number)
+            question_data.append({
+                'question': question,
+                'recent_answers': recent_answers,  # Thay latest_answer bằng recent_answers
+                'answer_count': answers.count(),
+                'answers': answers_page,  # Trang câu trả lời
+                'answers_paginator': answers_paginator  # Để hiển thị phân trang
+            })
+        paginator = Paginator(question_data, 9)  # Hiển thị 9 câu hỏi mỗi trang
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
         return render(request, 'my_questions.html', {
             'title': 'Câu hỏi của tôi',
-            'questions': questions
+            'question_data': page_obj
         })
-    return redirect('my_questions')  # Hoặc xử lý khác nếu không phải GET
+    return redirect('my_questions')
 
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
@@ -724,7 +865,7 @@ def profile(request):
             profile_form.save()
             email_form.save()
             messages.success(request, 'Thông tin hồ sơ đã được cập nhật thành công!')
-            return redirect('plant_health_app:profile')
+            return redirect('profile')
         else:
             errors = {**profile_form.errors, **email_form.errors}
             messages.error(request, f'Lỗi khi cập nhật thông tin: {errors}')
@@ -738,7 +879,7 @@ def profile(request):
             'is_farmer': is_farmer,
             'is_staff': is_staff,
         })
-    return redirect('plant_health_app:profile')  # Hoặc xử lý khác nếu không phải GET/POST
+    return redirect('profile')
 
 @login_required
 def change_password(request):
@@ -748,7 +889,7 @@ def change_password(request):
             user = password_form.save()
             update_session_auth_hash(request, user)
             messages.success(request, 'Mật khẩu đã được thay đổi thành công!')
-            return redirect('plant_health_app:change_password')
+            return redirect('change_password')
         else:
             messages.error(request, 'Lỗi khi đổi mật khẩu. Vui lòng kiểm tra lại.')
     elif request.method == 'GET':
@@ -762,4 +903,34 @@ def change_password(request):
             'is_farmer': is_farmer,
             'is_staff': is_staff,
         })
-    return redirect('plant_health_app:change_password')  # Hoặc xử lý khác nếu không phải GET/POST
+    return redirect('change_password')
+
+@login_required
+def get_notifications(request):
+    notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')[:10]
+    data = [{
+        'id': n.id,
+        'message': n.message,
+        'link': n.link,
+        'is_read': n.is_read,
+        'created_at': n.created_at.strftime('%Y-%m-%d %H:%M:%S')
+    } for n in notifications]
+    unread_count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+    return JsonResponse({'notifications': data, 'unread_count': unread_count})
+
+@login_required
+def mark_notification_read(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+    notification.is_read = True
+    notification.save()
+    return JsonResponse({'status': 'success'})
+
+@login_required
+def all_notifications(request):
+    notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')
+    return render(request, 'notifications.html', {'notifications': notifications})
+
+@login_required
+def mark_all_notifications_read(request):
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    return redirect('all_notifications')

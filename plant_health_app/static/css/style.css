@@ -53,6 +53,69 @@ body {
     z-index: 1045 !important;
 }
 
+.modal-content {
+    background-color: var(--card-background) !important;
+    color: var(--text-color);
+}
+
+.modal-header, .modal-footer {
+    border-color: #ddd;
+}
+
+[data-theme="dark"] .modal-header, [data-theme="dark"] .modal-footer {
+    border-color: #444;
+}
+
+.modal-title {
+    color: var(--text-color);
+}
+
+.btn-close {
+    background-color: var(--text-color);
+}
+
+/* Image Preview */
+#image-preview-container {
+    margin-top: 10px;
+}
+
+#image-preview {
+    max-width: 200px;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+[data-theme="dark"] #image-preview {
+    border-color: #444;
+}
+
+/* Upload Image Button */
+#upload-image-btn {
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+#upload-image-btn:hover {
+    background-color: var(--custom-btn-hover);
+}
+
+/* Upload Error */
+#upload-error {
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+/* Plant Image Dropdown */
+#plant_image_id {
+    flex-grow: 1;
+    min-width: 200px;
+}
+
 /* Header Styles */
 header {
     background-color: var(--primary-color);
@@ -96,8 +159,8 @@ nav .nav-link {
     align-items: center;
 }
 
-/* Biểu tượng người dùng */
-nav .bi-person-circle {
+/* Biểu tượng người dùng và thông báo */
+nav .bi-person-circle, nav .bi-bell {
     font-size: 1.1rem;
     line-height: 1.5;
     vertical-align: middle;
@@ -122,22 +185,180 @@ nav .bi-person-circle {
 
 /* Dropdown Menu */
 .dropdown-menu {
-    background-color: var(--primary-color) !important;
-    border: none;
+    background-color: var(--card-background) !important;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 [data-theme="dark"] .dropdown-menu {
-    background-color: var(--primary-color) !important;
+    background-color: var(--card-background) !important;
+    border-color: #444;
 }
 
 .dropdown-item {
     color: var(--text-color) !important;
-    font-weight: bold;
+    font-weight: 500;
+    padding: 8px 15px;
 }
 
 .dropdown-item:hover {
     background-color: var(--primary-color) !important;
-    color: var(--text-color) !important;
+    color: var(--text-light) !important;
+}
+
+/* Notification Dropdown Styles */
+.notification-dropdown .dropdown-menu {
+    min-width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 8px;
+}
+
+.notification-dropdown .dropdown-item {
+    white-space: normal;
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+[data-theme="dark"] .notification-dropdown .dropdown-item {
+    border-bottom-color: #444;
+}
+
+.notification-dropdown .dropdown-item:hover {
+    background-color: var(--primary-color) !important;
+    color: var(--text-light) !important;
+}
+
+.notification-dropdown .dropdown-item.text-muted {
+    opacity: 0.7;
+}
+
+.notification-dropdown .badge {
+    font-size: 0.7rem;
+    padding: 0.4em 0.6em;
+    background-color: var(--error-bg);
+    color: var(--error-text);
+}
+
+[data-theme="dark"] .notification-dropdown .badge {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.notification-dropdown .dropdown-header {
+    font-weight: bold;
+    padding: 10px 15px;
+    background-color: var(--primary-color);
+    color: var(--text-light);
+    border-bottom: 1px solid #ddd;
+}
+
+[data-theme="dark"] .notification-dropdown .dropdown-header {
+    background-color: var(--primary-color);
+    border-bottom-color: #444;
+}
+
+.notification-dropdown .dropdown-divider {
+    border-color: #ddd;
+}
+
+[data-theme="dark"] .notification-dropdown .dropdown-divider {
+    border-color: #444;
+}
+
+/* View Answers Button */
+.view-answers-btn {
+    color: var(--primary-color);
+}
+
+.view-answers-btn:hover {
+    color: var(--custom-btn-hover);
+}
+
+[data-theme="dark"] .view-answers-btn {
+    color: var(--primary-color);
+}
+
+[data-theme="dark"] .view-answers-btn:hover {
+    color: var(--custom-btn-hover);
+}
+
+/* Questions Grid */
+.questions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 20px;
+    margin-bottom: 20px;
+}
+
+.question-item {
+    background-color: var(--card-background);
+    border: 1px solid #ffffff;
+    border-radius: 4px;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+[data-theme="dark"] .question-item {
+    border-color: #000000;
+}
+
+/* Answers Grid */
+.answers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 10px;
+    margin-top: 10px;
+}
+
+.answer-item {
+    background-color: var(--card-background);
+    padding: 10px;
+    border: 1px solid #ffffff;
+    border-radius: 4px;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+[data-theme="dark"] .answer-item {
+    border-color: #000000;
+}
+
+.answer-image {
+    max-width: 50px;
+    height: auto;
+    margin-bottom: 5px;
+}
+
+.answer-text {
+    color: var(--text-color);
+    margin: 0;
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+[data-theme="dark"] .answer-text {
+    color: var(--text-color);
+}
+
+.answer-meta {
+    color: var(--text-color);
+    font-size: 0.8rem;
+    margin-top: 5px;
+    opacity: 0.7;
+}
+
+[data-theme="dark"] .answer-meta {
+    color: var(--text-color);
+    opacity: 0.7;
 }
 
 /* Main Content */
@@ -366,7 +587,6 @@ main .container {
     position: relative;
     z-index: auto;
     background-color: var(--card-background);
-    margin-bottom: 20px;
 }
 
 /* Hình ảnh trong card hoặc main */
@@ -551,4 +771,17 @@ textarea.form-control {
 
 [data-theme="dark"] .result h3, [data-theme="dark"] .result p {
     color: #ffffff;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .questions-grid, .answers-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .questions-grid, .answers-grid {
+        grid-template-columns: 1fr;
+    }
 }

@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Prediction History{% endblock %}
+{% block title %}Lịch sử dự đoán{% endblock %}
 {% block content %}
 <div class="container my-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-12">
             <h1 class="mb-4 text-center">Lịch sử dự đoán</h1>
             {% if messages %}
                 {% for message in messages %}
@@ -16,24 +16,60 @@
             {% endif %}
             {% if user.is_authenticated %}
                 {% if plant_images %}
-                    {% for image in plant_images %}
-                        <div class="card shadow-sm mb-4">
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-4 text-center">
-                                        <img src="{{ image.image.url }}" alt="Prediction Image" class="img-fluid rounded">
-                                    </div>
-                                    <div class="col-md-8">
-                                        <h5>Kết quả: {{ image.disease }}</h5>
-                                        <p>Loại cây: {{ image.plant_type }}</p>
-                                        <p>Độ tin cậy: {{ image.confidence|floatformat:2 }}%</p>
-                                        <p>Thời gian: {{ image.uploaded_at|date:"d/m/Y H:i" }}</p>
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+                        {% for image in plant_images %}
+                            <div class="col">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-body text-center">
+                                        <img src="{{ image.image.url }}" alt="Ảnh dự đoán" class="img-fluid rounded mb-3" style="max-height: 200px; object-fit: cover;">
+                                        <h5 class="card-title">Kết quả: {{ image.disease }}</h5>
+                                        <p class="card-text">Loại cây: {{ image.plant_type }}</p>
+                                        <p class="card-text">Độ tin cậy: {{ image.confidence|floatformat:2 }}%</p>
+                                        <p class="card-text">Thời gian: {{ image.uploaded_at|date:"d/m/Y H:i" }}</p>
                                         <a href="{% url 'result' %}" class="btn btn-info btn-sm">Xem chi tiết</a>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    {% endfor %}
+                        {% endfor %}
+                    </div>
+                    <!-- Phân trang -->
+                    {% if plant_images.paginator.num_pages > 1 %}
+                        <nav aria-label="Phân trang" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if plant_images.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ plant_images.previous_page_number }}" aria-label="Trang trước">
+                                            <span aria-hidden="true">«</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Trang trước">
+                                            <span aria-hidden="true">«</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                {% for num in plant_images.paginator.page_range %}
+                                    <li class="page-item {% if plant_images.number == num %}active{% endif %}">
+                                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endfor %}
+                                {% if plant_images.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ plant_images.next_page_number }}" aria-label="Trang sau">
+                                            <span aria-hidden="true">»</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Trang sau">
+                                            <span aria-hidden="true">»</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
                 {% else %}
                     <p class="text-center">Bạn chưa có dự đoán nào.</p>
                     <div class="text-center mt-3">
