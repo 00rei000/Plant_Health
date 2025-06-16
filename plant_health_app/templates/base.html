@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +13,30 @@
     <!-- Favicon -->
     <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- CSS tùy chỉnh cho navbar của farmer_dashboard và expert_dashboard -->
+    <style>
+        {% for group in request.user.groups.all %}
+            {% if group.name == 'Farmer' or group.name == 'Expert' %}
+            .navbar .container {
+                padding-left: 0;
+            }
+            .navbar-nav .nav-item {
+                margin-right: 1rem;
+            }
+            .navbar-nav .nav-link {
+                padding: 0.5rem 0.75rem;
+                white-space: nowrap;
+            }
+            @media (max-width: 991px) {
+                .navbar-nav .nav-item {
+                    margin-right: 0;
+                    margin-bottom: 0.5rem;
+                }
+            }
+            {% endif %}
+        {% endfor %}
+    </style>
 </head>
 <body>
     <!-- Navbar cố định trên cùng -->
@@ -20,11 +44,15 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="logo">
-                    <a href="{% if user.is_authenticated %}
-                                {% if user.is_staff %}{% url 'admin_dashboard' %}
-                                {% elif 'Expert' in user.groups.all|join:',' %}{% url 'expert_dashboard' %}
-                                {% elif 'Farmer' in user.groups.all|join:',' %}{% url 'farmer_dashboard' %}
-                                {% else %}{% url 'home' %}
+                    <a href="{% if request.user.is_authenticated %}
+                                {% if request.user.is_staff %}{% url 'admin_dashboard' %}
+                                {% else %}
+                                    {% for group in request.user.groups.all %}
+                                        {% if group.name == 'Expert' %}{% url 'expert_dashboard' %}
+                                        {% elif group.name == 'Farmer' %}{% url 'farmer_dashboard' %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if not request.user.groups.all %}{% url 'home' %}{% endif %}
                                 {% endif %}
                               {% else %}
                                 {% url 'home' %}
@@ -53,12 +81,6 @@
                     </button>
                     <div class="collapse navbar-collapse" id="navbarNav">
                         <ul class="navbar-nav ms-auto">
-                            <!-- Feedback -->
-                            <li class="nav-item">
-                                <a href="{% url 'feedback' %}" 
-                                   class="nav-link" 
-                                   aria-label="Gửi phản hồi">FEEDBACK</a>
-                            </li>
                             <!-- Prediction Dropdown -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" 
@@ -68,29 +90,154 @@
                                    data-bs-toggle="dropdown" 
                                    aria-expanded="false"
                                    aria-label="Dự đoán sức khỏe cây trồng">
-                                    PREDICTION
+                                    DỰ ĐOÁN
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="predictionDropdown">
                                     <li><a class="dropdown-item" 
                                            href="{% url 'prediction' %}"
-                                           aria-label="Tạo dự đoán mới">Make Prediction</a></li>
+                                           aria-label="Tạo dự đoán mới">Tạo Dự Đoán</a></li>
                                     <li><a class="dropdown-item" 
                                            href="{% url 'prediction_history' %}"
-                                           aria-label="Xem lịch sử dự đoán">Prediction History</a></li>
+                                           aria-label="Xem lịch sử dự đoán">Lịch Sử Dự Đoán</a></li>
                                 </ul>
                             </li>
-                            <!-- Disease Library -->
+                            <!-- Farmer: More Dropdown -->
+                            {% for group in request.user.groups.all %}
+                                {% if group.name == 'Farmer' %}
+                                <li class="nav-item">
+                                    <a href="{% url 'disease_list' %}" 
+                                       class="nav-link"
+                                       aria-label="Thư viện bệnh">BỆNH CÂY</a>
+                                </li>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" 
+                                       href="#" 
+                                       id="farmerMoreDropdown" 
+                                       role="button" 
+                                       data-bs-toggle="dropdown" 
+                                       aria-expanded="false"
+                                       aria-label="Các chức năng khác">
+                                        THÊM
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="farmerMoreDropdown">
+                                        <li><a class="dropdown-item" 
+                                               href="{% url 'my_questions' %}"
+                                               aria-label="Câu hỏi của tôi">Câu Hỏi Của Tôi</a></li>
+                                        <li><a class="dropdown-item" 
+                                               href="{% url 'ask_expert' %}"
+                                               aria-label="Hỏi chuyên gia">Hỏi Chuyên Gia</a></li>
+                                        <li><a class="dropdown-item" 
+                                               href="{% url 'feedback' %}"
+                                               aria-label="Gửi phản hồi">Phản Hồi</a></li>
+                                    </ul>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            <!-- Expert: More Dropdown -->
+                            {% for group in request.user.groups.all %}
+                                {% if group.name == 'Expert' %}
+                                <li class="nav-item">
+                                    <a href="{% url 'disease_list' %}" 
+                                       class="nav-link"
+                                       aria-label="Thư viện bệnh">BỆNH CÂY</a>
+                                </li>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" 
+                                       href="#" 
+                                       id="expertMoreDropdown" 
+                                       role="button" 
+                                       data-bs-toggle="dropdown" 
+                                       aria-expanded="false"
+                                       aria-label="Các chức năng khác">
+                                        THÊM
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="expertMoreDropdown">
+                                        <li><a class="dropdown-item" 
+                                               href="{% url 'expert_questions' %}"
+                                               aria-label="Câu hỏi cho chuyên gia">Câu Hỏi</a></li>
+                                        <li><a class="dropdown-item" 
+                                               href="{% url 'feedback' %}"
+                                               aria-label="Gửi phản hồi">Phản Hồi</a></li>
+                                    </ul>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            <!-- Admin: Manage and More Dropdown -->
+                            {% if request.user.is_staff %}
                             <li class="nav-item">
                                 <a href="{% url 'disease_list' %}" 
                                    class="nav-link"
-                                   aria-label="Thư viện bệnh">DISEASE</a>
+                                   aria-label="Thư viện bệnh">BỆNH CÂY</a>
                             </li>
-                            <!-- Manage (Only for Admins) -->
-                            {% if user.is_staff %}
                             <li class="nav-item">
                                 <a href="{% url 'manage' %}" 
                                    class="nav-link"
-                                   aria-label="Quản lý hệ thống">MANAGE</a>
+                                   aria-label="Quản lý hệ thống">QUẢN LÝ</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" 
+                                   href="#" 
+                                   id="adminMoreDropdown" 
+                                   role="button" 
+                                   data-bs-toggle="dropdown" 
+                                   aria-expanded="false"
+                                   aria-label="Các chức năng khác">
+                                    THÊM
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="adminMoreDropdown">
+                                    <li><a class="dropdown-item" 
+                                           href="{% url 'feedback' %}"
+                                           aria-label="Gửi phản hồi">Phản Hồi</a></li>
+                                </ul>
+                            </li>
+                            {% endif %}
+                            <!-- Non-authenticated users: Feedback and Disease Library -->
+                            {% if not request.user.is_authenticated %}
+                            <li class="nav-item">
+                                <a href="{% url 'feedback' %}" 
+                                   class="nav-link" 
+                                   aria-label="Gửi phản hồi">PHẢN HỒI</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{% url 'disease_list' %}" 
+                                   class="nav-link"
+                                   aria-label="Thư viện bệnh">BỆNH CÂY</a>
+                            </li>
+                            {% endif %}
+                            <!-- Notification Dropdown (Authenticated Users Only) -->
+                            {% if request.user.is_authenticated %}
+                            <li class="nav-item dropdown notification-dropdown">
+                                <a class="nav-link dropdown-toggle position-relative" 
+                                   href="#" 
+                                   id="notificationDropdown" 
+                                   role="button" 
+                                   data-bs-toggle="dropdown" 
+                                   aria-expanded="false"
+                                   aria-label="Thông báo">
+                                    <i class="bi bi-bell"></i>
+                                    <span class="badge badge-pill badge-danger position-absolute top-0 start-100 translate-middle" 
+                                          id="unread-count" 
+                                          style="display: none;">0</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" 
+                                    aria-labelledby="notificationDropdown">
+                                    <li>
+                                        <a class="dropdown-item" 
+                                           href="{% url 'all_notifications' %}" 
+                                           aria-label="Xem tất cả thông báo">
+                                            <strong>Thông báo</strong>
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <div id="notification-list"></div> 
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item text-center mark-all-read" 
+                                           href="{% url 'mark_all_notifications_read' %}" 
+                                           aria-label="Đánh dấu tất cả đã đọc"
+                                           style="display: none;">Đánh dấu tất cả đã đọc</a>
+                                    </li>
+                                </ul>
                             </li>
                             {% endif %}
                             <!-- User Dropdown -->
@@ -106,20 +253,20 @@
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" 
                                     aria-labelledby="userDropdown">
-                                    {% if user.is_authenticated %}
+                                    {% if request.user.is_authenticated %}
                                         <li><a class="dropdown-item" 
                                                href="{% url 'profile' %}"
-                                               aria-label="Xem hồ sơ">Profile</a></li>
+                                               aria-label="Xem hồ sơ">Hồ sơ</a></li>
                                         <li><a class="dropdown-item" 
                                                href="{% url 'change_password' %}"
-                                               aria-label="Đổi mật khẩu">Change Password</a></li>
+                                               aria-label="Đổi mật khẩu">Đổi Mật Khẩu</a></li>
                                         <li><a class="dropdown-item" 
                                                href="{% url 'logout' %}"
-                                               aria-label="Đăng xuất">Logout</a></li>
+                                               aria-label="Đăng xuất">Đăng Xuất</a></li>
                                     {% else %}
                                         <li><a class="dropdown-item" 
                                                href="{% url 'login' %}"
-                                               aria-label="Đăng nhập">Login</a></li>
+                                               aria-label="Đăng nhập">Đăng Nhập</a></li>
                                     {% endif %}
                                 </ul>
                             </li>
@@ -137,6 +284,18 @@
         </div>
     </header>
 
+    <!-- Hiển thị messages -->
+    <div class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
     <!-- Main content -->
     <main class="container my-4">
         {% block content %}
@@ -153,7 +312,7 @@
     <!-- Load JavaScript -->
     <script src="{% static 'js/upload.js' %}"></script>
 
-    <!-- Dark Mode và Modal Script -->
+    <!-- Dark Mode và Notification Script -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Dark Mode
@@ -194,6 +353,93 @@
                     document.body.style.overflow = '';
                 });
             });
+
+            // Notification Handling
+            const notificationList = document.getElementById('notification-list');
+            const unreadCountBadge = document.getElementById('unread-count');
+            const markAllReadLink = document.querySelector('.mark-all-read');
+
+            function fetchNotifications() {
+                fetch('{% url 'get_notifications' %}')
+                    .then(response => response.json())
+                    .then(data => {
+                        notificationList.innerHTML = '';
+                        // Lọc chỉ các thông báo chưa đọc
+                        const unreadNotifications = data.notifications.filter(notification => !notification.is_read);
+                        if (unreadNotifications.length === 0) {
+                            notificationList.innerHTML = '<li><span class="dropdown-item text-muted">Không có thông báo mới</span></li>';
+                            markAllReadLink.style.display = 'none';
+                        } else {
+                            unreadNotifications.forEach(notification => {
+                                const notificationItem = document.createElement('li');
+                                notificationItem.innerHTML = `
+                                    <a class="dropdown-item" 
+                                       href="${notification.link}" 
+                                       data-notification-id="${notification.id}"
+                                       aria-label="Xem thông báo: ${notification.message.substring(0, 50)}">
+                                        ${notification.message}
+                                        <br><small>${notification.created_at}</small>
+                                    </a>`;
+                                notificationList.appendChild(notificationItem);
+                            });
+                            markAllReadLink.style.display = 'block';
+                        }
+
+                        if (data.unread_count > 0) {
+                            unreadCountBadge.textContent = data.unread_count;
+                            unreadCountBadge.style.display = 'block';
+                        } else {
+                            unreadCountBadge.style.display = 'none';
+                        }
+
+                        // Add click event for notification items
+                        document.querySelectorAll('.notification-dropdown .dropdown-item').forEach(item => {
+                            item.addEventListener('click', (e) => {
+                                const notificationId = item.getAttribute('data-notification-id');
+                                if (notificationId) {
+                                    fetch(`{% url 'mark_notification_read' 0 %}`.replace('0', notificationId), {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRFToken': '{{ csrf_token }}',
+                                            'Content-Type': 'application/json'
+                                        }
+                                    }).then(() => {
+                                        item.parentElement.remove(); // Xóa mục khỏi dropdown
+                                        unreadCountBadge.textContent = parseInt(unreadCountBadge.textContent) - 1;
+                                        if (parseInt(unreadCountBadge.textContent) === 0) {
+                                            unreadCountBadge.style.display = 'none';
+                                            notificationList.innerHTML = '<li><span class="dropdown-item text-muted">Không có thông báo mới</span></li>';
+                                            markAllReadLink.style.display = 'none';
+                                        }
+                                    });
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => console.error('Error fetching notifications:', error));
+            }
+
+            // Mark all notifications as read
+            markAllReadLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                fetch('{% url 'mark_all_notifications_read' %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    }
+                }).then(() => {
+                    notificationList.innerHTML = '<li><span class="dropdown-item text-muted">Không có thông báo mới</span></li>';
+                    unreadCountBadge.style.display = 'none';
+                    markAllReadLink.style.display = 'none';
+                });
+            });
+
+            // Fetch notifications on page load
+            {% if request.user.is_authenticated %}
+                fetchNotifications();
+                setInterval(fetchNotifications, 30000);
+            {% endif %}
         });
     </script>
 </body>

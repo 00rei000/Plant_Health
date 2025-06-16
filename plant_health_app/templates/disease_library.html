@@ -5,7 +5,10 @@
     <h2>Thư viện Bệnh</h2>
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         {% endfor %}
     {% endif %}
 
@@ -13,11 +16,11 @@
     <div class="row">
         {% for disease in diseases %}
             <div class="col-md-4 mb-4">
-                <div class="card">
-                    {% if disease.image_url %}
-                        <img src="{{ disease.image_url|default:'/static/images/placeholder.jpg' }}" class="card-img-top" alt="{{ disease.name }}" style="max-height: 200px; object-fit: cover;">
+                <div class="card h-100">
+                    {% if disease.image %}
+                        <img src="{{ disease.image_url }}" class="card-img-top" alt="{{ disease.name }}" style="max-height: 350px; object-fit: cover;">
                     {% else %}
-                        <div class="card-img-top" style="max-height: 200px; background-color: var(--card-background); display: flex; align-items: center; justify-content: center;">Không có ảnh</div>
+                        <div class="card-img-top text-center" style="max-height: 350px; background-color: var(--card-background); display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">Không có ảnh</div>
                     {% endif %}
                     <div class="card-body">
                         <h5 class="card-title">{{ disease.name }}</h5>
@@ -73,17 +76,17 @@
 
             <!-- Modal chi tiết bệnh -->
             <div class="modal fade" id="diseaseModal{{ disease.id }}" tabindex="-1" aria-labelledby="diseaseModalLabel{{ disease.id }}" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content" style="background-color: var(--card-background); color: var(--text-color);">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="diseaseModalLabel{{ disease.id }}">{{ disease.name }}</h5>
+                            <h5 class="modal-title" id="diseaseModalLabel{{ disease.id }}" style="color: var(--text-light);">{{ disease.name }}</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
                         </div>
                         <div class="modal-body">
-                            {% if disease.image_url %}
-                                <img src="{{ disease.image_url|default:'/static/images/placeholder.jpg' }}" class="img-fluid mb-3" alt="{{ disease.name }}" style="max-height: 300px; object-fit: cover; width: 100%;">
+                            {% if disease.image %}
+                                <img src="{{ disease.image_url }}" class="img-fluid mb-3" alt="{{ disease.name }}" style="max-height: 350px; object-fit: cover; width: 100%;" loading="lazy">
                             {% else %}
-                                <div class="text-center mb-3" style="background-color: var(--card-background); height: 300px; display: flex; align-items: center; justify-content: center;">Không có ảnh</div>
+                                <div class="text-center mb-3" style="height: 350px; background-color: #ccc; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 1rem;">Không có ảnh</div>
                             {% endif %}
                             <p><strong>Mô tả:</strong> {{ disease.description }}</p>
                             <p><strong>Triệu chứng:</strong> {{ disease.symptoms }}</p>
@@ -103,6 +106,45 @@
         {% endfor %}
     </div>
 
+    <!-- Phân trang -->
+    {% if diseases.paginator.num_pages > 1 %}
+        <nav aria-label="Phân trang" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if diseases.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ diseases.previous_page_number }}" aria-label="Trang trước">
+                            <span aria-hidden="true">«</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Trang trước">
+                            <span aria-hidden="true">«</span>
+                        </a>
+                    </li>
+                {% endif %}
+                {% for num in diseases.paginator.page_range %}
+                    <li class="page-item {% if diseases.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endfor %}
+                {% if diseases.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ diseases.next_page_number }}" aria-label="Trang sau">
+                            <span aria-hidden="true">»</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Trang sau">
+                            <span aria-hidden="true">»</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
     <!-- Form thêm bệnh -->
     {% if is_expert_or_admin %}
         <h3 class="mt-5">Thêm Bệnh Mới</h3>
@@ -110,23 +152,23 @@
             {% csrf_token %}
             <div class="form-group">
                 <label for="name">Tên bệnh:</label>
-                <input type="text" class="form-control" id="name" name="name" required>
+                <input type="text" class="form-control" id="name" name="name" value="{{ form_data.name|default:'' }}" required>
             </div>
             <div class="form-group">
                 <label for="description">Mô tả:</label>
-                <textarea class="form-control" id="description" name="description" required></textarea>
+                <textarea class="form-control" id="description" name="description" required>{{ form_data.description|default:'' }}</textarea>
             </div>
             <div class="form-group">
                 <label for="symptoms">Triệu chứng:</label>
-                <textarea class="form-control" id="symptoms" name="symptoms" required></textarea>
+                <textarea class="form-control" id="symptoms" name="symptoms" required>{{ form_data.symptoms|default:'' }}</textarea>
             </div>
             <div class="form-group">
                 <label for="treatment">Phương pháp điều trị:</label>
-                <textarea class="form-control" id="treatment" name="treatment" required></textarea>
+                <textarea class="form-control" id="treatment" name="treatment" required>{{ form_data.treatment|default:'' }}</textarea>
             </div>
             <div class="form-group">
-                <label for="image">Ảnh minh họa:</label>
-                <input type="file" class="form-control-file" id="image" name="image" accept="image/*">
+                <label for="image">Ảnh minh họa (tùy chọn):</label>
+                <input type="file" class="form-control-file" id="image" name="image" accept="image/jpeg,image/png">
             </div>
             <button type="submit" class="btn btn-primary mt-2">Thêm bệnh</button>
         </form>
