@@ -1,126 +1,111 @@
-# Plant Health Webiste
+# Smart Grocery Management System / スマート食料管理システム
 
-![image](https://github.com/user-attachments/assets/2bee67b5-9e6c-4713-9df1-cf73ca5f2106)
+![Smart Grocery Management System](https://github.com/user-attachments/assets/placeholder-image.jpg)
 
-
-Plant Health is a web application that leverages **Computer Vision** to analyze plant health through images. It is built using **Django** for the back-end and **Bootstrap**, **HTML**, **CSS**, and **JavaScript** for the front-end. The project integrates the **ResNet18** deep learning model to identify 21 types of plant diseases, supporting **Farmers**, **Experts**, and **Admins** in managing and advising on plant health. The application uses **Microsoft SQL Server** as the database back-end and includes a **Jupyter Notebook** for model training documentation.
+The **Smart Grocery Management System** is a web application designed to help households manage food inventory, plan meals, and track consumption efficiently. It supports three user roles: **Home Cook** (manages meal plans, food inventory, and shopping lists), **Family Member** (views consumption reports and collaborates on shopping lists), and **Admin** (manages users and system performance). Built with **Django** for the back-end and **React (Vite)** for the front-end, it uses **Microsoft SQL Server** as the database to streamline grocery management and reduce food waste.
 
 ## Table of Contents
-- [Features](#features)
-- [Technologies Used](#technologies-used)
-- [Installation](#installation)
-- [Project Structure](#project-structure)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
+- [English Version](#english-version)
+  - [Features](#features-en)
+  - [Technologies Used](#technologies-used-en)
+  - [Installation](#installation-en)
+  - [Project Structure](#project-structure-en)
+  - [Usage](#usage-en)
+  - [Contributing](#contributing-en)
+  - [License](#license-en)
+- [Japanese Version](#japanese-version)
+  - [特徴](#特徴-ja)
+  - [使用技術](#使用技術-ja)
+  - [インストール](#インストール-ja)
+  - [プロジェクト構造](#プロジェクト構造-ja)
+  - [使用方法](#使用方法-ja)
+  - [貢献](#貢献-ja)
+  - [ライセンス](#ライセンス-ja)
 
-## Features
-- **Plant Disease Prediction**:
-  - Upload plant images (jpg, jpeg, png) and use the **ResNet18** model to predict 21 types of diseases (e.g., apple scab, bacterial spot, healthy).
-  - Display disease name, confidence score (%), and plant type.
-  - Store prediction history for users.
-- **User Management**:
-  - Supports three roles: **Farmer**, **Expert**, and **Admin** with detailed permissions.
-  - Features for registration, login, password change, and profile updates.
-- **Farmer-Expert Interaction**:
-  - Farmers can submit questions with optional plant images to Experts.
-  - Experts can answer, edit, or delete their responses.
-- **Disease Library**:
-  - Experts and Admins can add, edit, or delete plant disease information (name, description, symptoms, treatment, image).
-  - Display a list of diseases with illustrative images.
+## English Version
+
+### Features <a name="features-en"></a>
+- **Meal Planning & Food Management**:
+  - Home Cooks can create meal plans, manage refrigerator inventory (input, categorize, track expiration dates), and receive notifications for expiring food.
+  - Store and search food inventory history.
+- **Shopping List Collaboration**:
+  - Create, categorize (e.g., vegetables, meat), and share shopping lists among family members.
+- **Consumption Tracking**:
+  - Family Members can view reports on food consumption, expired or wasted food, and analyze consumption trends.
 - **System Management (Admin)**:
-  - Manage users, prediction history, and feedback with search and pagination features.
-  - Delete users (except superusers), prediction images, or feedback.
+  - Manage user accounts, data categories (e.g., food groups, units), user-generated content, and monitor system performance with search and pagination.
+- **User Management**:
+  - Supports **Home Cook**, **Family Member**, and **Admin** roles with registration, login, and profile updates.
 - **User-Friendly Interface**:
-  - Responsive design with **Bootstrap 5.3.0**.
-  - Supports **dark mode** with dynamic toggling.
-  - Fixed navbar with role-based links.
+  - Responsive design with **React** and **Tailwind CSS** (optional for styling).
+  - Role-based navigation and dynamic dashboards.
 
-## Technologies Used
+### Technologies Used <a name="technologies-used-en"></a>
 - **Back-end**:
   - **Django 4.2.13**: Python web framework for logic, authentication, and database management.
-  - **PyTorch 2.0.1**: **ResNet18** model for plant disease classification.
-  - **Django ORM**: Manages data models (User, PlantImage, Feedback, Question, Answer, DiseaseLibrary, UserProfile).
   - **mssql-django 1.5**: Django database backend for Microsoft SQL Server.
   - **pyodbc 5.2.0**: ODBC driver for SQL Server connectivity.
-  - **django-cors-headers 4.7.0**: Handles CORS for cross-origin requests.
-  - **djangorestframework 3.16.0**: Supports RESTful API development.
-  - **djangorestframework-simplejwt 5.5.0**: JWT-based authentication.
   - **django-environ 0.12.0**: Environment variable management.
-  - **Pillow 10.0.0**: Image processing.
-  - **opencv-python 4.8.0.76**: Image handling for computer vision tasks.
 - **Front-end**:
-  - **HTML/CSS/JavaScript**: Client-side interface and interactions.
-  - **Bootstrap 5.3.0**: Responsive design with navbar, modals, dropdowns, and pagination.
-  - **django-bootstrap-v5 1.0.11**: Bootstrap integration for Django templates.
+  - **React 18**: JavaScript library for building user interfaces.
+  - **Vite**: Front-end build tool for fast development.
+  - **Tailwind CSS** (optional): Utility-first CSS framework for styling.
+  - **Axios**: HTTP client for API requests.
 - **Database**: Microsoft SQL Server.
-- **File System**: Django Media for storing uploaded images in the `media/` directory.
 - **Environment**: **Anaconda** for virtual environment management.
-- **Jupyter Notebook**: Used for model training and evaluation (`plant_disease_model.ipynb`).
 
-## Installation
-### Requirements
+### Installation <a name="installation-en"></a>
+#### Requirements
 - Python 3.8+
+- Node.js 18+
 - Anaconda
 - Microsoft SQL Server (with a running instance and database created)
 - ODBC Driver 17 for SQL Server
 - Modern browser (Chrome, Firefox, etc.)
 
-### Installation Steps
+#### Installation Steps
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/00rei000/Plant_Health.git
-   cd Plant_Health
+   git clone https://github.com/your-username/smart-grocery-management-system.git
+   cd smart-grocery-management-system
    ```
 
 2. **Create an Anaconda virtual environment**:
    ```bash
-   conda create -n plant_health_app python=3.8
-   conda activate plant_health_app
+   conda create -n food-management python=3.8
+   conda activate food-management
    ```
 
-3. **Install dependencies**:
+3. **Install backend dependencies**:
    ```bash
-   pip install -r requirements.txt
+   pip install -r backend/requirements.txt
+   pip install pyodbc
    ```
 
-   Sample `requirements.txt`:
+   Sample `backend/requirements.txt`:
    ```plaintext
    Django==4.2.13
-   django-bootstrap-v5==1.0.11
-   django-cors-headers==4.7.0
-   django-environ==0.12.0
-   djangorestframework==3.16.0
-   djangorestframework-simplejwt==5.5.0
-   Pillow==10.0.0
-   opencv-python==4.8.0.76
-   torch==2.0.1
-   torchvision==0.15.2
-   pyodbc==5.2.0
    mssql-django==1.5
+   pyodbc==5.2.0
+   django-environ==0.12.0
    ```
 
-   Alternatively, install dependencies with Conda:
-   ```bash
-   conda install django=4.2.13
-   pip install django-bootstrap-v5==1.0.11 django-cors-headers==4.7.0 django-environ==0.12.0 djangorestframework==3.16.0 djangorestframework-simplejwt==5.5.0 Pillow==10.0.0 opencv-python==4.8.0.76 torch==2.0.1 torchvision==0.15.2 pyodbc==5.2.0 mssql-django==1.5
-   ```
-
-4. **Download AI models**:
-   - Download the pre-trained models (`best_model.pth` and `plant_disease_model.pth`) from [this Google Drive link](https://drive.google.com/your-link) and place them in `plant_health_app/models/`.
-   - Ensure `class_names.json` is in `plant_health_app/data/` (included in the repository).
-
-5. **Configure Microsoft SQL Server**:
-   - Ensure a SQL Server instance is running and a database is created (e.g., `plant_health_db`).
+4. **Configure Microsoft SQL Server**:
+   - Ensure a SQL Server instance is running and a database is created (e.g., `food_management`).
    - Install the **ODBC Driver 17 for SQL Server** from [Microsoft](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server).
-   - Update `settings.py` in `plant_health_app/` with SQL Server configuration:
+   - Create database:
+     ```sql
+     CREATE DATABASE food_management;
+     GO
+     ```
+   - Update `backend/settings.py`:
      ```python
      DATABASES = {
          'default': {
              'ENGINE': 'mssql',
-             'NAME': 'plant_health_db',
-             'USER': 'your_username',
-             'PASSWORD': 'your_password',
+             'NAME': 'food_management',
+             'USER': 'your-username',
+             'PASSWORD': 'your-password',
              'HOST': 'localhost',
              'PORT': '',
              'OPTIONS': {
@@ -129,96 +114,295 @@ Plant Health is a web application that leverages **Computer Vision** to analyze 
          }
      }
      ```
-   - Alternatively, use `django-environ` to store database credentials in a `.env` file:
+   - Alternatively, create a `.env` file in `backend/`:
      ```plaintext
-     SECRET_KEY=your-secret-key
-     DATABASE_URL=sqlserver://your_username:your_password@localhost:1433/plant_health_db?driver=ODBC+Driver+17+for+SQL+Server
+     SECRET_KEY=your-django-secret-key
+     DEBUG=True
+     DATABASE_URL=sqlserver://your-username:your-password@localhost:1433/food_management?driver=ODBC+Driver+17+for+SQL+Server
+     EMAIL_HOST=smtp.gmail.com
+     EMAIL_PORT=587
+     EMAIL_HOST_USER=your-email@gmail.com
+     EMAIL_HOST_PASSWORD=your-email-password
      ```
 
-6. **Configure the environment**:
-   - Create a `.env` file to store environment variables (e.g., `SECRET_KEY`, `DATABASE_URL`).
-   - Create a `media/` directory in the project root and ensure it has write permissions (`chmod 755 media/` on Linux).
-   - Optionally, download sample images for `media/` from [this Google Drive link](https://drive.google.com/your-link).
-   - Run `collectstatic` to generate static files:
-     ```bash
-     python manage.py collectstatic
-     ```
-   - Verify the default image path (`plant_images/images/train/disease/img.jpg`) or use the placeholder (`/static/images/placeholder.jpg`) included in the repository.
-
-7. **Run migrations**:
+5. **Run backend migrations**:
    ```bash
+   cd backend
+   python manage.py makemigrations
    python manage.py migrate
    ```
 
-8. **Create a superuser (Admin)**:
+6. **Create a superuser (Admin)**:
    ```bash
    python manage.py createsuperuser
    ```
 
-9. **Run the server**:
+7. **Install frontend dependencies**:
    ```bash
-   python manage.py runserver
+   cd ../frontend
+   npm install
    ```
-   Access the application at `http://localhost:8000`.
 
-### Notes
-- For GPU support, ensure **CUDA** is installed and use a compatible PyTorch version:
-  ```bash
-  conda install pytorch==2.0.1 torchvision==0.15.2 -c pytorch
-  ```
-- The `plant_disease_model.ipynb` file in `plant_health_app/notebooks/` documents the model training process. It is included for reference but not required to run the application.
-- The `media/` directory is excluded from the repository. Create it manually or download sample images from the provided link.
-- The `staticfiles/` directory (generated by `collectstatic`) is excluded from the repository. Run `collectstatic` to regenerate it.
-- The `best_model.pth` and `plant_disease_model.pth` files are large and excluded from the repository. Download them from the provided link and place them in `plant_health_app/models/`.
-- The `.ipynb_checkpoints/` directories are temporary files created by Jupyter Notebook and are excluded via `.gitignore`.
+8. **Configure frontend environment**:
+   - Create a `.env` file in `frontend/`:
+     ```plaintext
+     VITE_API_URL=http://localhost:8000/api
+     ```
 
-## Project Structure
+9. **Run the application**:
+   - Start backend:
+     ```bash
+     cd backend
+     conda activate food-management
+     python manage.py runserver
+     ```
+     Backend runs at: `http://localhost:8000`
+   - Start frontend:
+     ```bash
+     cd frontend
+     npm run dev
+     ```
+     Frontend runs at: `http://localhost:3000`
+
+### Project Structure <a name="project-structure-en"></a>
 ```plaintext
-Plant_Health/
-├── plant_health_app/
-│   ├── models/               # AI models (best_model.pth, plant_disease_model.pth, excluded)
-│   ├── notebooks/            # Jupyter Notebook (plant_disease_model.ipynb)
-│   ├── data/                 # Class names (class_names.json)
-│   ├── static/               # Custom static files (style.css, upload.js, favicon, logo, etc.)
-│   ├── templates/            # HTML templates (base.html, prediction.html, etc.)
-│   ├── media/                # Uploaded images (excluded)
+smart-grocery-management-system/
+├── backend/
+│   ├── static/               # Static files (CSS, JS, images)
+│   ├── templates/            # HTML templates (optional for Django-rendered views)
 │   ├── __init__.py
 │   ├── settings.py           # Django configuration
 │   ├── urls.py               # URL routing
-│   ├── views.py              # Request handling logic
-│   ├── models.py             # Data models
-│   └── utils.py              # PLANT_TYPE_MAPPING
-├── staticfiles/              # Collected static files (excluded)
+│   ├── views.py              # API endpoints
+│   ├── models.py             # Data models (User, FoodInventory, ShoppingList, etc.)
+│   └── requirements.txt      # Backend dependencies
+├── frontend/
+│   ├── src/                  # React source code
+│   ├── public/               # Static assets
+│   ├── .env                  # Frontend environment variables
+│   ├── package.json          # Frontend dependencies
+│   └── vite.config.js        # Vite configuration
 ├── manage.py                 # Django management script
-├── requirements.txt          # Dependency list
-├── .gitignore                # Excludes .conda/, __pycache__, media/, staticfiles/, etc.
+├── .gitignore                # Excludes .conda/, __pycache__, media/, etc.
 ├── .env.example              # Sample environment variables
 └── README.md                 # This file
 ```
 
-## Usage
+### Usage <a name="usage-en"></a>
 1. **Register/Login**:
-   - Access `/register` to create an account (Farmer or Expert).
-   - Log in at `/login` to access the respective dashboard (Farmer, Expert, or Admin).
-2. **Predict Plant Disease**:
-   - Farmers: Go to `/prediction`, upload a plant image, and view results at `/result`.
-   - View prediction history at `/prediction_history`.
-3. **Farmer-Expert Interaction**:
-   - Farmers: Submit questions at `/ask_expert` and view them at `/my_questions`.
-   - Experts: Answer questions at `/expert_questions`.
-4. **Manage Disease Library**:
-   - Experts/Admins: Add, edit, or delete diseases at `/disease_library` or `/disease_list`.
-5. **System Management (Admin)**:
-   - Access `/admin_dashboard` or `/manage` to manage users, predictions, and feedback.
-6. **Feedback**:
-   - Submit feedback at `/feedback`.
+   - Access `/register` to create an account (Home Cook or Family Member).
+   - Log in at `/login` to access role-based dashboards.
+2. **Manage Food Inventory**:
+   - Home Cooks: Add, categorize, and track food at `/inventory`.
+   - View expiration notifications at `/notifications`.
+3. **Create Meal Plans**:
+   - Home Cooks: Plan meals at `/meal-plans`.
+4. **Collaborate on Shopping Lists**:
+   - Home Cooks/Family Members: Create and share lists at `/shopping-lists`.
+5. **View Consumption Reports**:
+   - Family Members: Access reports at `/reports`.
+6. **System Management (Admin)**:
+   - Access `/admin` to manage users, data, and performance.
 
-## Contributing
-We welcome contributions! To contribute:
+### Contributing <a name="contributing-en"></a>
+Contributions are welcome! To contribute:
 1. Fork the repository.
 2. Create a new branch (`git checkout -b feature/your-feature-name`).
 3. Commit changes (`git commit -m 'Add feature XYZ'`).
 4. Push to the branch (`git push origin feature/your-feature-name`).
 5. Create a Pull Request.
 
+---
 
+## Japanese Version / 日本語版
+
+### スマート食料管理システム
+**スマート食料管理システム**は、家庭での食品在庫管理、食事計画、消費追跡を効率的に行うためのウェブアプリケーションです。食品の無駄を減らし、食料計画を効率化したい家庭に最適です。3つの役割をサポートします：**ホームクック**（食事計画、食品在庫、買い物リストの管理）、**家族メンバー**（消費レポートの閲覧、買い物リストの共有）、**管理者**（ユーザーおよびシステムパフォーマンスの管理）。**Django**をバックエンドに、**React (Vite)**をフロントエンドに使用し、**Microsoft SQL Server**をデータベースとして採用しています。
+
+### 特徴 <a name="特徴-ja"></a>
+- **食事計画と食品管理**:
+  - ホームクックは食事計画を作成し、冷蔵庫の在庫を管理（入力、カテゴリ分け、賞味期限追跡）し、期限切れの通知を受け取れます。
+  - 在庫履歴の保存と検索。
+- **買い物リストの共同作業**:
+  - 買い物リストを作成、カテゴリ分け（例：野菜、肉）、家族間で共有。
+- **消費追跡**:
+  - 家族メンバーは食品消費、期限切れ、または無駄になった食品のレポートを閲覧し、消費傾向を分析。
+- **システム管理（管理者）**:
+  - ユーザーアカウント、データカテゴリ（例：食品グループ、単位）、ユーザー生成コンテンツを管理し、検索とページネーションでシステムパフォーマンスを監視。
+- **ユーザー管理**:
+  - **ホームクック**、**家族メンバー**、**管理者**の役割をサポートし、登録、ログイン、プロフィール更新を提供。
+- **ユーザーフレンドリーなインターフェース**:
+  - **React**と**Tailwind CSS**（オプション）によるレスポンシブデザイン。
+  - 役割ベースのナビゲーションと動的ダッシュボード。
+
+### 使用技術 <a name="使用技術-ja"></a>
+- **バックエンド**:
+  - **Django 4.2.13**: ロジック、認証、データベース管理のためのPythonウェブフレームワーク。
+  - **mssql-django 1.5**: Microsoft SQL Server用のDjangoデータベースバックエンド。
+  - **pyodbc 5.2.0**: SQL Server接続用のODBCドライバ。
+  - **django-environ 0.12.0**: 環境変数管理。
+- **フロントエンド**:
+  - **React 18**: ユーザーインターフェース構築用のJavaScriptライブラリ。
+  - **Vite**: 高速開発用のフロントエンドビルドツール。
+  - **Tailwind CSS**（オプション）：ユーティリティ優先のCSSフレームワーク。
+  - **Axios**: APIリクエスト用のHTTPクライアント。
+- **データベース**: Microsoft SQL Server。
+- **環境**: **Anaconda**による仮想環境管理。
+
+### インストール <a name="インストール-ja"></a>
+#### 要件
+- Python 3.8+
+- Node.js 18+
+- Anaconda
+- Microsoft SQL Server（動作中のインスタンスと作成済みのデータベース）
+- ODBC Driver 17 for SQL Server
+- 最新のブラウザ（Chrome、Firefoxなど）
+
+#### インストール手順
+1. **リポジトリのクローン**:
+   ```bash
+   git clone https://github.com/your-username/smart-grocery-management-system.git
+   cd smart-grocery-management-system
+   ```
+
+2. **Anaconda仮想環境の作成**:
+   ```bash
+   conda create -n food-management python=3.8
+   conda activate food-management
+   ```
+
+3. **バックエンド依存関係のインストール**:
+   ```bash
+   pip install -r backend/requirements.txt
+   pip install pyodbc
+   ```
+
+   サンプル `backend/requirements.txt`:
+   ```plaintext
+   Django==4.2.13
+   mssql-django==1.5
+   pyodbc==5.2.0
+   django-environ==0.12.0
+   ```
+
+4. **Microsoft SQL Serverの設定**:
+   - SQL Serverインスタンスが動作中で、データベース（例：`food_management`）が作成されていることを確認。
+   - [Microsoft](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server)から**ODBC Driver 17 for SQL Server**をインストール。
+   - データベースを作成:
+     ```sql
+     CREATE DATABASE food_management;
+     GO
+     ```
+   - `backend/settings.py`を更新:
+     ```python
+     DATABASES = {
+         'default': {
+             'ENGINE': 'mssql',
+             'NAME': 'food_management',
+             'USER': 'your-username',
+             'PASSWORD': 'your-password',
+             'HOST': 'localhost',
+             'PORT': '',
+             'OPTIONS': {
+                 'driver': 'ODBC Driver 17 for SQL Server',
+             },
+         }
+     }
+     ```
+   - または、`backend/` に `.env` ファイルを作成:
+     ```plaintext
+     SECRET_KEY=your-django-secret-key
+     DEBUG=True
+     DATABASE_URL=sqlserver://your-username:your-password@localhost:1433/food_management?driver=ODBC+Driver+17+for+SQL+Server
+     EMAIL_HOST=smtp.gmail.com
+     EMAIL_PORT=587
+     EMAIL_HOST_USER=your-email@gmail.com
+     EMAIL_HOST_PASSWORD=your-email-password
+     ```
+
+5. **バックエンドマイグレーションの実行**:
+   ```bash
+   cd backend
+   python manage.py makemigrations
+   python manage.py migrate
+   ```
+
+6. **スーパーユーザー（管理者）の作成**:
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+7. **フロントエンド依存関係のインストール**:
+   ```bash
+   cd ../frontend
+   npm install
+   ```
+
+8. **フロントエンド環境の設定**:
+   - `frontend/` に `.env` ファイルを作成:
+     ```plaintext
+     VITE_API_URL=http://localhost:8000/api
+     ```
+
+9. **アプリケーションの実行**:
+   - バックエンドの起動:
+     ```bash
+     cd backend
+     conda activate food-management
+     python manage.py runserver
+     ```
+     バックエンドは `http://localhost:8000` で動作。
+   - フロントエンドの起動:
+     ```bash
+     cd frontend
+     npm run dev
+     ```
+     フロントエンドは `http://localhost:3000` で動作。
+
+### プロジェクト構造 <a name="プロジェクト構造-ja"></a>
+```plaintext
+smart-grocery-management-system/
+├── backend/
+│   ├── static/               # 静的ファイル（CSS、JS、画像）
+│   ├── templates/            # HTMLテンプレート（Djangoレンダリングビュー用、オプション）
+│   ├── __init__.py
+│   ├── settings.py           # Django設定
+│   ├── urls.py               # URLルーティング
+│   ├── views.py              # APIエンドポイント
+│   ├── models.py             # データモデル（User、FoodInventory、ShoppingListなど）
+│   └── requirements.txt      # バックエンド依存関係
+├── frontend/
+│   ├── src/                  # Reactソースコード
+│   ├── public/               # 静的アセット
+│   ├── .env                  # フロントエンド環境変数
+│   ├── package.json          # フロントエンド依存関係
+│   └── vite.config.js        # Vite設定
+├── manage.py                 # Django管理スクリプト
+├── .gitignore                # .conda/、__pycache__、media/などを除外
+├── .env.example              # サンプル環境変数
+└── README.md                 # このファイル
+```
+
+### 使用方法 <a name="使用方法-ja"></a>
+1. **登録/ログイン**:
+   - `/register` でアカウント（ホームクックまたは家族メンバー）を作成。
+   - `/login` でログインし、役割ベースのダッシュボードにアクセス。
+2. **食品在庫の管理**:
+   - ホームクック：`/inventory` で食品を追加、カテゴリ分け、追跡。
+   - `/notifications` で賞味期限通知を確認。
+3. **食事計画の作成**:
+   - ホームクック：`/meal-plans` で食事計画を作成。
+4. **買い物リストの共同作業**:
+   - ホームクック/家族メンバー：`/shopping-lists` でリストを作成、共有。
+5. **消費レポートの閲覧**:
+   - 家族メンバー：`/reports` でレポートにアクセス。
+6. **システム管理（管理者）**:
+   - `/admin` でユーザー、データ、パフォーマンスを管理。
+
+### 貢献 <a name="貢献-ja"></a>
+貢献を歓迎します！貢献するには：
+1. リポジトリをフォーク。
+2. 新しいブランチを作成（`git checkout -b feature/your-feature-name`）。
+3. 変更をコミット（`git commit -m 'Add feature XYZ'`）。
+4. ブランチをプッシュ（`git push origin feature/your-feature-name`）。
+5. プルリクエストを作成。
