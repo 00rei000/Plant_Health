@@ -1,7 +1,5 @@
 # Smart Grocery Management System / スマート食料管理システム
 
-![Smart Grocery Management System](https://github.com/user-attachments/assets/placeholder-image.jpg)
-
 The **Smart Grocery Management System** is a web application designed to help households manage food inventory, plan meals, and track consumption efficiently. It supports three user roles: **Home Cook** (manages meal plans, food inventory, and shopping lists), **Family Member** (views consumption reports and collaborates on shopping lists), and **Admin** (manages users and system performance). Built with **Django** for the back-end and **React (Vite)** for the front-end, it uses **Microsoft SQL Server** as the database to streamline grocery management and reduce food waste.
 
 ## Table of Contents
