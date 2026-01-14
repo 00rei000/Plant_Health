@@ -1,0 +1,427 @@
+{% extends 'base.html' %}
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .blog-detail-container {
+        margin-top: 100px;
+        padding: 2rem 0 3rem;
+    }
+
+    .post-card {
+        background: white;
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border: 2px solid #E8F5E9;
+        margin-bottom: 2rem;
+    }
+
+    .post-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid #E8F5E9;
+    }
+
+    .post-title {
+        color: #1B5E20;
+        font-weight: 800;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        line-height: 1.3;
+    }
+
+    .post-meta {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        font-size: 0.95rem;
+        color: #66BB6A;
+    }
+
+    .post-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .post-meta i {
+        color: #4CAF50;
+        font-size: 1.1rem;
+    }
+
+    .post-author {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: #2E7D32;
+    }
+
+    .post-image {
+        width: 100%;
+        max-height: 500px;
+        object-fit: cover;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        border: 3px solid #E8F5E9;
+    }
+
+    .post-content {
+        color: #1B5E20;
+        font-size: 1.1rem;
+        line-height: 1.8;
+        margin-bottom: 2rem;
+        white-space: pre-wrap;
+    }
+
+    .post-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        padding-top: 1.5rem;
+        border-top: 2px solid #E8F5E9;
+    }
+
+    .comments-section {
+        background: white;
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border: 2px solid #E8F5E9;
+    }
+
+    .comments-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+        color: #1B5E20;
+        font-weight: 700;
+        font-size: 1.5rem;
+    }
+
+    .comments-header i {
+        color: #4CAF50;
+    }
+
+    .comment-form {
+        background: #F1F8E9;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+
+    .comment-form textarea {
+        border: 2px solid #E8F5E9;
+        border-radius: 12px;
+        padding: 1rem;
+        min-height: 120px;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        resize: vertical;
+    }
+
+    .comment-form textarea:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        outline: none;
+    }
+
+    .comment-item {
+        background: white;
+        border: 2px solid #E8F5E9;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .comment-item:hover {
+        border-color: #4CAF50;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.1);
+    }
+
+    .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .comment-author {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+        color: #2E7D32;
+    }
+
+    .comment-author i {
+        color: #4CAF50;
+        font-size: 1.5rem;
+    }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .role-badge.admin {
+        background: #FFEBEE;
+        color: #C62828;
+    }
+
+    .role-badge.expert {
+        background: #E3F2FD;
+        color: #1565C0;
+    }
+
+    .role-badge.farmer {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .comment-date {
+        color: #66BB6A;
+        font-size: 0.875rem;
+    }
+
+    .comment-content {
+        color: #1B5E20;
+        line-height: 1.6;
+        white-space: pre-wrap;
+    }
+
+    .comment-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #E8F5E9;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        border: none;
+        border-radius: 10px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        color: white;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid #4CAF50;
+        color: #4CAF50;
+        background: white;
+        border-radius: 10px;
+        padding: 0.5rem 1.2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-outline-primary:hover {
+        background: #4CAF50;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-danger {
+        background: #F44336;
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1.2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-danger:hover {
+        background: #D32F2F;
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .btn-sm {
+        padding: 0.35rem 0.85rem;
+        font-size: 0.875rem;
+    }
+
+    .no-comments {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #66BB6A;
+    }
+
+    .no-comments i {
+        font-size: 3rem;
+        color: #E8F5E9;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container blog-detail-container">
+    <!-- Post Content -->
+    <div class="post-card">
+        <div class="post-header">
+            <h1 class="post-title">{{ post.title }}</h1>
+            <div class="post-meta">
+                <span class="post-author">
+                    <i class="bi bi-person-circle"></i>
+                    {{ post.author.username }}
+                    {% if post.author.is_staff %}
+                        <span class="role-badge admin">Admin</span>
+                    {% elif post.author.groups.all.0.name == 'Expert' %}
+                        <span class="role-badge expert">Expert</span>
+                    {% elif post.author.groups.all.0.name == 'Farmer' %}
+                        <span class="role-badge farmer">Farmer</span>
+                    {% endif %}
+                </span>
+                <span>
+                    <i class="bi bi-calendar-event"></i>
+                    {{ post.created_at|date:"d/m/Y H:i" }}
+                </span>
+                <span>
+                    <i class="bi bi-eye"></i>
+                    {{ post.views_count }} lượt xem
+                </span>
+                {% if post.visibility == 'public' %}
+                    <span style="color: #2E7D32;">
+                        <i class="bi bi-globe"></i> Công khai
+                    </span>
+                {% elif post.visibility == 'private' %}
+                    <span style="color: #F57C00;">
+                        <i class="bi bi-lock"></i> Riêng tư
+                    </span>
+                {% elif post.visibility == 'specific' %}
+                    <span style="color: #1976D2;">
+                        <i class="bi bi-people"></i> Chỉ định
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if post.image %}
+            <img src="{{ post.image.url }}" alt="{{ post.title }}" class="post-image">
+        {% endif %}
+
+        <div class="post-content">{{ post.content }}</div>
+
+        <div class="post-actions">
+            {% if post.author == request.user or request.user.is_staff %}
+                <a href="{% url 'blog_edit' post.id %}" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil"></i> Chỉnh sửa
+                </a>
+                <form method="post" action="{% url 'blog_delete' post.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc muốn xóa bài viết này?')">
+                        <i class="bi bi-trash"></i> Xóa
+                    </button>
+                </form>
+            {% endif %}
+            <a href="{% url 'blog_list' %}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    <!-- Comments Section -->
+    <div class="comments-section">
+        <div class="comments-header">
+            <i class="bi bi-chat-dots-fill"></i>
+            Bình luận ({{ comments.count }})
+        </div>
+
+        <!-- Comment Form -->
+        {% if request.user.is_authenticated %}
+        <div class="comment-form">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="content" class="form-label" style="color: #2E7D32; font-weight: 600;">
+                        <i class="bi bi-pencil-square"></i> Viết bình luận
+                    </label>
+                    <textarea id="content" name="content" class="form-control" required 
+                              placeholder="Chia sẻ suy nghĩ của bạn..." rows="4"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #66BB6A, #43A047); border: none; font-weight: 600; padding: 10px 24px; border-radius: 8px;">
+                    <i class="bi bi-send-fill"></i> Gửi bình luận
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="comment-form">
+            <div class="alert alert-info" style="border-radius: 12px; border: 2px solid #E8F5E9;">
+                <i class="bi bi-info-circle"></i> 
+                Vui lòng <a href="{% url 'login' %}?next={{ request.path }}" style="color: #4CAF50; font-weight: 700;">đăng nhập</a> để bình luận.
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Comments List -->
+        {% if comments %}
+            {% for comment in comments %}
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <div class="comment-author">
+                            <i class="bi bi-person-circle"></i>
+                            <span>{{ comment.author.username }}</span>
+                            {% if comment.author.is_staff %}
+                                <span class="role-badge admin">Admin</span>
+                            {% elif comment.author.groups.all.0.name == 'Expert' %}
+                                <span class="role-badge expert">Expert</span>
+                            {% elif comment.author.groups.all.0.name == 'Farmer' %}
+                                <span class="role-badge farmer">Farmer</span>
+                            {% endif %}
+                        </div>
+                        <div class="comment-date">
+                            <i class="bi bi-clock"></i> {{ comment.created_at|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                    <div class="comment-content">{{ comment.content }}</div>
+                    
+                    {% if comment.author == request.user or request.user.is_staff %}
+                        <div class="comment-actions">
+                            <form method="post" action="{% url 'blog_comment_delete' comment.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" 
+                                        onclick="return confirm('Bạn có chắc muốn xóa bình luận này?')">
+                                    <i class="bi bi-trash"></i> Xóa
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-comments">
+                <i class="bi bi-chat"></i>
+                <p>Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

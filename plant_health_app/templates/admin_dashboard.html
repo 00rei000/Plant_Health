@@ -2,236 +2,930 @@
 {% load static %}
 {% block title %}Trang Quản Lý Hệ Thống{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <h2>Trang Quản Lý Hệ Thống</h2>
-    <p>Chào mừng, {{ user.username }}! Bạn đang quản lý với tư cách <strong>Admin</strong>.</p>
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
+<style>
+    /* Admin Dashboard Container */
+    .admin-dashboard {
+        padding: 2rem 0;
+        margin-top: 80px;
+    }
+    
+    /* Admin Header */
+    .admin-header {
+        background: linear-gradient(135deg, #1B5E20 0%, #0D3012 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(27, 94, 32, 0.4);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .admin-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .admin-header h1 {
+        font-weight: 800;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .admin-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Admin Stats Cards */
+    .admin-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .admin-stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border-top: 4px solid;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .admin-stat-card:nth-child(1) { border-top-color: #4CAF50; }
+    .admin-stat-card:nth-child(2) { border-top-color: #2196F3; }
+    .admin-stat-card:nth-child(3) { border-top-color: #FF9800; }
+    .admin-stat-card:nth-child(4) { border-top-color: #9C27B0; }
+    
+    .admin-stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    
+    .admin-stat-card .stat-icon {
+        width: 55px;
+        height: 55px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        color: white;
+        margin-bottom: 1rem;
+    }
+    
+    .admin-stat-card:nth-child(1) .stat-icon { background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); }
+    .admin-stat-card:nth-child(2) .stat-icon { background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); }
+    .admin-stat-card:nth-child(3) .stat-icon { background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); }
+    .admin-stat-card:nth-child(4) .stat-icon { background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); }
+    
+    .admin-stat-card .stat-value {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #1B5E20;
+        line-height: 1;
+        margin-bottom: 0.3rem;
+    }
+    
+    .admin-stat-card .stat-label {
+        font-size: 0.95rem;
+        color: #558B2F;
+        font-weight: 500;
+    }
+    
+    /* Admin Chart Cards */
+    .admin-chart-section {
+        margin-bottom: 2rem;
+    }
+    
+    .admin-chart-card {
+        background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .admin-chart-card h3 {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1.4rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .chart-wrapper {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    /* Admin Tables */
+    .admin-table-section {
+        background: white;
+        border-radius: 20px;
+        padding: 0;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .admin-table-section h3 {
+        background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+        color: white;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin-bottom: 0;
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .admin-table-section .table-responsive {
+        padding: 2rem;
+    }
+    
+    .admin-table {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #E0E0E0;
+    }
+    
+    .admin-table thead {
+        background: #F1F8E9;
+        border-bottom: 2px solid #4CAF50;
+    }
+    
+    .admin-table thead th {
+        color: #1B5E20 !important;
+        font-weight: 700;
+        padding: 1rem;
+        border: none;
+        font-size: 1rem;
+    }
+    
+    .admin-table thead th * {
+        color: #1B5E20 !important;
+    }
+    
+    .admin-table tbody tr {
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .admin-table tbody tr:hover {
+        background: #F1F8E9;
+        transform: scale(1.002);
+    }
+    
+    .admin-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        font-size: 1rem !important;
+        color: #333333 !important;
+        border-bottom: 1px solid #E8F5E9;
+    }
+    
+    /* Override base.html với specificity cao nhất */
+    .admin-dashboard .admin-table tbody td {
+        color: #333333 !important;
+    }
+    
+    .admin-dashboard .admin-table tbody td *:not(.badge):not(.btn) {
+        color: #333333 !important;
+    }
+    
+    .admin-dashboard .admin-table tbody td strong {
+        color: #2E7D32 !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Specific overrides cho từng section */
+    #users-section table tbody td,
+    #users-section table tbody td *:not(.badge):not(.btn),
+    #predictions-section table tbody td,
+    #predictions-section table tbody td *:not(.badge):not(.btn),
+    #feedbacks-section table tbody td,
+    #feedbacks-section table tbody td *:not(.badge):not(.btn) {
+        color: #333333 !important;
+    }
+    
+    /* Badge colors - giữ nguyên màu gốc */
+    .admin-table .badge {
+        color: white !important;
+    }
+    
+    .admin-table .badge.bg-success {
+        background-color: #4CAF50 !important;
+    }
+    
+    .admin-table .badge.bg-info {
+        background-color: #2196F3 !important;
+    }
+    
+    .admin-table .badge.bg-warning {
+        background-color: #FF9800 !important;
+        color: white !important;
+    }
+    
+    .admin-table .badge.bg-secondary {
+        background-color: #757575 !important;
+    }
+    
+    .admin-table .text-muted {
+        color: #757575 !important;
+    }
+    
+    /* Pagination */
+    .admin-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1.5rem;
+        padding: 0 2rem 2rem 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .admin-pagination .btn {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.6rem 1.5rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .admin-pagination .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .admin-header h1 {
+            font-size: 2rem;
+        }
+        
+        .admin-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .admin-pagination {
+            flex-direction: column;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .admin-stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
-    <div class="row">
-        <!-- Cột trái cho các chức năng -->
-        <div class="col-md-3">
-            <div class="card mb-3 custom-green">
-                <div class="card-body text-center">
-                    <h5 class="card-title">
-                        <a href="#users-section" class="text-decoration-none">Quản lý Người dùng</a>
-                    </h5>
+<div class="admin-dashboard">
+    <div class="container">
+        <!-- Admin Header -->
+        <div class="admin-header">
+            <h1><i class="bi bi-shield-lock-fill"></i> Bảng Điều Khiển Quản Trị</h1>
+            <p>Chào mừng trở lại, <strong>{{ user.username }}</strong>! Quản lý toàn bộ hệ thống Plant Health AI.</p>
+        </div>
+        
+        {# Messages are shown centrally in base.html (#global-messages) to avoid duplicate alerts #}
+
+        <!-- Admin Stats Overview -->
+        <div class="admin-stats">
+            <a href="#users-section" style="text-decoration: none; color: inherit;">
+                <div class="admin-stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="stat-value">{{ users.paginator.count }}</div>
+                    <div class="stat-label">Người Dùng</div>
+                </div>
+            </a>
+            
+            <a href="#predictions-section" style="text-decoration: none; color: inherit;">
+                <div class="admin-stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <div class="stat-value">{{ prediction_history.paginator.count }}</div>
+                    <div class="stat-label">Dự Đoán</div>
+                </div>
+            </a>
+            
+            <a href="#feedbacks-section" style="text-decoration: none; color: inherit;">
+                <div class="admin-stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-chat-left-heart-fill"></i>
+                    </div>
+                    <div class="stat-value">{{ feedbacks.paginator.count }}</div>
+                    <div class="stat-label">Phản Hồi</div>
+                </div>
+            </a>
+            
+            <div class="admin-stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div class="stat-value" style="font-size: 1.5rem;">{{ current_date|date:"H:i" }}</div>
+                <div class="stat-label">{{ current_date|date:"d/m/Y" }}</div>
+            </div>
+        </div>
+        
+        <!-- Quick Links Section -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <a href="{% url 'admin_moderation' %}" class="btn w-100 p-3" style="background: linear-gradient(135deg, #FF5722 0%, #D84315 100%); color: white; border: none; border-radius: 15px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.1rem;">
+                    <i class="bi bi-shield-check" style="font-size: 1.5rem;"></i>
+                    <div class="text-start">
+                        <div>Kiểm duyệt ảnh</div>
+                        <small style="opacity: 0.9; font-size: 0.85rem; font-weight: 400;">Phê duyệt ảnh đóng góp</small>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="{% url 'blog_pending' %}" class="btn w-100 p-3" style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); color: white; border: none; border-radius: 15px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.1rem;">
+                    <i class="bi bi-newspaper" style="font-size: 1.5rem;"></i>
+                    <div class="text-start">
+                        <div>Duyệt bài viết</div>
+                        <small style="opacity: 0.9; font-size: 0.85rem; font-weight: 400;">Quản lý blog chờ duyệt</small>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="{% url 'disease_library' %}" class="btn w-100 p-3" style="background: linear-gradient(135deg, #00BCD4 0%, #0097A7 100%); color: white; border: none; border-radius: 15px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.1rem;">
+                    <i class="bi bi-book" style="font-size: 1.5rem;"></i>
+                    <div class="text-start">
+                        <div>Thư viện bệnh</div>
+                        <small style="opacity: 0.9; font-size: 0.85rem; font-weight: 400;">Quản lý dữ liệu bệnh</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Quick Approval Section - Always visible -->
+        <div class="admin-table-section" style="margin-bottom: 2rem;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3><i class="bi bi-lightning-charge-fill"></i> Phê Duyệt Nhanh Bài Viết</h3>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button onclick="selectAll()" class="btn btn-sm" style="background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600;">
+                        <i class="bi bi-check2-square"></i> Chọn tất cả
+                    </button>
+                    <button onclick="deselectAll()" class="btn btn-sm" style="background: linear-gradient(135deg, #9E9E9E, #757575); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600;">
+                        <i class="bi bi-x-square"></i> Bỏ chọn
+                    </button>
+                    <button onclick="approveSelected()" class="btn btn-sm" style="background: linear-gradient(135deg, #66BB6A, #43A047); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600;">
+                        <i class="bi bi-check-circle-fill"></i> Duyệt đã chọn
+                    </button>
+                    <a href="{% url 'blog_pending' %}" class="btn btn-sm" style="background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600;">
+                        <i class="bi bi-eye"></i> Xem tất cả
+                    </a>
                 </div>
             </div>
-            <div class="card mb-3 custom-green">
-                <div class="card-body text-center">
-                    <h5 class="card-title">
-                        <a href="#predictions-section" class="text-decoration-none">Lịch sử Dự đoán</a>
-                    </h5>
-                </div>
+            {% if pending_blog_posts %}
+            <div class="table-responsive">
+                <table class="table admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" style="cursor: pointer; width: 18px; height: 18px;">
+                            </th>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 30%">Tiêu đề</th>
+                            <th style="width: 15%">Tác giả</th>
+                            <th style="width: 15%">Ngày tạo</th>
+                            <th style="width: 10%">Lượt xem</th>
+                            <th style="width: 20%" class="text-center">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in pending_blog_posts %}
+                        <tr id="pending-post-{{ post.id }}" data-post-id="{{ post.id }}">
+                            <td>
+                                <input type="checkbox" class="post-checkbox" value="{{ post.id }}" style="cursor: pointer; width: 18px; height: 18px;">
+                            </td>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <a href="{% url 'blog_detail' post.id %}" target="_blank" style="color: #2E7D32; font-weight: 600; text-decoration: none;">
+                                    {{ post.title|truncatewords:10 }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge" style="background: linear-gradient(135deg, #2196F3, #1976D2); padding: 0.4rem 0.8rem;">
+                                    <i class="bi bi-person"></i> {{ post.author.username }}
+                                </span>
+                            </td>
+                            <td>{{ post.created_at|date:"d/m/Y H:i" }}</td>
+                            <td><i class="bi bi-eye"></i> {{ post.views_count }}</td>
+                            <td>
+                                <div class="d-flex gap-1 justify-content-center flex-nowrap">
+                                    <button class="btn btn-sm" onclick="quickApprove({{ post.id }})" title="Phê duyệt bài viết" style="background: linear-gradient(135deg, #66BB6A, #43A047); color: white; border: none; padding: 0.4rem 0.7rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem; white-space: nowrap;">
+                                        <i class="bi bi-check-circle-fill"></i> Duyệt
+                                    </button>
+                                    <a href="{% url 'blog_detail' post.id %}" target="_blank" class="btn btn-sm" title="Xem chi tiết bài viết" style="background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; padding: 0.4rem 0.7rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem; text-decoration: none; white-space: nowrap;">
+                                        <i class="bi bi-eye-fill"></i> Xem
+                                    </a>
+                                    <button class="btn btn-sm" onclick="quickReject({{ post.id }})" title="Từ chối bài viết" style="background: linear-gradient(135deg, #EF5350, #E53935); color: white; border: none; padding: 0.4rem 0.7rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem; white-space: nowrap;">
+                                        <i class="bi bi-x-circle-fill"></i> Từ chối
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            <div class="card mb-3 custom-green">
-                <div class="card-body text-center">
-                    <h5 class="card-title">
-                        <a href="#feedbacks-section" class="text-decoration-none">Quản lý Phản hồi</a>
-                    </h5>
-                </div>
+            {% else %}
+            <div class="text-center py-5" style="background: white; border-radius: 15px; border: 2px dashed #E8F5E9;">
+                <i class="bi bi-inbox" style="font-size: 4rem; color: #C8E6C9;"></i>
+                <h5 class="mt-3" style="color: #66BB6A;">Không có bài viết nào đang chờ duyệt</h5>
+                <p style="color: #A5D6A7;">Tất cả bài viết đã được xử lý</p>
             </div>
-            <div class="card mb-3 custom-green">
-                <div class="card-body text-center">
-                    <h5 class="card-title">
-                        <a href="{% url 'home' %}" class="text-decoration-none">Quay lại Trang chính</a>
-                    </h5>
+            {% endif %}
+        </div>
+        
+        <!-- Statistics Charts Section -->
+        <div id="statistics-section" class="admin-chart-section">
+            <div class="row">
+                <!-- Biểu đồ 1: Dự đoán theo loại cây -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="admin-chart-card">
+                        <h3><i class="bi bi-bar-chart-fill"></i> {{ plant_type_chart.title }}</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="plantTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Biểu đồ 2: Dự đoán theo bệnh -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="admin-chart-card">
+                        <h3><i class="bi bi-pie-chart-fill"></i> {{ disease_chart.title }}</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="diseaseChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Biểu đồ 3: Blog posts theo thời gian -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="admin-chart-card">
+                        <h3><i class="bi bi-graph-up"></i> {{ blog_chart.title }}</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="blogChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Biểu đồ 4: Trạng thái blog posts -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="admin-chart-card">
+                        <h3><i class="bi bi-pie-chart-fill"></i> {{ blog_stats_chart.title }}</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="blogStatsChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Cột giữa cho thông tin tổng quan và chi tiết -->
-        <div class="col-md-9">
-            <div class="card">
-                <div class="card-body">
-                    <h3 class="mt-4">Tổng quan Hệ Thống</h3>
-                    <ul class="list-group">
-                        <li class="list-group-item"><strong>Tổng số Người dùng:</strong> {{ users.paginator.count }}</li>
-                        <li class="list-group-item"><strong>Tổng số Dự đoán:</strong> {{ prediction_history.paginator.count }}</li>
-                        <li class="list-group-item"><strong>Tổng số Phản hồi:</strong> {{ feedbacks.paginator.count }}</li>
-                        <li class="list-group-item"><strong>Thời gian hiện tại:</strong> {{ current_date|date:"d/m/Y H:i" }} ({{ current_date|date:"l" }})</li>
-                    </ul>
+        <!-- Users Table Section -->
+        <div id="users-section" class="admin-table-section">
+            <h3><i class="bi bi-people-fill"></i> Danh Sách Người Dùng</h3>
+            <div class="table-responsive">
+                <table class="table admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Tên đăng nhập</th>
+                            <th>Email</th>
+                            <th>Tuổi</th>
+                            <th>Số điện thoại</th>
+                            <th>Quốc tịch</th>
+                            <th>Ngày tham gia</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr id="user-row-{{ user.id }}">
+                            <td style="color: #333333 !important;"><strong style="color: #2E7D32 !important;">{{ user.username }}</strong></td>
+                            <td style="color: #333333 !important;">{{ user.email|default:"Không có" }}</td>
+                            <td style="color: #333333 !important;">{{ user.profile_info.age|default:"Không có" }}</td>
+                            <td style="color: #333333 !important;">{{ user.profile_info.phone_number|default:"Không có" }}</td>
+                            <td style="color: #333333 !important;">{{ user.profile_info.nationality|default:"Không có" }}</td>
+                            <td style="color: #333333 !important;">{{ user.date_joined|date:"d/m/Y H:i" }}</td>
+                            <td style="color: #333333 !important;">
+                                {% if user.is_superuser %}
+                                    <span class="badge bg-success">Admin</span>
+                                {% elif 'Expert' in user.groups.all|join:',' %}
+                                    <span class="badge bg-info">Expert</span>
+                                {% elif 'Farmer' in user.groups.all|join:',' %}
+                                    <span class="badge bg-warning">Farmer</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Người dùng</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not user.is_superuser %}
+                                    <form method="post" action="{% url 'delete_user' user.id %}" style="display:inline;" class="ajax-delete" data-delete-target="#user-row-{{ user.id }}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-muted small">Không thể xóa</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem; color: #A5D6A7;"></i>
+                                <p class="mb-0 mt-2">Không có người dùng nào.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Phân trang cho Users -->
+            <div class="admin-pagination">
+                <div>
+                    {% if users.has_previous %}
+                        <a href="?user_page={{ users.previous_page_number }}&prediction_page={{ request.GET.prediction_page|default:1 }}&feedback_page={{ request.GET.feedback_page|default:1 }}#users-section" class="btn"><i class="bi bi-arrow-left"></i> Trang trước</a>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="text-muted">Trang {{ users.number }} / {{ users.paginator.num_pages }}</span>
+                </div>
+                <div>
+                    {% if users.has_next %}
+                        <a href="?user_page={{ users.next_page_number }}&prediction_page={{ request.GET.prediction_page|default:1 }}&feedback_page={{ request.GET.feedback_page|default:1 }}#users-section" class="btn">Trang sau <i class="bi bi-arrow-right"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
 
-                    <!-- Bảng danh sách người dùng -->
-                    <h3 id="users-section" class="mt-5">Danh sách Người dùng</h3>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Tên đăng nhập</th>
-                                    <th>Email</th>
-                                    <th>Tuổi</th>
-                                    <th>Số điện thoại</th>
-                                    <th>Quốc tịch</th>
-                                    <th>Ngày tham gia</th>
-                                    <th>Trạng thái</th>
-                                    <th>Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for user in users %}
-                                <tr>
-                                    <td>{{ user.username }}</td>
-                                    <td>{{ user.email|default:"Không có" }}</td>
-                                    <td>{{ user.profile_info.age|default:"Không có" }}</td>
-                                    <td>{{ user.profile_info.phone_number|default:"Không có" }}</td>
-                                    <td>{{ user.profile_info.nationality|default:"Không có" }}</td>
-                                    <td>{{ user.date_joined|date:"d/m/Y H:i" }}</td>
-                                    <td>
-                                        {% if user.is_superuser %}
-                                            <span class="badge bg-success">Admin</span>
-                                        {% elif 'Expert' in user.groups.all|join:',' %}
-                                            <span class="badge bg-info">Expert</span>
-                                        {% elif 'Farmer' in user.groups.all|join:',' %}
-                                            <span class="badge bg-warning">Farmer</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">Người dùng</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if not user.is_superuser %}
-                                            <form method="post" action="{% url 'delete_user' user.id %}" style="display:inline;">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa người dùng {{ user.username }}?')">Xóa</button>
-                                            </form>
-                                        {% else %}
-                                            <span class="text-muted">Không thể xóa</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="8" class="text-center">Không có người dùng nào.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Phân trang cho Users -->
-                    <div class="d-flex justify-content-between mt-3">
-                        <div>
-                            {% if users.has_previous %}
-                                <a href="?user_page={{ users.previous_page_number }}&prediction_page={{ prediction_history.number }}&feedback_page={{ feedbacks.number }}#users-section" class="btn btn-outline-primary">← Trang trước</a>
-                            {% endif %}
-                        </div>
-                        <div>
-                            {% if users.has_next %}
-                                <a href="?user_page={{ users.next_page_number }}&prediction_page={{ prediction_history.number }}&feedback_page={{ feedbacks.number }}#users-section" class="btn btn-outline-primary">Trang sau →</a>
-                            {% endif %}
-                        </div>
-                    </div>
+        <!-- Predictions Table Section -->
+        <div id="predictions-section" class="admin-table-section">
+            <h3><i class="bi bi-graph-up-arrow"></i> Lịch Sử Dự Đoán</h3>
+            <div class="table-responsive">
+                <table class="table admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Hình ảnh</th>
+                            <th>Người dùng</th>
+                            <th>Loại cây</th>
+                            <th>Bệnh</th>
+                            <th>Độ tin cậy</th>
+                            <th>Ngày tải lên</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for image in prediction_history %}
+                        <tr id="admin-prediction-{{ image.id }}">
+                            <td style="color: #333333 !important;">
+                                <img src="{{ image.image.url }}" alt="Plant Image" class="img-fluid rounded" style="max-width: 80px; max-height: 80px; object-fit: cover;">
+                            </td>
+                            <td style="color: #333333 !important;"><strong style="color: #2E7D32 !important;">{{ image.user.username|default:"Ẩn danh" }}</strong></td>
+                            <td style="color: #333333 !important;">{{ image.plant_type|default:"Không xác định" }}</td>
+                            <td style="color: #333333 !important;">{{ image.disease|default:"Chưa dự đoán" }}</td>
+                            <td style="color: #333333 !important;">
+                                <span class="badge bg-success">{{ image.confidence|floatformat:1|default:"N/A" }}%</span>
+                            </td>
+                            <td style="color: #333333 !important;">{{ image.uploaded_at|date:"d/m/Y H:i" }}</td>
+                            <td style="color: #333333 !important;">
+                                <form method="post" action="{% url 'delete_prediction' image.id %}" style="display:inline;" class="ajax-delete" data-delete-target="#admin-prediction-{{ image.id }}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem; color: #A5D6A7;"></i>
+                                <p class="mb-0 mt-2">Không có lịch sử dự đoán.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Phân trang cho Predictions -->
+            <div class="admin-pagination">
+                <div>
+                    {% if prediction_history.has_previous %}
+                        <a href="?user_page={{ request.GET.user_page|default:1 }}&prediction_page={{ prediction_history.previous_page_number }}&feedback_page={{ request.GET.feedback_page|default:1 }}#predictions-section" class="btn"><i class="bi bi-arrow-left"></i> Trang trước</a>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="text-muted">Trang {{ prediction_history.number }} / {{ prediction_history.paginator.num_pages }}</span>
+                </div>
+                <div>
+                    {% if prediction_history.has_next %}
+                        <a href="?user_page={{ request.GET.user_page|default:1 }}&prediction_page={{ prediction_history.next_page_number }}&feedback_page={{ request.GET.feedback_page|default:1 }}#predictions-section" class="btn">Trang sau <i class="bi bi-arrow-right"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
 
-                    <!-- Bảng lịch sử dự đoán -->
-                    <h3 id="predictions-section" class="mt-5">Lịch sử Dự đoán</h3>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Hình ảnh</th>
-                                    <th>Người dùng</th>
-                                    <th>Bệnh</th>
-                                    <th>Độ tin cậy</th>
-                                    <th>Ngày tải lên</th>
-                                    <th>Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for image in prediction_history %}
-                                <tr>
-                                    <td><img src="{{ image.image.url }}" alt="Plant Image" class="img-fluid" style="max-width: 100px;"></td>
-                                    <td>{{ image.user.username|default:"Ẩn danh" }}</td>
-                                    <td>{{ image.disease|default:"Chưa dự đoán" }}</td>
-                                    <td>{{ image.confidence|floatformat:1|default:"N/A" }}%</td>
-                                    <td>{{ image.uploaded_at|date:"d/m/Y H:i" }}</td>
-                                    <td>
-                                        <form method="post" action="{% url 'delete_prediction' image.id %}" style="display:inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa ảnh này?')">Xóa</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="6" class="text-center">Không có lịch sử dự đoán.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Phân trang cho Predictions -->
-                    <div class="d-flex justify-content-between mt-3">
-                        <div>
-                            {% if prediction_history.has_previous %}
-                                <a href="?user_page={{ users.number }}&prediction_page={{ prediction_history.previous_page_number }}&feedback_page={{ feedbacks.number }}#predictions-section" class="btn btn-outline-primary">← Trang trước</a>
-                            {% endif %}
-                        </div>
-                        <div>
-                            {% if prediction_history.has_next %}
-                                <a href="?user_page={{ users.number }}&prediction_page={{ prediction_history.next_page_number }}&feedback_page={{ feedbacks.number }}#predictions-section" class="btn btn-outline-primary">Trang sau →</a>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <!-- Bảng phản hồi -->
-                    <h3 id="feedbacks-section" class="mt-5">Danh sách Phản hồi</h3>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Người dùng</th>
-                                    <th>Nội dung</th>
-                                    <th>Ngày gửi</th>
-                                    <th>Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for feedback in feedbacks %}
-                                <tr>
-                                    <td>{{ feedback.user.username|default:"Ẩn danh" }}</td>
-                                    <td>{{ feedback.feedback_text|truncatewords:20 }}</td>
-                                    <td>{{ feedback.created_at|date:"d/m/Y H:i" }}</td>
-                                    <td>
-                                        <a href="{% url 'edit_feedback' feedback.id %}" class="btn btn-primary btn-sm">Chỉnh sửa</a>
-                                        <form method="post" action="{% url 'delete_feedback' feedback.id %}" style="display:inline;">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa phản hồi này?')">Xóa</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="4" class="text-center">Không có phản hồi nào.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Phân trang cho Feedbacks -->
-                    <div class="d-flex justify-content-between mt-3">
-                        <div>
-                            {% if feedbacks.has_previous %}
-                                <a href="?user_page={{ users.number }}&prediction_page={{ prediction_history.number }}&feedback_page={{ feedbacks.previous_page_number }}#feedbacks-section" class="btn btn-outline-primary">← Trang trước</a>
-                            {% endif %}
-                        </div>
-                        <div>
-                            {% if feedbacks.has_next %}
-                                <a href="?user_page={{ users.number }}&prediction_page={{ prediction_history.number }}&feedback_page={{ feedbacks.next_page_number }}#feedbacks-section" class="btn btn-outline-primary">Trang sau →</a>
-                            {% endif %}
-                        </div>
-                    </div>
+        <!-- Feedbacks Table Section -->
+        <div id="feedbacks-section" class="admin-table-section">
+            <h3><i class="bi bi-chat-left-heart-fill"></i> Danh Sách Phản Hồi</h3>
+            <div class="table-responsive">
+                <table class="table admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Người dùng</th>
+                            <th>Nội dung</th>
+                            <th>Ngày gửi</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for feedback in feedbacks %}
+                        <tr id="feedback-row-{{ feedback.id }}">
+                            <td style="color: #333333 !important;"><strong style="color: #2E7D32 !important;">{{ feedback.user.username|default:"Ẩn danh" }}</strong></td>
+                            <td style="color: #333333 !important;">{{ feedback.feedback_text|truncatewords:20 }}</td>
+                            <td style="color: #333333 !important;">{{ feedback.created_at|date:"d/m/Y H:i" }}</td>
+                            <td style="color: #333333 !important;">
+                                <a href="{% url 'edit_feedback' feedback.id %}" class="btn btn-primary btn-sm me-1"><i class="bi bi-pencil"></i></a>
+                                <form method="post" action="{% url 'delete_feedback' feedback.id %}" style="display:inline;" class="ajax-delete" data-delete-target="#feedback-row-{{ feedback.id }}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem; color: #A5D6A7;"></i>
+                                <p class="mb-0 mt-2">Không có phản hồi nào.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Phân trang cho Feedbacks -->
+            <div class="admin-pagination">
+                <div>
+                    {% if feedbacks.has_previous %}
+                        <a href="?user_page={{ request.GET.user_page|default:1 }}&prediction_page={{ request.GET.prediction_page|default:1 }}&feedback_page={{ feedbacks.previous_page_number }}#feedbacks-section" class="btn"><i class="bi bi-arrow-left"></i> Trang trước</a>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="text-muted">Trang {{ feedbacks.number }} / {{ feedbacks.paginator.num_pages }}</span>
+                </div>
+                <div>
+                    {% if feedbacks.has_next %}
+                        <a href="?user_page={{ request.GET.user_page|default:1 }}&prediction_page={{ request.GET.prediction_page|default:1 }}&feedback_page={{ feedbacks.next_page_number }}#feedbacks-section" class="btn">Trang sau <i class="bi bi-arrow-right"></i></a>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- JavaScript để cuộn mượt đến section -->
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js is not loaded!');
+            return;
+        }
+
+        // Biểu đồ 1: Dự đoán theo loại cây
+        const plantTypeCtx = document.getElementById('plantTypeChart');
+        if (!plantTypeCtx) {
+            console.error('plantTypeChart canvas not found!');
+            return;
+        }
+        new Chart(plantTypeCtx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: {{ plant_type_chart.labels|safe }},
+            datasets: [{
+                label: 'Số lượng dự đoán',
+                data: {{ plant_type_chart.data|safe }},
+                backgroundColor: 'rgba(76, 175, 80, 0.8)',
+                borderColor: 'rgba(46, 125, 50, 1)',
+                borderWidth: 2,
+                borderRadius: 8,
+                hoverBackgroundColor: 'rgba(46, 125, 50, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Số lượng', font: { weight: '600' }, color: 'white' },
+                    ticks: { color: 'white' },
+                    grid: { color: 'rgba(255,255,255,0.1)' }
+                },
+                x: {
+                    title: { display: true, text: 'Loại cây', font: { weight: '600' }, color: 'white' },
+                    ticks: { color: 'white' },
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { 
+                    display: false,
+                    labels: { color: 'white' }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(27, 94, 32, 0.95)',
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+
+    // Biểu đồ 2: Dự đoán theo bệnh
+    const diseaseCtx = document.getElementById('diseaseChart').getContext('2d');
+    new Chart(diseaseCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ disease_chart.labels|safe }},
+            datasets: [{
+                label: 'Số lượng dự đoán',
+                data: {{ disease_chart.data|safe }},
+                backgroundColor: 'rgba(255, 152, 0, 0.8)',
+                borderColor: 'rgba(245, 124, 0, 1)',
+                borderWidth: 2,
+                borderRadius: 8,
+                hoverBackgroundColor: 'rgba(245, 124, 0, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Số lượng', font: { weight: '600' }, color: 'white' },
+                    ticks: { color: 'white' },
+                    grid: { color: 'rgba(255,255,255,0.1)' }
+                },
+                x: {
+                    title: { display: true, text: 'Bệnh', font: { weight: '600' }, color: 'white' },
+                    ticks: { color: 'white' },
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: { 
+                    display: false,
+                    labels: { color: 'white' }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(245, 124, 0, 0.95)',
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+
+    // Biểu đồ 3: Blog posts theo thời gian
+    const blogCtx = document.getElementById('blogChart').getContext('2d');
+    new Chart(blogCtx, {
+        type: 'line',
+        data: {
+            labels: {{ blog_chart.labels|safe }},
+            datasets: [{
+                label: 'Bài viết',
+                data: {{ blog_chart.data|safe }},
+                backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                borderColor: 'rgba(46, 125, 50, 1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: 'rgba(46, 125, 50, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Số lượng bài viết', font: { weight: '600' }, color: 'white' },
+                    ticks: { color: 'white' },
+                    grid: { color: 'rgba(255,255,255,0.1)' }
+                },
+                x: {
+                    title: { display: true, text: 'Tháng', font: { weight: '600' }, color: 'white' },
+                    ticks: { color: 'white' },
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: { color: 'white' }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(27, 94, 32, 0.95)',
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            animation: {
+                duration: 1500,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+
+    // Biểu đồ 4: Trạng thái blog posts
+    const blogStatsCtx = document.getElementById('blogStatsChart').getContext('2d');
+    new Chart(blogStatsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ blog_stats_chart.labels|safe }},
+            datasets: [{
+                data: {{ blog_stats_chart.data|safe }},
+                backgroundColor: ['rgba(76, 175, 80, 0.8)', 'rgba(255, 152, 0, 0.8)', 'rgba(33, 150, 243, 0.8)'],
+                borderColor: ['rgba(46, 125, 50, 1)', 'rgba(245, 124, 0, 1)', 'rgba(25, 118, 210, 1)'],
+                borderWidth: 2,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { 
+                    position: 'bottom',
+                    labels: { 
+                        padding: 20,
+                        font: { size: 13, weight: '600' },
+                        color: 'white'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(27, 94, 32, 0.95)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.parsed || 0;
+                            return label + ': ' + value + ' bài viết';
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 1500,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+
+    // Giữ logic cuộn mượt
     const hash = window.location.hash;
     if (hash) {
         const targetSection = document.querySelector(hash);
@@ -243,7 +937,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    document.querySelectorAll('a[href*="#"]').forEach(link => {
+    // Smooth scroll chỉ áp dụng cho navigation links, không chặn pagination
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const targetId = this.getAttribute('href');
@@ -267,6 +962,243 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    } catch (error) {
+        console.error('Error initializing admin dashboard charts:', error);
+    }
 });
+
+// Quick Approve Function - No confirmation needed
+function quickApprove(postId) {
+    const button = event.target.closest('button');
+    button.disabled = true;
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang duyệt...';
+    
+    fetch(`/blog/${postId}/approve/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Remove row with animation
+            const row = document.getElementById(`pending-post-${postId}`);
+            row.style.transition = 'all 0.3s ease';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(-20px)';
+            
+            setTimeout(() => {
+                row.remove();
+                
+                // Check if table is empty
+                const tbody = document.querySelector('.admin-table tbody');
+                if (tbody.children.length === 0) {
+                    location.reload(); // Reload to hide empty table
+                }
+            }, 300);
+            
+            // Show success message
+            showToast('success', 'Đã phê duyệt bài viết thành công!');
+        } else {
+            showToast('error', data.message || 'Có lỗi xảy ra!');
+            button.disabled = false;
+            button.innerHTML = '<i class="bi bi-check-circle"></i> Duyệt';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('error', 'Có lỗi xảy ra khi phê duyệt!');
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-check-circle"></i> Duyệt';
+    });
+}
+
+// Toggle Select All
+function toggleSelectAll(checkbox) {
+    const checkboxes = document.querySelectorAll('.post-checkbox');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+}
+
+// Select All Button
+function selectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    selectAllCheckbox.checked = true;
+    toggleSelectAll(selectAllCheckbox);
+    showToast('info', 'Đã chọn tất cả bài viết');
+}
+
+// Deselect All Button
+function deselectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    selectAllCheckbox.checked = false;
+    toggleSelectAll(selectAllCheckbox);
+    showToast('info', 'Đã bỏ chọn tất cả bài viết');
+}
+
+// Approve Selected Posts
+function approveSelected() {
+    const checkedBoxes = document.querySelectorAll('.post-checkbox:checked');
+    
+    if (checkedBoxes.length === 0) {
+        showToast('warning', 'Vui lòng chọn ít nhất một bài viết để duyệt');
+        return;
+    }
+    
+    const postIds = Array.from(checkedBoxes).map(cb => cb.value);
+    let approvedCount = 0;
+    let errorCount = 0;
+    
+    showToast('info', `Đang duyệt ${postIds.length} bài viết...`);
+    
+    // Approve each post
+    Promise.all(postIds.map(postId => 
+        fetch(`/blog/${postId}/approve/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                approvedCount++;
+                // Remove row with animation
+                const row = document.getElementById(`pending-post-${postId}`);
+                if (row) {
+                    row.style.transition = 'all 0.3s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(-20px)';
+                    setTimeout(() => row.remove(), 300);
+                }
+            } else {
+                errorCount++;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            errorCount++;
+        })
+    )).then(() => {
+        // Show final result
+        if (approvedCount > 0) {
+            showToast('success', `Đã phê duyệt thành công ${approvedCount} bài viết!`);
+        }
+        if (errorCount > 0) {
+            showToast('error', `Có ${errorCount} bài viết gặp lỗi khi duyệt`);
+        }
+        
+        // Reload if all posts are approved
+        setTimeout(() => {
+            const tbody = document.querySelector('.admin-table tbody');
+            if (tbody && tbody.children.length === 0) {
+                location.reload();
+            } else {
+                // Uncheck select all
+                document.getElementById('selectAllCheckbox').checked = false;
+            }
+        }, 400);
+    });
+}
+
+// Quick Reject Function
+function quickReject(postId) {
+    const button = event.target.closest('button');
+    button.disabled = true;
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+    
+    fetch(`/blog/${postId}/reject/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Remove row with animation
+            const row = document.getElementById(`pending-post-${postId}`);
+            row.style.transition = 'all 0.3s ease';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(20px)';
+            
+            setTimeout(() => {
+                row.remove();
+                
+                // Check if table is empty
+                const tbody = document.querySelector('.admin-table tbody');
+                if (tbody.children.length === 0) {
+                    location.reload();
+                }
+            }, 300);
+            
+            // Show success message
+            showToast('success', 'Đã từ chối bài viết!');
+        } else {
+            showToast('error', data.message || 'Có lỗi xảy ra!');
+            button.disabled = false;
+            button.innerHTML = '<i class="bi bi-x-circle-fill"></i> Từ chối';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('error', 'Có lỗi xảy ra khi từ chối!');
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-x-circle-fill"></i> Từ chối';
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showToast(type, message) {
+    const typeMap = {
+        'success': { class: 'success', icon: 'check-circle' },
+        'error': { class: 'danger', icon: 'x-circle' },
+        'warning': { class: 'warning', icon: 'exclamation-triangle' },
+        'info': { class: 'info', icon: 'info-circle' }
+    };
+    
+    const config = typeMap[type] || typeMap['info'];
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${config.class} position-fixed`;
+    toast.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 12px; animation: slideIn 0.3s ease; font-weight: 600;';
+    toast.innerHTML = `
+        <strong><i class="bi bi-${config.icon}"></i></strong> ${message}
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
 </script>
+
+<style>
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+</style>
 {% endblock %}

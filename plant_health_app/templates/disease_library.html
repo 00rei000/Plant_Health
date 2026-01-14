@@ -1,177 +1,492 @@
 {% extends 'base.html' %}
-{% block title %}Thư viện Bệnh{% endblock %}
+{% block title %}Thư viện bệnh cây trồng{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <h2>Thư viện Bệnh</h2>
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
+<style>
+    .library-container {
+        margin-top: 90px;
+        padding: 2rem 0;
+    }
+    
+    .library-header {
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(46, 125, 50, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .library-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .library-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        color: white;
+    }
+    
+    .library-header p {
+        font-size: 1.1rem;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        color: rgba(255, 255, 255, 0.95);
+    }
+    
+    .filter-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        margin-bottom: 2.5rem;
+        border: 2px solid #E8F5E9;
+    }
+    
+    .filter-card .form-control,
+    .filter-card .form-select {
+        border: 2px solid #E8F5E9;
+        border-radius: 10px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        outline: none;
+    }
+    
+    .filter-card .btn-primary {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-card .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+    
+    .disease-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 2px solid #E8F5E9;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .disease-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(76, 175, 80, 0.2);
+        border-color: #4CAF50;
+    }
+    
+    .disease-card .disease-body {
+        padding: 1.5rem;
+        flex-grow: 1;
+    }
 
-    <!-- Hiển thị danh sách bệnh -->
-    <div class="row">
+    .disease-card .disease-title {
+        color: #1B5E20;
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .disease-card .disease-description {
+        color: #2E7D32;
+        line-height: 1.6;
+        margin-bottom: 0;
+    }
+
+    .disease-card .disease-footer {
+        padding: 1rem 1.5rem;
+        background: #F9F9F9;
+        border-top: 2px solid #E8F5E9;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .disease-card .disease-image {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .disease-card .disease-image img {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        border-bottom: 3px solid #4CAF50;
+    }
+    
+    .disease-card .btn {
+        flex: 1;
+        min-width: 80px;
+        padding: 0.6rem 1rem;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+    
+    .disease-card .btn-primary {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border: none;
+        color: white;
+    }
+    
+    .disease-card .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+    
+    .disease-card .btn-warning {
+        background: linear-gradient(135deg, #FFA726 0%, #FB8C00 100%);
+        border: none;
+        color: white;
+    }
+    
+    .disease-card .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 167, 38, 0.4);
+    }
+    
+    .disease-card .btn-danger {
+        background: linear-gradient(135deg, #EF5350 0%, #E53935 100%);
+        border: none;
+        color: white;
+    }
+    
+    .disease-card .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 83, 80, 0.4);
+    }
+    
+    .modal-content {
+        border-radius: 20px;
+        border: 2px solid #E8F5E9;
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #F1F8E9 0%, #E8F5E9 100%);
+        border-bottom: 2px solid #E8F5E9;
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .modal-title {
+        color: #1B5E20;
+        font-weight: 700;
+    }
+    
+    .modal-body h6 {
+        color: #1B5E20;
+        font-weight: 700;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .modal-body img {
+        border-radius: 15px;
+        border: 3px solid #E8F5E9;
+    }
+    
+    .pagination {
+        margin-top: 2rem;
+    }
+    
+    .pagination .page-link {
+        border: 2px solid #E8F5E9;
+        color: #4CAF50;
+        font-weight: 600;
+        padding: 0.6rem 1rem;
+        margin: 0 0.3rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .pagination .page-link:hover {
+        background: #4CAF50;
+        color: white;
+        border-color: #4CAF50;
+        transform: translateY(-2px);
+    }
+    
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border-color: #4CAF50;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    .text-muted {
+        color: #66BB6A !important;
+        text-align: center;
+        padding: 3rem;
+        font-size: 1.2rem;
+    }
+
+    /* Modal detail sections */
+    .disease-details .detail-section {
+        background: #F1F8E9;
+        border-left: 4px solid #4CAF50;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .disease-details .detail-section:hover {
+        background: #E8F5E9;
+        border-left-width: 6px;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.1);
+    }
+
+    .disease-details .detail-section h6 {
+        color: #1B5E20;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        font-size: 1.1em;
+    }
+
+    .disease-details .detail-section p {
+        color: #2E7D32;
+        line-height: 1.8;
+        margin: 0;
+    }
+
+    /* Plant type badge in card */
+    .plant-type-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: rgba(76, 175, 80, 0.95);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-size: 0.85em;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(10px);
+    }
+</style>
+
+<div class="container library-container">
+    <div class="library-header">
+        <h1><i class="bi bi-book-fill"></i> Thư viện bệnh cây trồng</h1>
+        <p>Tra cứu thông tin về các loại bệnh và cách điều trị</p>
+    </div>
+
+    <!-- Hiển thị thông báo -->
+    {# Messages are displayed centrally in base.html (#global-messages) - avoid duplicate alerts here #}
+
+    <!-- Form lọc -->
+    <div class="filter-card">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <form method="get" action="{% url 'disease_library' %}">
+                    <div class="row g-3">
+                        <!-- Ô tìm kiếm -->
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0" style="border-color: #E8F5E9; border-width: 2px;">
+                                    <i class="bi bi-search" style="color: #4CAF50;"></i>
+                                </span>
+                                <input type="text" class="form-control border-start-0" name="search" placeholder="Tìm kiếm bệnh hoặc loại cây..." value="{{ search_query|default:'' }}">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="bi bi-search"></i> Tìm
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Dropdown loại cây -->
+                        <div class="col-md-4">
+                            <select name="plant_type_filter" class="form-select" onchange="this.form.submit()">
+                                <option value="">🌿 Tất cả loại cây</option>
+                                {% for plant_type in plant_types %}
+                                    <option value="{{ plant_type }}" {% if plant_type_filter == plant_type %}selected{% endif %}>{{ plant_type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <!-- Dropdown sắp xếp -->
+                        <div class="col-md-4">
+                            <select name="sort_order" class="form-select" onchange="this.form.submit()">
+                                <option value="-created_at" {% if sort_order == '-created_at' %}selected{% endif %}>📅 Mới nhất</option>
+                                <option value="created_at" {% if sort_order == 'created_at' %}selected{% endif %}>📅 Cũ nhất</option>
+                                <option value="name" {% if sort_order == 'name' %}selected{% endif %}>🔤 Từ A-Z</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách bệnh với phân trang -->
+    <div class="row g-4" id="disease-list">
         {% for disease in diseases %}
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    {% if disease.image %}
-                        <img src="{{ disease.image_url }}" class="card-img-top" alt="{{ disease.name }}" style="max-height: 350px; object-fit: cover;">
-                    {% else %}
-                        <div class="card-img-top text-center" style="max-height: 350px; background-color: var(--card-background); display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">Không có ảnh</div>
+        <div class="col-lg-4 col-md-6" id="disease-{{ disease.id }}">
+            <div class="disease-card">
+                <!-- Hình ảnh -->
+                <div class="disease-image">
+                    <img src="{{ disease.image_url }}" alt="{{ disease.name }}">
+                    {% if disease.plant_type %}
+                        <span class="plant-type-badge">🌿 {{ disease.plant_type }}</span>
                     {% endif %}
-                    <div class="card-body">
-                        <h5 class="card-title">{{ disease.name }}</h5>
+                </div>
 
-                        <!-- Cắt ngắn Mô tả -->
-                        <p class="card-text">
-                            <strong>Mô tả:</strong>
-                            {% if disease.description|length > 100 %}
-                                {{ disease.description|slice:":100" }}...
-                            {% else %}
-                                {{ disease.description }}
-                            {% endif %}
-                        </p>
+                <!-- Nội dung -->
+                <div class="disease-body">
+                    <h5 class="disease-title">{{ disease.name }}</h5>
+                    <p class="disease-description">
+                        {{ disease.description|truncatewords:15 }}
+                    </p>
+                </div>
 
-                        <!-- Cắt ngắn Triệu chứng -->
-                        <p class="card-text">
-                            <strong>Triệu chứng:</strong>
-                            {% if disease.symptoms|length > 100 %}
-                                {{ disease.symptoms|slice:":100" }}...
-                            {% else %}
-                                {{ disease.symptoms }}
-                            {% endif %}
-                        </p>
-
-                        <!-- Cắt ngắn Phương pháp điều trị -->
-                        <p class="card-text">
-                            <strong>Phương pháp điều trị:</strong>
-                            {% if disease.treatment|length > 100 %}
-                                {{ disease.treatment|slice:":100" }}...
-                            {% else %}
-                                {{ disease.treatment }}
-                            {% endif %}
-                        </p>
-
-                        {% if disease.created_by %}
-                            <p class="card-text"><small>Được tạo bởi: {{ disease.created_by.username }} vào {{ disease.created_at|date:"d/m/Y H:i" }}</small></p>
-                        {% else %}
-                            <p class="card-text"><small>Được tạo bởi: Không xác định vào {{ disease.created_at|date:"d/m/Y H:i" }}</small></p>
-                        {% endif %}
-
-                        <!-- Nút Xem chi tiết -->
-                        <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#diseaseModal{{ disease.id }}">
-                            Xem chi tiết
+                <!-- Footer với các nút -->
+                <div class="disease-footer">
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#diseaseModal{{ disease.id }}">
+                        <i class="bi bi-eye"></i> Chi tiết
+                    </button>
+                    {% if is_expert_or_admin %}
+                    <a href="{% url 'update_disease' disease.id %}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-pencil"></i> Sửa
+                    </a>
+                    <form method="post" action="{% url 'delete_disease' disease.id %}" class="d-inline" onsubmit="return confirm('Xác nhận xóa bệnh này?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash"></i> Xóa
                         </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
 
-                        {% if is_expert_or_admin %}
-                            <a href="{% url 'update_disease' disease.id %}" class="btn btn-warning btn-sm">Cập nhật</a>
-                            <a href="{% url 'delete_disease' disease.id %}" class="btn btn-danger btn-sm">Xóa</a>
-                        {% endif %}
+        <!-- Modal chi tiết bệnh -->
+        <div class="modal fade" id="diseaseModal{{ disease.id }}" tabindex="-1" aria-labelledby="diseaseModalLabel{{ disease.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="diseaseModalLabel{{ disease.id }}">
+                            <i class="bi bi-clipboard2-pulse-fill"></i> {{ disease.name }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Image and Plant Type -->
+                        <div class="text-center mb-4">
+                            <img src="{{ disease.image_url }}" class="img-fluid rounded-3" alt="{{ disease.name }}" style="max-height: 300px; object-fit: cover; border: 3px solid #E8F5E9;">
+                            {% if disease.plant_type %}
+                            <div class="mt-3">
+                                <span class="badge" style="background: linear-gradient(135deg, #4CAF50, #2E7D32); font-size: 1em; padding: 0.5rem 1rem;">
+                                    🌿 {{ disease.plant_type }}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Disease Details -->
+                        <div class="disease-details">
+                            <div class="detail-section">
+                                <h6><i class="bi bi-info-circle-fill" style="color: #4CAF50;"></i> Mô tả</h6>
+                                <p>{{ disease.description }}</p>
+                            </div>
+                            
+                            <div class="detail-section">
+                                <h6><i class="bi bi-exclamation-triangle-fill" style="color: #FF9800;"></i> Triệu chứng</h6>
+                                <p>{{ disease.symptoms }}</p>
+                            </div>
+                            
+                            <div class="detail-section">
+                                <h6><i class="bi bi-heart-pulse-fill" style="color: #F44336;"></i> Phương pháp điều trị</h6>
+                                <p>{{ disease.treatment }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i> Đóng
+                        </button>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Modal chi tiết bệnh -->
-            <div class="modal fade" id="diseaseModal{{ disease.id }}" tabindex="-1" aria-labelledby="diseaseModalLabel{{ disease.id }}" aria-hidden="true">
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content" style="background-color: var(--card-background); color: var(--text-color);">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="diseaseModalLabel{{ disease.id }}" style="color: var(--text-light);">{{ disease.name }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-                        </div>
-                        <div class="modal-body">
-                            {% if disease.image %}
-                                <img src="{{ disease.image_url }}" class="img-fluid mb-3" alt="{{ disease.name }}" style="max-height: 350px; object-fit: cover; width: 100%;" loading="lazy">
-                            {% else %}
-                                <div class="text-center mb-3" style="height: 350px; background-color: #ccc; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 1rem;">Không có ảnh</div>
-                            {% endif %}
-                            <p><strong>Mô tả:</strong> {{ disease.description }}</p>
-                            <p><strong>Triệu chứng:</strong> {{ disease.symptoms }}</p>
-                            <p><strong>Phương pháp điều trị:</strong> {{ disease.treatment }}</p>
-                            {% if disease.created_by %}
-                                <p><small>Được tạo bởi: {{ disease.created_by.username }} vào {{ disease.created_at|date:"d/m/Y H:i" }}</small></p>
-                            {% else %}
-                                <p><small>Được tạo bởi: Không xác định vào {{ disease.created_at|date:"d/m/Y H:i" }}</small></p>
-                            {% endif %}
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                        </div>
-                    </div>
-                </div>
+        {# Confirm modal removed per request; using simple POST+confirm dialog above #}
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div style="font-size: 4rem; color: #E8F5E9; margin-bottom: 1rem;">
+                <i class="bi bi-inbox"></i>
             </div>
+            <h4 style="color: #2E7D32;">Chưa có bệnh nào trong thư viện</h4>
+            <p class="text-muted">Hãy thêm bệnh mới để bắt đầu xây dựng thư viện của bạn</p>
+        </div>
         {% endfor %}
     </div>
 
     <!-- Phân trang -->
-    {% if diseases.paginator.num_pages > 1 %}
-        <nav aria-label="Phân trang" class="mt-4">
-            <ul class="pagination justify-content-center">
-                {% if diseases.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ diseases.previous_page_number }}" aria-label="Trang trước">
-                            <span aria-hidden="true">«</span>
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" aria-label="Trang trước">
-                            <span aria-hidden="true">«</span>
-                        </a>
-                    </li>
-                {% endif %}
-                {% for num in diseases.paginator.page_range %}
-                    <li class="page-item {% if diseases.number == num %}active{% endif %}">
-                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                    </li>
-                {% endfor %}
-                {% if diseases.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ diseases.next_page_number }}" aria-label="Trang sau">
-                            <span aria-hidden="true">»</span>
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" aria-label="Trang sau">
-                            <span aria-hidden="true">»</span>
-                        </a>
-                    </li>
-                {% endif %}
-            </ul>
-        </nav>
-    {% endif %}
+    {% if diseases.has_other_pages %}
+    <nav aria-label="Phân trang thư viện bệnh" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if diseases.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ diseases.previous_page_number }}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}{% if plant_type_filter %}&plant_type_filter={{ plant_type_filter|urlencode }}{% endif %}{% if sort_order %}&sort_order={{ sort_order }}{% endif %}" aria-label="Trang trước">
+                        <i class="bi bi-chevron-left"></i> Trước
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="bi bi-chevron-left"></i> Trước</span>
+                </li>
+            {% endif %}
 
-    <!-- Form thêm bệnh -->
-    {% if is_expert_or_admin %}
-        <h3 class="mt-5">Thêm Bệnh Mới</h3>
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="name">Tên bệnh:</label>
-                <input type="text" class="form-control" id="name" name="name" value="{{ form_data.name|default:'' }}" required>
-            </div>
-            <div class="form-group">
-                <label for="description">Mô tả:</label>
-                <textarea class="form-control" id="description" name="description" required>{{ form_data.description|default:'' }}</textarea>
-            </div>
-            <div class="form-group">
-                <label for="symptoms">Triệu chứng:</label>
-                <textarea class="form-control" id="symptoms" name="symptoms" required>{{ form_data.symptoms|default:'' }}</textarea>
-            </div>
-            <div class="form-group">
-                <label for="treatment">Phương pháp điều trị:</label>
-                <textarea class="form-control" id="treatment" name="treatment" required>{{ form_data.treatment|default:'' }}</textarea>
-            </div>
-            <div class="form-group">
-                <label for="image">Ảnh minh họa (tùy chọn):</label>
-                <input type="file" class="form-control-file" id="image" name="image" accept="image/jpeg,image/png">
-            </div>
-            <button type="submit" class="btn btn-primary mt-2">Thêm bệnh</button>
-        </form>
+            {% for num in diseases.paginator.page_range %}
+                {% if diseases.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > diseases.number|add:'-3' and num < diseases.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}{% if plant_type_filter %}&plant_type_filter={{ plant_type_filter|urlencode }}{% endif %}{% if sort_order %}&sort_order={{ sort_order }}{% endif %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if diseases.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ diseases.next_page_number }}{% if search_query %}&search={{ search_query|urlencode }}{% endif %}{% if plant_type_filter %}&plant_type_filter={{ plant_type_filter|urlencode }}{% endif %}{% if sort_order %}&sort_order={{ sort_order }}{% endif %}" aria-label="Trang sau">
+                        Sau <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Sau <i class="bi bi-chevron-right"></i></span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
     {% endif %}
 </div>
 {% endblock %}

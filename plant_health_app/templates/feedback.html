@@ -2,29 +2,156 @@
 {% load static %}
 {% block title %}Feedback{% endblock %}
 {% block content %}
+<style>
+    .feedback-header {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(76, 175, 80, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .feedback-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .feedback-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .feedback-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .feedback-card {
+        background: white;
+        border-radius: 25px;
+        padding: 3rem;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+        border: none;
+    }
+    
+    .feedback-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #66BB6A 0%, #43A047 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2.5rem;
+        color: white;
+    }
+    
+    .feedback-textarea {
+        border: 2px solid #e2e8f0;
+        border-radius: 15px;
+        padding: 1.2rem;
+        min-height: 180px;
+        transition: all 0.3s ease;
+        resize: vertical;
+    }
+    
+    .feedback-textarea:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+    }
+    
+    .btn-feedback {
+        background: linear-gradient(135deg, #66BB6A 0%, #43A047 100%);
+        color: white;
+        border: none;
+        padding: 1rem 3rem;
+        border-radius: 15px;
+        font-weight: 700;
+        font-size: 1.05rem;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .btn-feedback:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(67, 160, 71, 0.4);
+        color: white;
+    }
+    
+    .feedback-info {
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(67, 160, 71, 0.1) 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+</style>
+
 <div class="container my-5">
+    <div class="feedback-header">
+        <h1 class="mb-2"><i class="bi bi-chat-heart-fill"></i> Gửi phản hồi</h1>
+        <p class="mb-0" style="opacity: 0.9;">Ý kiến của bạn giúp chúng tôi cải thiện dịch vụ</p>
+    </div>
+    
     <div class="row justify-content-center">
-        <div class="col-md-6 col-sm-8">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h1 class="card-title mb-4">Phản hồi</h1>
-                    <p>Đây là trang để bạn gửi phản hồi về ứng dụng Plant Health App.</p>
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mt-3" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                    <form method="POST" class="mt-4 text-start">
-                        {% csrf_token %}
-                        <div class="form-group mb-3">
-                            <label for="feedback-text" class="form-label">Phản hồi của bạn:</label>
-                            <textarea id="feedback-text" name="feedback" class="form-control" rows="4" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Gửi phản hồi</button>
-                    </form>
+        <div class="col-md-7 col-lg-6">
+            <div class="feedback-card">
+                <div class="feedback-icon">
+                    <i class="bi bi-pencil-square"></i>
+                </div>
+                
+                <div class="feedback-info">
+                    <h6 style="color: #2d3748; font-weight: 700; margin-bottom: 0.5rem;">
+                        <i class="bi bi-lightbulb-fill"></i> Chúng tôi lắng nghe bạn
+                    </h6>
+                    <p style="color: #718096; margin: 0; font-size: 0.95rem;">
+                        Chia sẻ trải nghiệm, đề xuất tính năng mới, hoặc báo cáo lỗi để giúp Plant Health AI ngày càng tốt hơn.
+                    </p>
+                </div>
+                
+                {# Messages are shown centrally in base.html (#global-messages) to avoid duplicates #}
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="form-group mb-4">
+                        <label for="feedback-text" class="form-label" style="font-weight: 600; color: #2d3748; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="bi bi-chat-text"></i> Nội dung phản hồi
+                        </label>
+                        <textarea id="feedback-text" 
+                                  name="feedback" 
+                                  class="form-control feedback-textarea" 
+                                  placeholder="Ví dụ: Tôi muốn có thêm tính năng... / Tôi gặp lỗi khi... / Giao diện rất đẹp nhưng..."
+                                  required></textarea>
+                        <small class="text-muted d-block mt-2">
+                            <i class="bi bi-info-circle"></i> Hãy mô tả chi tiết để chúng tôi hỗ trợ tốt nhất
+                        </small>
+                    </div>
+                    
+                    <button type="submit" class="btn-feedback">
+                        <i class="bi bi-send-fill"></i> Gửi phản hồi
+                    </button>
+                </form>
+                
+                <div class="text-center mt-4 pt-4" style="border-top: 1px solid #e2e8f0;">
+                    <small style="color: #718096;">
+                        <i class="bi bi-shield-check"></i> Mọi thông tin được bảo mật và chỉ dùng để cải thiện dịch vụ
+                    </small>
                 </div>
             </div>
         </div>

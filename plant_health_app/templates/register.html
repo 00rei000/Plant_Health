@@ -1,52 +1,200 @@
 {% extends 'base.html' %}
 {% block title %}Register{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-sm-8">
-            <div class="auth-container">
-                <h2 class="text-center mb-4">Tạo tài khoản</h2>
-                {% if messages %}
-                    <div class="messages mb-3">
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<style>
+    .auth-wrapper {
+        min-height: 90vh;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(46, 125, 50, 0.1) 100%);
+        padding: 3rem 0;
+    }
+    
+    .auth-card {
+        background: white;
+        border-radius: 25px;
+        padding: 3.5rem;
+        box-shadow: 0 20px 60px rgba(76, 175, 80, 0.15);
+        border: none;
+        max-width: 650px;
+        margin: 0 auto;
+    }
+    
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .auth-icon {
+        width: 90px;
+        height: 90px;
+        background: linear-gradient(135deg, #66BB6A 0%, #43A047 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2.8rem;
+        color: white;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    .form-group-modern {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group-modern label {
+        font-weight: 600;
+        color: #1B5E20;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-group-modern input,
+    .form-group-modern select {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem 1.3rem;
+        transition: all 0.3s ease;
+        font-size: 0.975rem;
+    }
+    
+    .form-group-modern input:focus,
+    .form-group-modern select:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+    }
+    
+    .btn-register {
+        background: linear-gradient(135deg, #66BB6A 0%, #43A047 100%);
+        color: white;
+        border: none;
+        padding: 1.1rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        width: 100%;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    .btn-register:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67, 160, 71, 0.4);
+        color: white;
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .auth-footer p {
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .auth-footer a {
+        color: #4CAF50;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .auth-footer a:hover {
+        color: #2E7D32;
+        text-decoration: underline;
+    }
+</style>
+
+<div class="auth-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-7">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <div class="auth-icon">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                        <h2 style="font-weight: 800; color: #1B5E20; font-size: 2.2rem;">Tạo tài khoản</h2>
+                        <p style="color: #558B2F; font-size: 1.05rem;">Tham gia Plant Health AI ngay!</p>
+                    </div>
+                    
+                    {# Messages rendered centrally in base.html to avoid duplication #}
+                    
+                    <form method="POST" action="{% url 'register' %}">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label for="username">
+                                        <i class="bi bi-person-fill"></i> Tên đăng nhập
+                                    </label>
+                                    <input type="text" id="username" name="username" class="form-control" 
+                                           placeholder="Chọn tên đăng nhập" required>
+                                </div>
                             </div>
-                        {% endfor %}
+                            
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label for="email">
+                                        <i class="bi bi-envelope-fill"></i> Email
+                                    </label>
+                                    <input type="email" id="email" name="email" class="form-control" 
+                                           placeholder="your@email.com" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label for="password">
+                                        <i class="bi bi-lock-fill"></i> Mật khẩu
+                                    </label>
+                                    <input type="password" id="password" name="password" class="form-control" 
+                                           placeholder="Tối thiểu 8 ký tự" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label for="confirm_password">
+                                        <i class="bi bi-shield-check"></i> Xác nhận
+                                    </label>
+                                    <input type="password" id="confirm_password" name="confirm_password" 
+                                           class="form-control" placeholder="Nhập lại mật khẩu" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group-modern">
+                            <label for="user_type">
+                                <i class="bi bi-people-fill"></i> Vai trò của bạn
+                            </label>
+                            <select id="user_type" name="user_type" class="form-select" required>
+                                <option value="" disabled selected>Chọn vai trò phù hợp</option>
+                                <option value="Farmer">🌾 Nông dân - Người trồng trọt</option>
+                                <option value="Expert">👨‍🌾 Chuyên gia - Cố vấn nông nghiệp</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn-register mt-3">
+                            <i class="bi bi-check-circle"></i> Tạo tài khoản
+                        </button>
+                    </form>
+                    
+                    <div class="auth-footer">
+                        <p class="text-muted mb-0">Bạn đã có tài khoản?</p>
+                        <a href="{% url 'login' %}">Đăng nhập ngay <i class="bi bi-arrow-right"></i></a>
                     </div>
-                {% endif %}
-                <form method="POST" action="{% url 'register' %}">
-                    {% csrf_token %}
-                    <div class="form-group mb-3">
-                        <label for="username" class="form-label">Tên đăng nhập:</label>
-                        <input type="text" id="username" name="username" class="form-control" required>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="email" class="form-label">Email:</label>
-                        <input type="email" id="email" name="email" class="form-control" required>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="password" class="form-label">Mật khẩu:</label>
-                        <input type="password" id="password" name="password" class="form-control" required>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="confirm_password" class="form-label">Xác nhận mật khẩu:</label>
-                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="user_type" class="form-label">Vai trò:</label>
-                        <select id="user_type" name="user_type" class="form-select" required>
-                            <option value="" disabled selected>Chọn vai trò</option>
-                            <option value="Farmer">Nông dân</option>
-                            <option value="Expert">Chuyên gia</option>
-                        </select>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Đăng ký</button>
-                    </div>
-                </form>
-                <p class="text-center mt-3">Bạn đã có tài khoản? <a href="{% url 'login' %}" class="text-primary fw-bold">Đăng nhập tại đây</a></p>
+                </div>
             </div>
         </div>
     </div>

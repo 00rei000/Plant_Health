@@ -2,87 +2,587 @@
 {% load static %}
 {% block title %}Lịch sử dự đoán{% endblock %}
 {% block content %}
-<div class="container my-5">
+<style>
+    /* Custom styles for prediction history page */
+    .history-container {
+        margin-top: 120px;
+        padding: 2rem 0;
+    }
+    
+    .prediction-header {
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .prediction-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .prediction-header h1 {
+        font-weight: 800;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .prediction-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .filter-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        margin-bottom: 2.5rem;
+        border: 2px solid #E8F5E9;
+    }
+    
+    .filter-card h5 {
+        color: #1B5E20;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .filter-card h5 i {
+        color: #4CAF50;
+        font-size: 1.3rem;
+    }
+    
+    .filter-card .form-label {
+        font-weight: 600;
+        color: #1B5E20;
+        margin-bottom: 0.5rem;
+    }
+    
+    .filter-card .form-control,
+    .filter-card .form-select {
+        border: 2px solid #E8F5E9;
+        border-radius: 10px;
+        padding: 0.85rem;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        outline: none;
+    }
+    
+    .prediction-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 2px solid #E8F5E9;
+        height: 100%;
+    }
+    
+    .prediction-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(76, 175, 80, 0.2);
+        border-color: #4CAF50;
+    }
+    
+    .prediction-card .card-img-top {
+        height: 240px;
+        object-fit: cover;
+        border-bottom: 3px solid #4CAF50;
+    }
+    
+    .prediction-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .prediction-card .card-title {
+        color: #1B5E20;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .prediction-card .card-title i {
+        color: #4CAF50;
+    }
+    
+    .prediction-card .disease-badge {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        color: white;
+        padding: 0.5rem 1.2rem;
+        border-radius: 20px;
+        display: inline-block;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    .prediction-card .date-text {
+        color: #66BB6A;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-weight: 500;
+    }
+    
+    .prediction-card .date-text i {
+        color: #4CAF50;
+    }
+    
+    .btn-view-detail {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        color: white;
+        border: none;
+        padding: 0.7rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    .btn-view-detail:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+        color: white;
+    }
+    
+    .btn-view-detail i {
+        margin-right: 0.3rem;
+    }
+    
+    .btn-delete-custom {
+        background: linear-gradient(135deg, #EF5350 0%, #E53935 100%);
+        color: white;
+        border: none;
+        padding: 0.7rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(239, 83, 80, 0.3);
+    }
+    
+    .btn-delete-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 83, 80, 0.5);
+        color: white;
+    }
+    
+    .btn-delete-custom i {
+        margin-right: 0.3rem;
+    }
+    
+    .btn-filter {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        color: white;
+        border: none;
+        padding: 0.9rem 2.5rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.05rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    .btn-filter:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+        color: white;
+    }
+    
+    .btn-filter i {
+        margin-right: 0.5rem;
+    }
+    
+    .btn-clear-filter {
+        background: white;
+        color: #4CAF50;
+        border: 2px solid #4CAF50;
+        padding: 0.9rem 2.5rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.05rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-clear-filter:hover {
+        background: #4CAF50;
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+    
+    .btn-clear-filter i {
+        margin-right: 0.5rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border: 2px solid #E8F5E9;
+    }
+    
+    .empty-state i {
+        font-size: 5rem;
+        color: #A5D6A7;
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-state h4 {
+        color: #1B5E20;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state p {
+        color: #66BB6A;
+        font-size: 1.1rem;
+    }
+    
+    .modal-content {
+        border-radius: 20px;
+        border: 2px solid #E8F5E9;
+    }
+    
+    .modal-header {
+        border-radius: 20px 20px 0 0;
+        border-bottom: 2px solid #E8F5E9;
+        background: linear-gradient(135deg, #F1F8E9 0%, #E8F5E9 100%);
+    }
+    
+    .modal-title {
+        color: #1B5E20;
+        font-weight: 700;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        margin-bottom: 2.5rem;
+        border: 2px solid #E8F5E9;
+    }
+    
+    .chart-container h3 {
+        color: #1B5E20;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .chart-container h3 i {
+        color: #4CAF50;
+    }
+    
+    .pagination {
+        margin-top: 2rem;
+        justify-content: center;
+    }
+    
+    .pagination .page-link {
+        border: 2px solid #E8F5E9;
+        color: #4CAF50;
+        font-weight: 600;
+        padding: 0.6rem 1rem;
+        margin: 0 0.3rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .pagination .page-link:hover {
+        background: #4CAF50;
+        color: white;
+        border-color: #4CAF50;
+        transform: translateY(-2px);
+    }
+    
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border-color: #4CAF50;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+</style>
+
+<div class="container history-container">
     <div class="row justify-content-center">
         <div class="col-md-12">
-            <h1 class="mb-4 text-center">Lịch sử dự đoán</h1>
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
+            <div class="prediction-header">
+                <h1><i class="bi bi-clock-history"></i> Lịch sử dự đoán</h1>
+                <p>Xem lại các dự đoán đã thực hiện</p>
+            </div>
+
+            {% if plant_type_chart.data %}
+            <div class="chart-container">
+                <h3 class="text-center mb-4">
+                    <i class="bi bi-bar-chart-fill"></i> {{ plant_type_chart.title }}
+                </h3>
+                <canvas id="predictionPlantTypeChart"></canvas>
+            </div>
             {% endif %}
+
+            <div class="filter-card">
+                <h5>
+                    <i class="bi bi-funnel-fill"></i> Bộ lọc
+                </h5>
+                <form method="get" class="mb-0">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="date_from" class="form-label">Từ ngày</label>
+                        <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date_to" class="form-label">Đến ngày</label>
+                        <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="plant_type" class="form-label">Loại cây</label>
+                        <select class="form-select" id="plant_type" name="plant_type">
+                            <option value="">Tất cả</option>
+                            {% for pt in plant_types %}
+                                <option value="{{ pt.plant_type }}" {% if selected_plant_type == pt.plant_type %}selected{% endif %}>{{ pt.plant_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="disease" class="form-label">Bệnh</label>
+                        <select class="form-select" id="disease" name="disease">
+                            <option value="">Tất cả</option>
+                            {% for d in diseases %}
+                                <option value="{{ d.disease }}" {% if selected_disease == d.disease %}selected{% endif %}>{{ d.disease }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <button type="submit" class="btn btn-filter">
+                        <i class="bi bi-search"></i> Lọc kết quả
+                    </button>
+                    <a href="{% url 'prediction_history' %}" class="btn btn-clear-filter ms-2">
+                        <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                    </a>
+                </div>
+                </form>
+            </div>
+
+            {# Messages rendered centrally in base.html (#global-messages) - avoid duplicates #}
+
             {% if user.is_authenticated %}
                 {% if plant_images %}
-                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+                    <div class="row g-4">
                         {% for image in plant_images %}
-                            <div class="col">
-                                <div class="card shadow-sm h-100">
-                                    <div class="card-body text-center">
-                                        <img src="{{ image.image.url }}" alt="Ảnh dự đoán" class="img-fluid rounded mb-3" style="max-height: 200px; object-fit: cover;">
-                                        <h5 class="card-title">Kết quả: {{ image.disease }}</h5>
-                                        <p class="card-text">Loại cây: {{ image.plant_type }}</p>
-                                        <p class="card-text">Độ tin cậy: {{ image.confidence|floatformat:2 }}%</p>
-                                        <p class="card-text">Thời gian: {{ image.uploaded_at|date:"d/m/Y H:i" }}</p>
-                                        <a href="{% url 'result' %}" class="btn btn-info btn-sm">Xem chi tiết</a>
+                            <div class="col-md-4" id="prediction-{{ image.id }}">
+                                <div class="prediction-card card h-100">
+                                    <img src="{{ image.image.url }}" class="card-img-top" alt="Ảnh dự đoán">
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title">
+                                            <i class="bi bi-flower1"></i> {{ image.plant_type }}
+                                        </h5>
+                                        <div class="disease-badge">
+                                            <i class="bi bi-bug-fill"></i> {{ image.disease }}
+                                        </div>
+                                        
+                                        <!-- Hiển thị trạng thái đóng góp -->
+                                        {% if image.contribution_type == 'CONTRIBUTING' %}
+                                            {% if image.approval_status == 'PENDING' %}
+                                                <span class="badge bg-warning text-dark mb-2">
+                                                    <i class="bi bi-clock"></i> Đang chờ duyệt
+                                                </span>
+                                            {% elif image.approval_status == 'ACCEPTED' %}
+                                                <span class="badge bg-success mb-2">
+                                                    <i class="bi bi-check-circle"></i> Đã được duyệt
+                                                </span>
+                                            {% elif image.approval_status == 'REJECTED' %}
+                                                <span class="badge bg-danger mb-2">
+                                                    <i class="bi bi-x-circle"></i> Đã từ chối
+                                                </span>
+                                                {% if image.rejection_reason %}
+                                                <small class="text-danger d-block mb-2">
+                                                    <i class="bi bi-info-circle"></i> {{ image.rejection_reason|truncatewords:10 }}
+                                                </small>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary mb-2">
+                                                <i class="bi bi-eye"></i> Chỉ xem
+                                            </span>
+                                        {% endif %}
+                                        
+                                        <p class="date-text mb-3">
+                                            <i class="bi bi-calendar3"></i>
+                                            {{ image.uploaded_at|date:'d/m/Y H:i' }}
+                                        </p>
+                                        <div class="mt-auto d-flex justify-content-between align-items-center gap-2">
+                                            <a href="{% url 'prediction_detail' image.id %}" class="btn btn-sm btn-view-detail flex-grow-1">
+                                                <i class="bi bi-eye"></i> Chi tiết
+                                            </a>
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-delete-custom"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#confirm-delete-modal"
+                                                data-delete-url="{% url 'delete_prediction_history' image.id %}"
+                                                data-preview="{{ image.disease }}"
+                                                data-target-selector="#prediction-{{ image.id }}"
+                                            >
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
-                    <!-- Phân trang -->
-                    {% if plant_images.paginator.num_pages > 1 %}
+
+                                        {# Shared confirmation modal with improved design #}
+                                        <div class="modal fade" id="confirm-delete-modal" tabindex="-1" aria-labelledby="confirm-delete-modalLabel" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content border-0 shadow-lg">
+                                                    <div class="modal-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 15px 15px 0 0;">
+                                                        <h5 class="modal-title mb-0 text-white" id="confirm-delete-modalLabel">
+                                                            <i class="bi bi-exclamation-triangle-fill"></i> Xác nhận xóa
+                                                        </h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body py-4">
+                                                        <div class="text-center mb-3">
+                                                            <i class="bi bi-trash3" style="font-size: 3rem; color: #f5576c;"></i>
+                                                        </div>
+                                                        <p class="text-center mb-3" style="color: #4a5568; font-size: 1.1rem;">
+                                                            Bạn có chắc chắn muốn xóa dự đoán này?
+                                                        </p>
+                                                        <div class="alert alert-warning border-0" style="background: #fef3c7; border-radius: 10px;">
+                                                            <p class="mb-1" style="color: #92400e;">
+                                                                <i class="bi bi-info-circle-fill"></i> <strong>Lưu ý:</strong> Hành động này không thể hoàn tác!
+                                                            </p>
+                                                            <div class="mt-2 p-2" style="background: white; border-radius: 8px;">
+                                                                <strong class="modal-preview-text" style="color: #2d3748;"></strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer border-0" style="padding: 1.5rem;">
+                                                        <form method="post" action="#" class="ajax-delete w-100" data-delete-target="">
+                                                            {% csrf_token %}
+                                                            <div class="d-flex gap-2">
+                                                                <button type="button" class="btn btn-outline-secondary flex-grow-1" data-bs-dismiss="modal" style="border-radius: 10px; padding: 0.75rem;">
+                                                                    <i class="bi bi-x-circle"></i> Hủy bỏ
+                                                                </button>
+                                                                <button type="submit" class="btn flex-grow-1" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; border-radius: 10px; padding: 0.75rem; font-weight: 600;">
+                                                                    <i class="bi bi-trash"></i> Xác nhận xóa
+                                                                </button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                    {% if plant_images.has_other_pages %}
                         <nav aria-label="Phân trang" class="mt-4">
                             <ul class="pagination justify-content-center">
                                 {% if plant_images.has_previous %}
                                     <li class="page-item">
-                                        <a class="page-link" href="?page={{ plant_images.previous_page_number }}" aria-label="Trang trước">
-                                            <span aria-hidden="true">«</span>
-                                        </a>
+                                        <a class="page-link" href="?page={{ plant_images.previous_page_number }}&date_from={{ date_from|date:'Y-m-d' }}&date_to={{ date_to|date:'Y-m-d' }}&plant_type={{ selected_plant_type }}&disease={{ selected_disease }}" aria-label="Trang trước">&laquo;</a>
                                     </li>
                                 {% else %}
-                                    <li class="page-item disabled">
-                                        <a class="page-link" href="#" aria-label="Trang trước">
-                                            <span aria-hidden="true">«</span>
-                                        </a>
-                                    </li>
+                                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
                                 {% endif %}
                                 {% for num in plant_images.paginator.page_range %}
-                                    <li class="page-item {% if plant_images.number == num %}active{% endif %}">
-                                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                                    </li>
+                                    {% if plant_images.number == num %}
+                                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    {% elif num > plant_images.number|add:'-3' and num < plant_images.number|add:'3' %}
+                                        <li class="page-item"><a class="page-link" href="?page={{ num }}&date_from={{ date_from|date:'Y-m-d' }}&date_to={{ date_to|date:'Y-m-d' }}&plant_type={{ selected_plant_type }}&disease={{ selected_disease }}">{{ num }}</a></li>
+                                    {% endif %}
                                 {% endfor %}
                                 {% if plant_images.has_next %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ plant_images.next_page_number }}" aria-label="Trang sau">
-                                            <span aria-hidden="true">»</span>
-                                        </a>
-                                    </li>
+                                    <li class="page-item"><a class="page-link" href="?page={{ plant_images.next_page_number }}&date_from={{ date_from|date:'Y-m-d' }}&date_to={{ date_to|date:'Y-m-d' }}&plant_type={{ selected_plant_type }}&disease={{ selected_disease }}">&raquo;</a></li>
                                 {% else %}
-                                    <li class="page-item disabled">
-                                        <a class="page-link" href="#" aria-label="Trang sau">
-                                            <span aria-hidden="true">»</span>
-                                        </a>
-                                    </li>
+                                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
                                 {% endif %}
                             </ul>
                         </nav>
                     {% endif %}
                 {% else %}
-                    <p class="text-center">Bạn chưa có dự đoán nào.</p>
-                    <div class="text-center mt-3">
-                        <a href="{% url 'prediction' %}" class="btn btn-primary">Tải lên ảnh mới</a>
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <h4 style="color: #4a5568; font-weight: 600;">Chưa có dự đoán nào</h4>
+                        <p style="color: #718096; margin-bottom: 2rem;">Bắt đầu tải lên ảnh cây trồng của bạn để chẩn đoán bệnh</p>
+                        <a href="{% url 'prediction' %}" class="btn btn-filter" style="padding: 1rem 2.5rem;">
+                            <i class="bi bi-cloud-upload"></i> Tải lên ảnh mới
+                        </a>
                     </div>
                 {% endif %}
             {% else %}
-                <p class="text-center">Vui lòng đăng nhập để xem lịch sử dự đoán.</p>
-                <div class="text-center mt-3">
-                    <a href="{% url 'login' %}" class="btn btn-primary">Đăng nhập</a>
+                <div class="empty-state">
+                    <i class="bi bi-lock-fill"></i>
+                    <h4 style="color: #4a5568; font-weight: 600;">Vui lòng đăng nhập</h4>
+                    <p style="color: #718096; margin-bottom: 2rem;">Bạn cần đăng nhập để xem lịch sử dự đoán của mình</p>
+                    <a href="{% url 'login' %}" class="btn btn-filter" style="padding: 1rem 2.5rem;">
+                        <i class="bi bi-box-arrow-in-right"></i> Đăng nhập ngay
+                    </a>
                 </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var modalEl = document.getElementById('confirm-delete-modal');
+    if (!modalEl) return;
+    modalEl.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget; // Button that triggered the modal
+        if (!button) return;
+        var url = button.getAttribute('data-delete-url');
+        var preview = button.getAttribute('data-preview');
+        var target = button.getAttribute('data-target-selector');
+
+        var form = modalEl.querySelector('form.ajax-delete');
+        if (form && url) {
+            form.action = url;
+            if (target) {
+                form.setAttribute('data-delete-target', target);
+            } else {
+                form.removeAttribute('data-delete-target');
+            }
+        }
+
+        var previewEl = modalEl.querySelector('.modal-preview-text');
+        if (previewEl) {
+            previewEl.textContent = preview || '';
+        }
+    });
+});
+</script>
+
 {% endblock %}

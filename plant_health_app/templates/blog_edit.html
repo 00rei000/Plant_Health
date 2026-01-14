@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+{% block title %}Chỉnh sửa bài viết{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-blog-container {
+        margin-top: 100px;
+        padding: 2rem 0 3rem;
+    }
+
+    .edit-header {
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(46, 125, 50, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .edit-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .edit-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        color: white;
+    }
+
+    .edit-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .form-wrapper {
+        background: white;
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border: 2px solid #E8F5E9;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #1B5E20;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.05rem;
+    }
+
+    .form-label i {
+        color: #4CAF50;
+        font-size: 1.2rem;
+    }
+
+    .form-control,
+    .form-select {
+        border: 2px solid #E8F5E9;
+        border-radius: 12px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        outline: none;
+    }
+
+    textarea.form-control {
+        min-height: 250px;
+        resize: vertical;
+    }
+
+    .current-image {
+        border-radius: 15px;
+        max-height: 200px;
+        width: auto;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border: 3px solid #E8F5E9;
+        margin-bottom: 1rem;
+    }
+
+    .upload-zone {
+        border: 3px dashed #4CAF50;
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(46, 125, 50, 0.05) 100%);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .upload-zone:hover {
+        border-color: #2E7D32;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(46, 125, 50, 0.1) 100%);
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        color: white;
+        border: none;
+        padding: 1.1rem 3rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+        color: white;
+    }
+
+    .btn-cancel {
+        background: #9E9E9E;
+        color: white;
+        border: none;
+        padding: 1.1rem 3rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancel:hover {
+        background: #757575;
+        transform: translateY(-3px);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container edit-blog-container">
+    <div class="edit-header">
+        <h1><i class="bi bi-pencil-square"></i> Chỉnh sửa bài viết</h1>
+        <p>Cập nhật nội dung bài viết của bạn</p>
+    </div>
+
+    <div class="form-wrapper">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <label for="title" class="form-label">
+                    <i class="bi bi-type"></i> Tiêu đề bài viết
+                </label>
+                <input type="text" class="form-control" id="title" name="title" required 
+                       value="{{ post.title }}">
+            </div>
+
+            <div class="mb-4">
+                <label for="content" class="form-label">
+                    <i class="bi bi-file-earmark-text"></i> Nội dung
+                </label>
+                <textarea id="content" name="content" class="form-control" required>{{ post.content }}</textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">
+                    <i class="bi bi-image"></i> Hình ảnh
+                </label>
+                {% if post.image %}
+                    <div class="mb-2">
+                        <p style="color: #2E7D32; font-weight: 600;">Ảnh hiện tại:</p>
+                        <img src="{{ post.image.url }}" alt="{{ post.title }}" class="current-image">
+                    </div>
+                {% endif %}
+                <div class="upload-zone" onclick="document.getElementById('image').click()">
+                    <i class="bi bi-cloud-upload" style="font-size: 2rem; color: #4CAF50;"></i>
+                    <p style="color: #2E7D32; margin: 0.5rem 0 0 0; font-weight: 600;">
+                        Nhấn để thay đổi ảnh
+                    </p>
+                </div>
+                <input type="file" id="image" name="image" class="d-none" accept="image/*">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">
+                    <i class="bi bi-eye"></i> Chế độ hiển thị
+                </label>
+                <select id="visibility" name="visibility" class="form-select">
+                    <option value="public" {% if post.visibility == 'public' %}selected{% endif %}>
+                        Công khai - Ai cũng có thể xem
+                    </option>
+                    <option value="private" {% if post.visibility == 'private' %}selected{% endif %}>
+                        Riêng tư - Chỉ mình tôi xem được
+                    </option>
+                    <option value="specific" {% if post.visibility == 'specific' %}selected{% endif %}>
+                        Chỉ định - Chọn người được xem
+                    </option>
+                </select>
+            </div>
+
+            <div class="mb-4" id="allowed_viewers_div" 
+                 style="{% if post.visibility != 'specific' %}display: none;{% endif %}">
+                <label class="form-label">
+                    <i class="bi bi-people"></i> Chọn người được xem
+                </label>
+                <select id="allowed_viewers" name="allowed_viewers" class="form-select" multiple size="5">
+                    {% for user in users %}
+                        <option value="{{ user.id }}"
+                                {% if user in post.allowed_viewers.all %}selected{% endif %}>
+                            {{ user.username }}
+                            {% if user.is_staff %}
+                                (Admin)
+                            {% elif user.groups.all.0.name == 'Expert' %}
+                                (Expert)
+                            {% elif user.groups.all.0.name == 'Farmer' %}
+                                (Farmer)
+                            {% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted">Giữ Ctrl (Windows) hoặc Command (Mac) để chọn nhiều người</small>
+            </div>
+
+            <div class="text-center mt-5">
+                <button type="submit" class="btn btn-submit">
+                    <i class="bi bi-check-circle-fill"></i> Cập nhật bài viết
+                </button>
+                <a href="{% url 'blog_detail' post.id %}" class="btn btn-cancel ms-3">
+                    <i class="bi bi-x-circle"></i> Hủy
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('visibility').addEventListener('change', function() {
+        const allowedViewersDiv = document.getElementById('allowed_viewers_div');
+        if (this.value === 'specific') {
+            allowedViewersDiv.style.display = 'block';
+        } else {
+            allowedViewersDiv.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

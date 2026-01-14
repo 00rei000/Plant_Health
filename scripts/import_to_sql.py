@@ -1,104 +1,71 @@
-import os
 import pyodbc
-from datetime import datetime
+import pandas as pd
+import os
+from tqdm import tqdm  # pip install tqdm nếu chưa có
 
-# Đường dẫn thư mục media
-media_root = r"C:\Users\DELL\OneDrive - Hanoi University of Science and Technology\Desktop\Django\Demo\mysite\media\plant_images"
+# Thiết lập kết nối SQL Server
+server = 'DESKTOP-NDJJABF\SQLEXPRESS'
+database = 'plant_disease'
+connection_string = f'DRIVER={{SQL Server}};SERVER={server};DATABASE={database};Trusted_Connection=yes;'
 
-def extract_plant_and_disease(disease_name):
-    """
-    Tách plant_type và disease từ tên thư mục.
-    Nếu không có '__', đặt plant_type là 'Unknown'.
-    """
-    if '__' in disease_name:
-        plant_type, disease = disease_name.split('__', 1)
-        disease = disease.replace('_', ' ').lower()  # Chuẩn hóa disease
-    else:
-        plant_type = 'Unknown'
-        disease = disease_name.replace('_', ' ').lower()
-    return plant_type, disease
+# Đường dẫn file CSV
+csv_file_path = r'C:\Users\DELL\OneDrive - Hanoi University of Science and Technology\Desktop\Django\Demo\mysite\plant_data.csv'
 
-def get_image_info(image_path, disease_name, dataset_type):
-    """
-    Tạo thông tin ảnh từ đường dẫn, tên bệnh, và loại dữ liệu.
-    """
-    # Tách plant_type và disease
-    plant_type, disease = extract_plant_and_disease(disease_name)
-    # Tạo đường dẫn tương đối
-    relative_path = os.path.join('images', dataset_type, disease_name, os.path.basename(image_path))
-    return (relative_path, disease, plant_type, dataset_type)
+# Đường dẫn thư mục chứa ảnh
+media_root = r'C:\Users\DELL\OneDrive - Hanoi University of Science and Technology\Desktop\Django\Demo\mysite\media'
 
-def scan_images(data_dir, dataset_type):
-    """
-    Quét thư mục để lấy danh sách ảnh và nhãn bệnh.
-    """
-    image_info = []
-    # Quét các thư mục disease
-    for disease_name in os.listdir(data_dir):
-        disease_dir = os.path.join(data_dir, disease_name)
-        if not os.path.isdir(disease_dir):
-            continue
-        # Quét các file ảnh trong thư mục disease
-        for img_name in os.listdir(disease_dir):
-            if img_name.endswith('.jpg') or img_name.endswith('.JPG'):
-                img_path = os.path.join(disease_dir, img_name)
-                image_info.append((img_path, disease_name, dataset_type))
-    return image_info
-
-def import_to_sql():
-    # Đường dẫn thư mục train và valid
-    train_dir = os.path.join(media_root, 'images', 'train')
-    valid_dir = os.path.join(media_root, 'images', 'valid')
-
-    # Kiểm tra thư mục
-    if not os.path.exists(train_dir):
-        print(f"Thư mục train không tồn tại: {train_dir}")
-        return
-    if not os.path.exists(valid_dir):
-        print(f"Thư mục valid không tồn tại: {valid_dir}")
-        return
-
-    # Quét dữ liệu train và valid
-    train_images = scan_images(train_dir, 'train')
-    valid_images = scan_images(valid_dir, 'valid')
-    all_images = train_images + valid_images
-
-    print(f"Tổng số ảnh tìm thấy: {len(all_images)} (train: {len(train_images)}, valid: {len(valid_images)})")
+try:
+    # Đọc file CSV
+    df = pd.read_csv(csv_file_path, encoding='utf-8')
+    total_rows = len(df)
+    print(f"Tổng số dòng CSV: {total_rows}")
 
     # Kết nối SQL Server
-    server = 'DESKTOP-NDJJABF\SQLEXPRESS'
-    database = 'plant_disease'
-    connection_string = f'DRIVER={{SQL Server}};SERVER={server};DATABASE={database};Trusted_Connection=yes;'
+    conn = pyodbc.connect(connection_string)
+    cursor = conn.cursor()
 
-    try:
-        conn = pyodbc.connect(connection_string)
-        cursor = conn.cursor()
+    # Chuẩn bị danh sách bản ghi
+    records = []
+    successful = 0
+    skipped = 0
 
-        # Chèn dữ liệu theo batch
-        batch_size = 1000
-        for i in range(0, len(all_images), batch_size):
-            batch = all_images[i:i + batch_size]
-            # Tạo thông tin cho batch
-            formatted_batch = [get_image_info(img_path, disease_name, dataset_type) for img_path, disease_name, dataset_type in batch]
-            
-            cursor.executemany(
-                """
-                INSERT INTO plant_health_app_plantmodel (image, disease, plant_type, dataset_type)
-                VALUES (?, ?, ?, ?)
-                """,
-                formatted_batch
-            )
-            conn.commit()
-            print(f"Đã chèn {i + len(batch)} bản ghi")
+    # Hiển thị tiến độ
+    for index, row in tqdm(df.iterrows(), total=total_rows, desc="Importing"):
+        image_path = row['image']  # plant_images/images/train/...
+        image_path = image_path.replace('\\', '/').strip()
+        
+        # Kiểm tra file ảnh
+        full_image_path = os.path.join(media_root, image_path)
+        if not os.path.exists(full_image_path):
+            skipped += 1
+            if skipped <= 10:  # Chỉ in 10 lỗi đầu
+                print(f"Image not found at row {index + 2}: {full_image_path}")
+            continue
 
-        print("Dữ liệu đã được nhập vào SQL Server!")
+        # Chuẩn hóa đường dẫn cho SQL Server
+        image_path_sql = image_path.replace('/', '\\')
 
-    except Exception as e:
-        print(f"Lỗi: {e}")
+        records.append((image_path_sql, row['disease'], row['plant_type'], row['dataset_type']))
+        successful += 1
 
-    finally:
-        cursor.close()
-        conn.close()
+    # Insert hàng loạt
+    if records:
+        cursor.executemany(
+            """
+            INSERT INTO plant_health_app_plantmodel (image, disease, plant_type, dataset_type)
+            VALUES (?, ?, ?, ?)
+            """,
+            records
+        )
+        conn.commit()
+        print(f"\n✅ Import thành công {len(records)} records!")
+        print(f"📊 Tiến độ: {successful}/{total_rows} thành công, {skipped} bị bỏ qua")
+    else:
+        print("❌ Không có records hợp lệ để import.")
 
-if __name__ == '__main__':
-    import_to_sql()
+except Exception as e:
+    print(f"❌ Lỗi khi import: {e}")
+
+finally:
+    cursor.close()
+    conn.close()

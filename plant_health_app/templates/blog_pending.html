@@ -1,0 +1,504 @@
+{% extends 'base.html' %}
+{% block title %}Duyệt bài viết{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pending-container {
+        margin-top: 100px;
+        padding: 2rem 0 3rem;
+    }
+
+    .pending-header {
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(46, 125, 50, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .pending-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .pending-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        color: white;
+    }
+
+    .pending-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .post-card {
+        background: white;
+        border: 2px solid #E8F5E9;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .post-card:hover {
+        border-color: #4CAF50;
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.15);
+    }
+
+    .post-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+    }
+
+    .post-title {
+        color: #1B5E20;
+        font-weight: 700;
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .post-author {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #2E7D32;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .post-author i {
+        color: #4CAF50;
+    }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .role-badge.admin {
+        background: #FFEBEE;
+        color: #C62828;
+    }
+
+    .role-badge.expert {
+        background: #E3F2FD;
+        color: #1565C0;
+    }
+
+    .role-badge.farmer {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .post-excerpt {
+        color: #2E7D32;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .post-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        font-size: 0.875rem;
+        color: #66BB6A;
+        margin-bottom: 1rem;
+    }
+
+    .post-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .post-meta i {
+        color: #4CAF50;
+    }
+
+    .post-image-preview {
+        width: 120px;
+        height: 120px;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 2px solid #E8F5E9;
+        margin-bottom: 1rem;
+    }
+
+    .visibility-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.85rem;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        gap: 0.35rem;
+    }
+
+    .visibility-badge.public {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .visibility-badge.private {
+        background: #FFF3E0;
+        color: #F57C00;
+    }
+
+    .visibility-badge.specific {
+        background: #E3F2FD;
+        color: #1976D2;
+    }
+
+    .post-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        padding-top: 1rem;
+        border-top: 1px solid #E8F5E9;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        color: white;
+    }
+
+    .btn-danger {
+        background: #F44336;
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-danger:hover {
+        background: #D32F2F;
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .pagination {
+        margin-top: 3rem;
+    }
+
+    .pagination .page-link {
+        border: 2px solid #E8F5E9;
+        color: #4CAF50;
+        font-weight: 600;
+        padding: 0.6rem 1rem;
+        margin: 0 0.3rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .pagination .page-link:hover {
+        background: #4CAF50;
+        color: white;
+        border-color: #4CAF50;
+        transform: translateY(-2px);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border-color: #4CAF50;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        color: #E8F5E9;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h4 {
+        color: #2E7D32;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        color: #66BB6A;
+        font-size: 1.1rem;
+    }
+
+    /* Modal styles */
+    .modal-content {
+        border-radius: 20px;
+        border: 2px solid #E8F5E9;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        color: white;
+        border-radius: 18px 18px 0 0;
+        border-bottom: none;
+    }
+
+    .modal-title {
+        font-weight: 700;
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #E8F5E9;
+        padding: 1.5rem 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pending-container">
+    <div class="pending-header">
+        <h1><i class="bi bi-hourglass-split"></i> Duyệt bài viết</h1>
+        <p>Xem xét và duyệt các bài viết từ người dùng</p>
+    </div>
+
+    {% if page_obj %}
+        {% for post in page_obj %}
+            <div class="post-card">
+                <div class="post-header">
+                    <div>
+                        <h3 class="post-title">{{ post.title }}</h3>
+                        <div class="post-author">
+                            <i class="bi bi-person-circle"></i>
+                            {{ post.author.username }}
+                            {% if post.author.is_staff %}
+                                <span class="role-badge admin">Admin</span>
+                            {% elif post.author.groups.all.0.name == 'Expert' %}
+                                <span class="role-badge expert">Expert</span>
+                            {% elif post.author.groups.all.0.name == 'Farmer' %}
+                                <span class="role-badge farmer">Farmer</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if post.visibility == 'public' %}
+                        <span class="visibility-badge public">
+                            <i class="bi bi-globe"></i> Công khai
+                        </span>
+                    {% elif post.visibility == 'private' %}
+                        <span class="visibility-badge private">
+                            <i class="bi bi-lock"></i> Riêng tư
+                        </span>
+                    {% elif post.visibility == 'specific' %}
+                        <span class="visibility-badge specific">
+                            <i class="bi bi-people"></i> Chỉ định ({{ post.allowed_viewers.count }} người)
+                        </span>
+                    {% endif %}
+                </div>
+
+                {% if post.image %}
+                    <img src="{{ post.image.url }}" alt="{{ post.title }}" class="post-image-preview">
+                {% endif %}
+
+                <p class="post-excerpt">{{ post.content|truncatewords:50 }}</p>
+
+                <div class="post-meta">
+                    <span>
+                        <i class="bi bi-calendar-event"></i>
+                        {{ post.created_at|date:"d/m/Y H:i" }}
+                    </span>
+                </div>
+
+                <div class="post-actions">
+                    <button type="button" class="btn btn-success" 
+                            data-bs-toggle="modal" data-bs-target="#approveModal{{ post.id }}">
+                        <i class="bi bi-check-circle"></i> Duyệt bài
+                    </button>
+                    <button type="button" class="btn btn-danger" 
+                            data-bs-toggle="modal" data-bs-target="#rejectModal{{ post.id }}">
+                        <i class="bi bi-x-circle"></i> Từ chối
+                    </button>
+                </div>
+
+                <!-- Approve Modal -->
+                <div class="modal fade" id="approveModal{{ post.id }}" tabindex="-1" 
+                     aria-labelledby="approveModalLabel{{ post.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);">
+                                <h5 class="modal-title" id="approveModalLabel{{ post.id }}">
+                                    <i class="bi bi-check-circle"></i> Duyệt bài viết
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" 
+                                        data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form method="post" action="{% url 'blog_approve' post.id %}">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <div class="text-center mb-3">
+                                        <i class="bi bi-check-circle-fill" style="font-size: 3.5rem; color: #4CAF50;"></i>
+                                    </div>
+                                    <h5 class="text-center mb-3" style="color: #1B5E20; font-weight: 600;">
+                                        Xác nhận duyệt bài viết
+                                    </h5>
+                                    <p class="text-center" style="color: #2E7D32;">
+                                        Bạn có chắc muốn duyệt bài viết <strong>"{{ post.title }}"</strong>?
+                                    </p>
+                                    <div class="alert alert-success" role="alert" style="background: #E8F5E9; border: 2px solid #4CAF50; border-radius: 12px;">
+                                        <i class="bi bi-info-circle"></i> Sau khi duyệt, bài viết sẽ được công khai và người dùng sẽ nhận được thông báo.
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 10px;">
+                                        <i class="bi bi-x"></i> Hủy
+                                    </button>
+                                    <button type="submit" class="btn btn-success" style="border-radius: 10px;">
+                                        <i class="bi bi-check-circle"></i> Xác nhận duyệt
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reject Modal -->
+                <div class="modal fade" id="rejectModal{{ post.id }}" tabindex="-1" 
+                     aria-labelledby="rejectModalLabel{{ post.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #F44336 0%, #C62828 100%);">
+                                <h5 class="modal-title" id="rejectModalLabel{{ post.id }}" style="color: white;">
+                                    <i class="bi bi-x-circle"></i> Từ chối bài viết
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" 
+                                        data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form method="post" action="{% url 'blog_reject' post.id %}">
+                                {% csrf_token %}
+                                <div class="modal-body">
+                                    <div class="text-center mb-3">
+                                        <i class="bi bi-x-circle-fill" style="font-size: 3.5rem; color: #F44336;"></i>
+                                    </div>
+                                    <h5 class="text-center mb-3" style="color: #C62828; font-weight: 600;">
+                                        Xác nhận từ chối bài viết
+                                    </h5>
+                                    <p class="text-center mb-4" style="color: #333;">
+                                        Bạn có chắc muốn từ chối bài viết <strong>"{{ post.title }}"</strong>?
+                                    </p>
+                                    <div class="mb-3">
+                                        <label for="reason{{ post.id }}" class="form-label" 
+                                               style="color: #2E7D32; font-weight: 600;">
+                                            <i class="bi bi-pencil-square"></i> Lý do từ chối (tùy chọn):
+                                        </label>
+                                        <textarea id="reason{{ post.id }}" name="reason" class="form-control" 
+                                                  rows="4" placeholder="Nhập lý do để tác giả biết cách cải thiện..."
+                                                  style="border: 2px solid #FFEBEE; border-radius: 12px; resize: none;"></textarea>
+                                    </div>
+                                    <div class="alert alert-warning" role="alert" style="background: #FFF3E0; border: 2px solid #FF9800; border-radius: 12px;">
+                                        <i class="bi bi-exclamation-triangle"></i> Người dùng sẽ nhận được thông báo về việc từ chối này.
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 10px;">
+                                        <i class="bi bi-arrow-left"></i> Quay lại
+                                    </button>
+                                    <button type="submit" class="btn btn-danger" style="border-radius: 10px;">
+                                        <i class="bi bi-x-circle"></i> Xác nhận từ chối
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        {% if page_obj.has_other_pages %}
+            <nav class="mt-5" aria-label="Phân trang">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i> Trước
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                Sau <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-check-circle"></i>
+            <h4>Không có bài viết nào cần duyệt</h4>
+            <p>Tất cả bài viết đã được xem xét</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

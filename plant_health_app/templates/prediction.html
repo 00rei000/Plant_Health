@@ -1,66 +1,291 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Upload Image{% endblock %}
+{% block title %}Tải lên hình ảnh{% endblock %}
 {% block content %}
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-sm-8">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h1 class="card-title mb-4">Tải lên hình ảnh cây trồng</h1>
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                    <form id="upload-form" method="POST" enctype="multipart/form-data" action="{% url 'prediction' %}" class="text-start">
-                        {% csrf_token %}
-                        <div class="form-group mb-3">
-                            <label for="plant-image" class="form-label">Chọn hình ảnh:</label>
-                            <input type="file" id="plant-image" name="plant_image" accept="image/*" class="form-control" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Tải lên và dự đoán</button>
-                    </form>
-                    <div id="preview" class="mt-3">
-                        <img id="image-preview" src="" alt="Image Preview" class="img-fluid rounded" style="display: none; max-width: 100%;">
-                    </div>
+<style>
+    .prediction-container {
+        margin-top: 120px;
+        padding: 2rem 0;
+    }
 
-                    <!-- Hiển thị kết quả dự đoán nếu có -->
-                    {% if image_url and prediction %}
-                        <div class="card shadow-sm mt-4">
-                            <div class="card-body text-center">
-                                <h2 class="card-title mb-4">Kết quả dự đoán</h2>
-                                <p>Hình ảnh đã tải lên:</p>
-                                <img src="{{ image_url }}" alt="Uploaded Image" class="img-fluid rounded mb-3">
-                                <p class="mt-3"><strong>Loại cây:</strong> {{ prediction.plant_type }}</p>
-                                <p class="mt-3"><strong>Bệnh:</strong> {{ prediction.disease }}</p>
-                                <p><strong>Độ tin cậy:</strong> {{ prediction.confidence|floatformat:1 }}%</p>
-                                <a href="{% url 'result' %}" class="btn btn-success mt-3">Xem chi tiết</a>
-                            </div>
+    .prediction-header {
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .prediction-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .prediction-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .prediction-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .upload-card {
+        background: white;
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border: 2px solid #E8F5E9;
+    }
+    
+    .upload-zone {
+        border: 3px dashed #4CAF50;
+        border-radius: 20px;
+        padding: 4rem 3rem;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(46, 125, 50, 0.05) 100%);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+    
+    .upload-zone:hover {
+        border-color: #2E7D32;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(46, 125, 50, 0.1) 100%);
+        transform: scale(1.02);
+        box-shadow: 0 5px 20px rgba(76, 175, 80, 0.15);
+    }
+    
+    .upload-zone input[type="file"] {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+    }
+    
+    .upload-icon {
+        font-size: 4rem;
+        color: #4CAF50;
+        margin-bottom: 1rem;
+    }
+    
+    .form-select-modern {
+        border: 2px solid #E8F5E9;
+        border-radius: 12px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+    
+    .form-select-modern:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        outline: none;
+    }
+    
+    .upload-card .form-label {
+        font-weight: 700;
+        color: #1B5E20;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.05rem;
+    }
+    
+    .upload-card .form-label i {
+        color: #4CAF50;
+        font-size: 1.2rem;
+    }
+    
+    .btn-predict {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        color: white;
+        border: none;
+        padding: 1.2rem 3.5rem;
+        border-radius: 15px;
+        font-weight: 800;
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+    
+    .btn-predict:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(76, 175, 80, 0.5);
+        color: white;
+    }
+    
+    .btn-predict i {
+        margin-right: 0.5rem;
+    }
+    
+    .preview-container {
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        margin-top: 2rem;
+        border: 3px solid #E8F5E9;
+    }
+    
+    .text-muted {
+        color: #66BB6A !important;
+    }
+</style>
+
+<div class="container prediction-container">
+    <div class="prediction-header">
+        <h1><i class="bi bi-cloud-upload-fill"></i> Chẩn đoán bệnh cây</h1>
+        <p>Tải lên hình ảnh để nhận kết quả chẩn đoán từ AI</p>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="upload-card">
+                {# Messages rendered centrally in base.html to avoid duplicate alerts #}
+                
+                <form id="upload-form" method="POST" enctype="multipart/form-data" action="{% url 'prediction' %}">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="plant_type" class="form-label" style="font-weight: 600; color: #2d3748; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="bi bi-flower1"></i> Loại cây trồng
+                        </label>
+                        <select id="plant_type" name="plant_type" class="form-select form-select-modern">
+                            <option value="auto">Tự động nhận diện</option>
+                            {% for plant_type in GROUPS %}
+                                {% if plant_type not in 'Blueberry,Orange,Raspberry,Soybean,Squash' %}
+                                    <option value="{{ plant_type }}">{{ plant_type }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted d-block mt-2">
+                            <i class="bi bi-info-circle"></i> Để "Tự động" nếu bạn không chắc chắn về loại cây
+                        </small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label" style="font-weight: 600; color: #2d3748; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="bi bi-image"></i> Hình ảnh cây trồng
+                        </label>
+                        <div class="upload-zone" id="upload-zone-area">
+                            <i class="bi bi-cloud-arrow-up upload-icon"></i>
+                            <h5 style="color: #2d3748; font-weight: 600;">Nhấn để chọn ảnh</h5>
+                            <p style="color: #718096;">hoặc kéo thả ảnh vào đây</p>
+                            <small style="color: #a0aec0;">Hỗ trợ: JPG, PNG, JPEG</small>
+                            <input type="file" id="plant-image" name="plant_image" accept="image/*" required>
                         </div>
-                    {% endif %}
-                </div>
+                    </div>
+                    
+                    <div id="preview" class="preview-container" style="display: none;">
+                        <img id="image-preview" src="" alt="Image Preview" class="img-fluid w-100">
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn-predict">
+                            <i class="bi bi-magic"></i> Chẩn đoán ngay
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Script để preview ảnh -->
 <script>
+// Click to upload functionality
+const uploadZoneArea = document.getElementById('upload-zone-area');
+const fileInput = document.getElementById('plant-image');
+
+uploadZoneArea.addEventListener('click', function(e) {
+    // Prevent click if clicking on the input itself
+    if (e.target !== fileInput) {
+        fileInput.click();
+    }
+});
+
 document.getElementById('plant-image').addEventListener('change', function(e) {
     const preview = document.getElementById('image-preview');
+    const previewContainer = document.getElementById('preview');
     const file = e.target.files[0];
+    
     if (file) {
         const reader = new FileReader();
         reader.onload = function(event) {
             preview.src = event.target.result;
-            preview.style.display = 'block';
+            previewContainer.style.display = 'block';
+            
+            // Smooth animation
+            previewContainer.style.opacity = '0';
+            setTimeout(() => {
+                previewContainer.style.transition = 'opacity 0.3s ease';
+                previewContainer.style.opacity = '1';
+            }, 10);
         };
         reader.readAsDataURL(file);
     }
 });
+
+// Drag and drop functionality
+const uploadZone = document.querySelector('.upload-zone');
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadZone.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    uploadZone.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    uploadZone.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight(e) {
+    uploadZone.style.borderColor = '#667eea';
+    uploadZone.style.background = 'linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%)';
+}
+
+function unhighlight(e) {
+    uploadZone.style.borderColor = '#cbd5e0';
+    uploadZone.style.background = 'linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)';
+}
+
+uploadZone.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    if (files.length > 0) {
+        document.getElementById('plant-image').files = files;
+        const event = new Event('change', { bubbles: true });
+        document.getElementById('plant-image').dispatchEvent(event);
+    }
+}
 </script>
 {% endblock %}

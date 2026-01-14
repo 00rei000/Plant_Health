@@ -1,50 +1,501 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Prediction Result{% endblock %}
+{% block title %}Kết quả dự đoán{% endblock %}
 {% block content %}
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-sm-10">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h1 class="card-title mb-4">Kết quả dự đoán</h1>
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                    <div class="result">
-                        <h3 class="mb-3">Hình ảnh đã tải lên:</h3>
-                        <img src="{{ image_url }}" alt="Uploaded Image" class="img-fluid rounded mb-3">
-                        <h3 class="mb-2">Dự đoán:</h3>
-                        {% if prediction %}
-                            <p class="mb-2"><strong>Bệnh:</strong> {{ prediction.disease }}</p>
-                            <p class="mb-4"><strong>Độ tin cậy:</strong> {{ prediction.confidence|floatformat:1 }}%</p>
-                        {% else %}
-                            <p class="text-warning">Không thể dự đoán bệnh. Vui lòng thử lại.</p>
-                        {% endif %}
-                    </div>
+<style>
+    .result-container {
+        margin-top: 90px;
+        padding: 2rem 0;
+    }
+    
+    .result-header {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(76, 175, 80, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .result-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .result-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .result-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .result-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border: 2px solid #E8F5E9;
+        height: 100%;
+    }
+    
+    .result-card h2 {
+        color: #1B5E20;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #E8F5E9;
+    }
+    
+    .result-card h4 {
+        color: #2E7D32;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .result-image {
+        border-radius: 15px;
+        max-height: 350px;
+        width: 100%;
+        object-fit: cover;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        border: 3px solid #E8F5E9;
+        margin-bottom: 1.5rem;
+    }
+    
+    .prediction-info {
+        background: #F1F8E9;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        border-left: 4px solid #4CAF50;
+    }
+    
+    .prediction-info strong {
+        color: #1B5E20;
+        font-weight: 700;
+    }
+    
+    .prediction-info p {
+        margin: 0;
+        color: #2E7D32;
+        font-weight: 500;
+    }
+    
+    .btn-info {
+        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        border: none;
+        padding: 0.4rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        color: white;
+    }
+    
+    .btn-info:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
+        color: white;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border: none;
+        padding: 0.8rem 2rem;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border: none;
+        padding: 0.8rem 2rem;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: #4CAF50;
+        border: 2px solid #4CAF50;
+        padding: 0.8rem 2rem;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+        background: #4CAF50;
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #E8F5E9;
+        border-radius: 10px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        outline: none;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #1B5E20;
+        margin-bottom: 0.5rem;
+    }
+    
+    .text-warning {
+        color: #FF9800 !important;
+        font-weight: 600;
+    }
+</style>
 
-                    <!-- Form tải ảnh mới -->
-                    <h3 class="mt-4">Tải lên hình ảnh mới</h3>
-                    <form method="post" enctype="multipart/form-data" action="{% url 'result' %}">
-                        {% csrf_token %}
-                        <div class="form-group mb-3">
-                            <input type="file" name="plant_image" accept=".jpg,.jpeg,.png" class="form-control" required>
+<div class="container result-container">
+    <div class="result-header">
+        <h1><i class="bi bi-check-circle-fill"></i> Kết quả dự đoán</h1>
+        <p>Kết quả chẩn đoán từ hệ thống AI</p>
+    </div>
+    
+    <div class="row">
+        <!-- Nửa trái: Kết quả dự đoán -->
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div class="result-card">
+                <h2><i class="bi bi-stars"></i> Kết quả dự đoán</h2>
+                {# Messages are shown centrally in base.html (#global-messages) to avoid duplicates #}
+                <div class="result text-center">
+                    <h4><i class="bi bi-image"></i> Hình ảnh đã tải lên</h4>
+                    <img src="{{ image_url }}" alt="Uploaded Image" class="result-image">
+                    
+                    <h4><i class="bi bi-clipboard-data"></i> Kết quả phân tích</h4>
+                    {% if prediction %}
+                        <div class="prediction-info">
+                            <strong>Bệnh:</strong>
+                            <p>{{ prediction.disease }}</p>
+                            <button type="button" class="btn btn-info btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#diseaseModal">
+                                <i class="bi bi-info-circle"></i> Chi tiết bệnh
+                            </button>
                         </div>
-                        <button type="submit" class="btn btn-success">Dự đoán lại</button>
+                        <div class="prediction-info">
+                            <strong>Loại cây:</strong>
+                            <p>{{ prediction.plant_type|default:"Không xác định" }}
+                                {% if prediction.plant_confidence %}
+                                    (Độ tin cậy: {{ prediction.plant_confidence|floatformat:2 }}%)
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="prediction-info">
+                            <strong>Độ tin cậy bệnh:</strong>
+                            <p>{{ prediction.disease_confidence|floatformat:2 }}%</p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> Không thể dự đoán bệnh. Vui lòng thử lại.
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- BƯỚC 2: Form xác nhận đóng góp -->
+                <div class="mt-4 p-4" style="background: #FFF9C4; border-radius: 15px; border: 2px solid #FBC02D;">
+                    <h4 class="text-center mb-3" style="color: #F57C00;">
+                        <i class="bi bi-hand-thumbs-up"></i> Bạn muốn làm gì với kết quả này?
+                    </h4>
+                    
+                    <form method="post" action="{% url 'user_confirm_prediction' prediction_id %}" id="contributionForm">
+                        {% csrf_token %}
+                        
+                        <!-- Lựa chọn A: Chỉ xem -->
+                        <div class="form-check mb-3 p-3" style="background: white; border-radius: 10px; border: 2px solid #E0E0E0;">
+                            <input class="form-check-input" type="radio" name="action" value="consulting" id="consultingRadio" checked>
+                            <label class="form-check-label" for="consultingRadio" style="font-weight: 600; color: #424242;">
+                                <i class="bi bi-eye"></i> Chỉ xem kết quả (Không đóng góp)
+                            </label>
+                            <p class="text-muted ms-4 mb-0 small">Tôi chỉ muốn biết cây bị bệnh gì thôi.</p>
+                        </div>
+                        
+                        <!-- Lựa chọn B: Đóng góp -->
+                        <div class="form-check mb-3 p-3" style="background: white; border-radius: 10px; border: 2px solid #4CAF50;">
+                            <input class="form-check-input" type="radio" name="action" value="contributing" id="contributingRadio">
+                            <label class="form-check-label" for="contributingRadio" style="font-weight: 600; color: #2E7D32;">
+                                <i class="bi bi-gift"></i> Đóng góp ảnh này cho hệ thống AI
+                            </label>
+                            <p class="text-muted ms-4 mb-2 small">Giúp AI học tập và chẩn đoán chính xác hơn.</p>
+                            
+                            <!-- Sub-options khi chọn Contributing -->
+                            <div id="contributingOptions" style="display: none; margin-left: 2rem; margin-top: 1rem;">
+                                <div class="mb-3">
+                                    <label class="form-label" style="font-weight: 600; color: #1B5E20;">
+                                        <i class="bi bi-clipboard-check"></i> Bạn đồng ý với dự đoán của AI không?
+                                    </label>
+                                    
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="user_disease_choice" value="agree_with_ai" id="agreeRadio">
+                                        <label class="form-check-label" for="agreeRadio">
+                                            <strong>Đồng ý:</strong> Đúng rồi, đây là <strong>{{ prediction.disease }}</strong>
+                                            {% if prediction.disease_confidence < 70 %}
+                                                <span class="badge bg-warning text-dark ms-2">
+                                                    <i class="bi bi-exclamation-triangle"></i> AI không chắc chắn ({{ prediction.disease_confidence|floatformat:0 }}%)
+                                                </span>
+                                            {% endif %}
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="user_disease_choice" value="custom" id="customRadio">
+                                        <label class="form-check-label" for="customRadio">
+                                            <strong>Không đồng ý:</strong> Tôi biết chính xác là loại cây và bệnh
+                                        </label>
+                                    </div>
+                                    
+                                    <!-- Form tự nhập loại cây và bệnh -->
+                                    <div id="customDiseaseSelect" style="display: none; margin-top: 1rem; padding: 1rem; background: #F9FBE7; border-radius: 10px; border: 2px solid #CDDC39;">
+                                        <div class="alert alert-info mb-3">
+                                            <i class="bi bi-info-circle"></i> <strong>Hướng dẫn:</strong><br>
+                                            • <strong>Chọn từ dropdown</strong>: Dùng dữ liệu chuẩn của hệ thống<br>
+                                            • <strong>Gõ tay</strong>: Nhập tên mới (hệ thống sẽ tự động chuẩn hóa)<br>
+                                            • Ví dụ: "xoài" → "Xoài", "cây cam" → "Cây Cam"
+                                        </div>
+                                        
+                                        <!-- Chọn/Nhập Loại cây -->
+                                        <div class="mb-3">
+                                            <label class="form-label" style="font-weight: 600; color: #1B5E20;">
+                                                <i class="bi bi-tree"></i> Loại cây:
+                                            </label>
+                                            <input 
+                                                type="text" 
+                                                name="user_plant_type" 
+                                                class="form-control" 
+                                                list="plantTypeList" 
+                                                placeholder="Chọn từ dropdown hoặc gõ tay..."
+                                                style="border: 2px solid #4CAF50;"
+                                            >
+                                            <datalist id="plantTypeList">
+                                                {% for plant_type in PLANT_TYPE_CLASSES %}
+                                                    <option value="{{ plant_type }}">
+                                                {% endfor %}
+                                            </datalist>
+                                            <small class="text-muted">
+                                                Có thể gõ tên mới nếu cây không có trong danh sách. Ví dụ: "Mango" (Xoài), "Durian" (Sầu riêng)
+                                            </small>
+                                        </div>
+                                        
+                                        <!-- Chọn/Nhập Tên bệnh -->
+                                        <div class="mb-3">
+                                            <label class="form-label" style="font-weight: 600; color: #1B5E20;">
+                                                <i class="bi bi-bug"></i> Tên bệnh:
+                                            </label>
+                                            <input 
+                                                type="text" 
+                                                name="user_disease" 
+                                                class="form-control" 
+                                                list="diseaseList" 
+                                                placeholder="Chọn từ dropdown hoặc gõ tay..."
+                                                style="border: 2px solid #4CAF50;"
+                                            >
+                                            <datalist id="diseaseList">
+                                                {% for disease in all_diseases %}
+                                                    <option value="{{ disease }}">
+                                                {% endfor %}
+                                            </datalist>
+                                            <small class="text-muted">
+                                                Có thể gõ tên bệnh mới. Ví dụ: "Anthracnose", "Mosaic Virus", "Healthy"
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if prediction.disease_confidence < 70 %}
+                                <div class="alert alert-warning mb-0">
+                                    <i class="bi bi-info-circle"></i> <strong>Lưu ý:</strong> AI không chắc chắn về ảnh này (độ tin cậy < 70%). 
+                                    Bạn chỉ nên đóng góp nếu bạn <strong>chắc chắn</strong> biết đây là bệnh gì.
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <button type="submit" class="btn btn-lg" style="background: linear-gradient(135deg, #FBC02D 0%, #F57C00 100%); color: white; font-weight: 700; border: none; padding: 1rem 3rem; border-radius: 12px;">
+                                <i class="bi bi-check-circle"></i> Xác nhận
+                            </button>
+                        </div>
                     </form>
+                </div>
+                
+                <div class="mt-4 d-flex gap-2 justify-content-center flex-wrap">
+                    <a href="{% url 'prediction' %}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left-circle"></i> Dự đoán ảnh mới
+                    </a>
+                    <a href="{% url 'prediction_history' %}" class="btn btn-secondary">
+                        <i class="bi bi-clock-history"></i> Xem lịch sử
+                    </a>
+                </div>
+            </div>
+        </div>
 
-                    <div class="mt-4">
-                        <a href="{% url 'prediction' %}" class="btn btn-primary">Quay lại trang dự đoán</a>
-                        <a href="{% url 'prediction_history' %}" class="btn btn-secondary">Xem lịch sử dự đoán</a>
+        <!-- Nửa phải: Thông tin chi tiết bệnh -->
+        <div class="col-lg-6 col-md-12 mb-4">
+            <div class="result-card">
+                <h2><i class="bi bi-file-medical"></i> Thông tin bệnh</h2>
+                {% if prediction.disease_details %}
+                    <div class="prediction-info">
+                        <strong>Tên bệnh:</strong>
+                        <p>{{ prediction.disease_details.name }}</p>
                     </div>
+                    <div class="prediction-info">
+                        <strong>Loại cây:</strong>
+                        <p>{{ prediction.disease_details.plant_type|default:"Không xác định" }}</p>
+                    </div>
+                    <h4><i class="bi bi-file-text"></i> Mô tả</h4>
+                    <div class="prediction-info">
+                        <p>{{ prediction.disease_details.description|truncatewords:50 }}</p>
+                    </div>
+                    <h4><i class="bi bi-capsule"></i> Phương pháp điều trị</h4>
+                    <div class="prediction-info">
+                        <p>{{ prediction.disease_details.treatment|truncatewords:50 }}</p>
+                    </div>
+                {% else %}
+                    <div class="alert alert-secondary">
+                        <i class="bi bi-info-circle"></i> Không có thông tin bệnh để hiển thị.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal chi tiết bệnh -->
+    {% if prediction.disease_details %}
+    <div class="modal fade" id="diseaseModal" tabindex="-1" aria-labelledby="diseaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="diseaseModalLabel">{{ prediction.disease_details.name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Loại cây:</strong> {{ prediction.disease_details.plant_type|default:"Không xác định" }}</p>
+                    <img src="{{ prediction.disease_details.image_url }}" class="img-fluid mb-3" alt="{{ prediction.disease_details.name }}" style="max-height: 300px; object-fit: cover;">
+                    <h6>Mô tả:</h6>
+                    <p>{{ prediction.disease_details.description }}</p>
+                    <h6>Triệu chứng:</h6>
+                    <p>{{ prediction.disease_details.symptoms }}</p>
+                    <h6>Phương pháp điều trị:</h6>
+                    <p>{{ prediction.disease_details.treatment }}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const contributingRadio = document.getElementById('contributingRadio');
+    const consultingRadio = document.getElementById('consultingRadio');
+    const contributingOptions = document.getElementById('contributingOptions');
+    const customRadio = document.getElementById('customRadio');
+    const agreeRadio = document.getElementById('agreeRadio');
+    const customDiseaseSelect = document.getElementById('customDiseaseSelect');
+    
+    // Hiển thị/ẩn phần Contributing Options
+    function toggleContributingOptions() {
+        if (contributingRadio.checked) {
+            contributingOptions.style.display = 'block';
+        } else {
+            contributingOptions.style.display = 'none';
+            // Reset sub-options
+            if (agreeRadio) agreeRadio.checked = false;
+            if (customRadio) customRadio.checked = false;
+            if (customDiseaseSelect) customDiseaseSelect.style.display = 'none';
+        }
+    }
+    
+    // Hiển thị/ẩn form custom disease
+    function toggleCustomDiseaseSelect() {
+        if (customRadio && customRadio.checked) {
+            customDiseaseSelect.style.display = 'block';
+        } else {
+            customDiseaseSelect.style.display = 'none';
+        }
+    }
+    
+    // Event listeners
+    if (contributingRadio) {
+        contributingRadio.addEventListener('change', toggleContributingOptions);
+    }
+    if (consultingRadio) {
+        consultingRadio.addEventListener('change', toggleContributingOptions);
+    }
+    if (customRadio) {
+        customRadio.addEventListener('change', toggleCustomDiseaseSelect);
+    }
+    if (agreeRadio) {
+        agreeRadio.addEventListener('change', toggleCustomDiseaseSelect);
+    }
+    
+    // Validation trước khi submit
+    const form = document.getElementById('contributionForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (contributingRadio.checked) {
+                // Kiểm tra đã chọn agree hoặc custom chưa
+                if (!agreeRadio.checked && !customRadio.checked) {
+                    e.preventDefault();
+                    alert('⚠️ Vui lòng chọn: Đồng ý với AI hoặc Tự nhập nhãn!');
+                    return false;
+                }
+                
+                // Nếu chọn custom, phải điền đủ thông tin
+                if (customRadio.checked) {
+                    const plantType = document.querySelector('input[name="user_plant_type"]').value.trim();
+                    const disease = document.querySelector('input[name="user_disease"]').value.trim();
+                    
+                    if (!plantType || !disease) {
+                        e.preventDefault();
+                        alert('⚠️ Vui lòng nhập đầy đủ Loại cây và Tên bệnh!');
+                        return false;
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+
 {% endblock %}

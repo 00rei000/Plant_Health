@@ -1,27 +1,234 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Chỉnh sửa phản hồi{% endblock %}
+
+{% block extra_css %}
+<style>
+    .feedback-container {
+        margin-top: 90px;
+        padding: 2rem 0;
+        min-height: calc(100vh - 200px);
+    }
+
+    .feedback-header {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 8px 30px rgba(76, 175, 80, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .feedback-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .feedback-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .feedback-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        border: 2px solid #E8F5E9;
+    }
+
+    .form-group {
+        margin-bottom: 2rem;
+    }
+
+    .form-label {
+        color: #2E7D32;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-control {
+        border: 2px solid #E8F5E9;
+        border-radius: 15px;
+        padding: 1rem 1.25rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #FAFAFA;
+    }
+
+    .form-control:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.15);
+        background: white;
+    }
+
+    textarea.form-control {
+        min-height: 200px;
+        resize: vertical;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 3rem;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        color: white;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+
+    .btn-cancel {
+        background: #9E9E9E;
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 3rem;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        color: white;
+    }
+
+    .btn-cancel:hover {
+        background: #757575;
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .char-counter {
+        text-align: right;
+        color: #66BB6A;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .feedback-header {
+            padding: 2rem 1.5rem;
+        }
+
+        .feedback-header h1 {
+            font-size: 1.75rem;
+        }
+
+        .form-card {
+            padding: 2rem 1.5rem;
+        }
+
+        .button-group {
+            flex-direction: column;
+        }
+
+        .btn-submit,
+        .btn-cancel {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container my-5">
-    <h1 class="mb-4 text-center">Chỉnh sửa phản hồi</h1>
+<div class="container feedback-container">
+    <div class="feedback-header">
+        <h1><i class="bi bi-pencil-square"></i> Chỉnh sửa phản hồi</h1>
+        <p>Cập nhật nội dung phản hồi của bạn</p>
+    </div>
+
     <div class="row justify-content-center">
-        <div class="col-md-8 col-sm-10">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="form-group mb-3">
-                            <label for="feedback_text" class="form-label">Nội dung phản hồi</label>
-                            <textarea name="feedback_text" id="feedback_text" class="form-control" rows="5" required>{{ feedback.feedback_text }}</textarea>
+        <div class="col-lg-8 col-md-10">
+            <div class="form-card">
+                <form method="post" id="feedbackForm">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label for="feedback_text" class="form-label">
+                            <i class="bi bi-chat-left-text-fill"></i> Nội dung phản hồi
+                        </label>
+                        <textarea 
+                            name="feedback_text" 
+                            id="feedback_text" 
+                            class="form-control" 
+                            rows="8" 
+                            required 
+                            placeholder="Nhập nội dung phản hồi của bạn..."
+                        >{{ feedback.feedback_text }}</textarea>
+                        <div class="char-counter">
+                            <span id="charCount">0</span> ký tự
                         </div>
-                        <div class="text-center">
-                            <button type="submit" class="btn btn-success">Cập nhật</button>
-                            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Hủy</a>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-submit">
+                            <i class="bi bi-check-circle"></i> Cập nhật phản hồi
+                        </button>
+                        <a href="{% url 'admin_dashboard' %}" class="btn btn-cancel">
+                            <i class="bi bi-x-circle"></i> Hủy bỏ
+                        </a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Character counter
+    const textarea = document.getElementById('feedback_text');
+    const charCount = document.getElementById('charCount');
+    
+    function updateCharCount() {
+        charCount.textContent = textarea.value.length;
+    }
+    
+    textarea.addEventListener('input', updateCharCount);
+    updateCharCount(); // Initial count
+
+    // Form validation
+    document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+        const feedbackText = textarea.value.trim();
+        
+        if (feedbackText.length === 0) {
+            e.preventDefault();
+            alert('Vui lòng nhập nội dung phản hồi!');
+            textarea.focus();
+        }
+    });
+</script>
 {% endblock %}

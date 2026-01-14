@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+{% block title %}Tạo bài viết mới{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-blog-container {
+        margin-top: 100px;
+        padding: 2rem 0 3rem;
+    }
+
+    .create-header {
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(46, 125, 50, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .create-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .create-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        color: white;
+    }
+
+    .create-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    .form-wrapper {
+        background: white;
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border: 2px solid #E8F5E9;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #1B5E20;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.05rem;
+    }
+
+    .form-label i {
+        color: #4CAF50;
+        font-size: 1.2rem;
+    }
+
+    .form-control,
+    .form-select {
+        border: 2px solid #E8F5E9;
+        border-radius: 12px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        outline: none;
+    }
+
+    textarea.form-control {
+        min-height: 250px;
+        resize: vertical;
+    }
+
+    .upload-zone {
+        border: 3px dashed #4CAF50;
+        border-radius: 15px;
+        padding: 3rem 2rem;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(46, 125, 50, 0.05) 100%);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .upload-zone:hover {
+        border-color: #2E7D32;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(46, 125, 50, 0.1) 100%);
+        transform: scale(1.02);
+    }
+
+    .upload-zone i {
+        font-size: 3rem;
+        color: #4CAF50;
+        margin-bottom: 1rem;
+    }
+
+    .image-preview {
+        border-radius: 15px;
+        max-height: 300px;
+        width: 100%;
+        object-fit: cover;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border: 3px solid #E8F5E9;
+        margin-top: 1rem;
+    }
+
+    .visibility-help {
+        font-size: 0.9rem;
+        color: #66BB6A;
+        margin-top: 0.5rem;
+        padding: 0.75rem;
+        background: #F1F8E9;
+        border-radius: 8px;
+    }
+
+    .visibility-help i {
+        color: #4CAF50;
+        margin-right: 0.5rem;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        color: white;
+        border: none;
+        padding: 1.1rem 3rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+        color: white;
+    }
+
+    .btn-cancel {
+        background: #9E9E9E;
+        color: white;
+        border: none;
+        padding: 1.1rem 3rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancel:hover {
+        background: #757575;
+        transform: translateY(-3px);
+        color: white;
+    }
+
+    #allowed_viewers_div {
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container create-blog-container">
+    <div class="create-header">
+        <h1><i class="bi bi-plus-circle-fill"></i> Tạo bài viết mới</h1>
+        <p>Chia sẻ kinh nghiệm và kiến thức của bạn với cộng đồng</p>
+    </div>
+
+    <div class="form-wrapper">
+        <form method="post" enctype="multipart/form-data" id="blog-form">
+            {% csrf_token %}
+            
+            <!-- Title -->
+            <div class="mb-4">
+                <label for="title" class="form-label">
+                    <i class="bi bi-type"></i> Tiêu đề bài viết
+                </label>
+                <input type="text" class="form-control" id="title" name="title" required 
+                       placeholder="Nhập tiêu đề hấp dẫn cho bài viết...">
+            </div>
+
+            <!-- Content -->
+            <div class="mb-4">
+                <label for="content" class="form-label">
+                    <i class="bi bi-file-earmark-text"></i> Nội dung
+                </label>
+                <textarea id="content" name="content" class="form-control" required 
+                          placeholder="Viết nội dung chi tiết của bài viết..."></textarea>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="mb-4">
+                <label for="image" class="form-label">
+                    <i class="bi bi-image"></i> Hình ảnh (tùy chọn)
+                </label>
+                <div class="upload-zone" onclick="document.getElementById('image').click()">
+                    <i class="bi bi-cloud-upload"></i>
+                    <p style="color: #2E7D32; margin: 0; font-weight: 600;">
+                        Nhấn để chọn ảnh hoặc kéo thả vào đây
+                    </p>
+                    <small style="color: #66BB6A;">Hỗ trợ: JPG, PNG, GIF (tối đa 5MB)</small>
+                </div>
+                <input type="file" id="image" name="image" class="d-none" accept="image/*">
+                <div id="preview-container" style="display: none;">
+                    <img id="preview" class="image-preview" alt="Preview">
+                </div>
+            </div>
+
+            <!-- Visibility -->
+            <div class="mb-4">
+                <label class="form-label">
+                    <i class="bi bi-eye"></i> Chế độ hiển thị
+                </label>
+                <select id="visibility" name="visibility" class="form-select">
+                    <option value="public">Công khai - Ai cũng có thể xem</option>
+                    <option value="private">Riêng tư - Chỉ mình tôi xem được</option>
+                    <option value="specific">Chỉ định - Chọn người được xem</option>
+                </select>
+                <div class="visibility-help">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Lưu ý:</strong> Tất cả bài viết cần được admin duyệt trước khi hiển thị công khai.
+                </div>
+            </div>
+
+            <!-- Allowed Viewers (hidden by default) -->
+            <div class="mb-4" id="allowed_viewers_div" style="display: none;">
+                <label class="form-label">
+                    <i class="bi bi-people"></i> Chọn người được xem
+                </label>
+                <select id="allowed_viewers" name="allowed_viewers" class="form-select" multiple size="5">
+                    {% for user in users %}
+                        <option value="{{ user.id }}">
+                            {{ user.username }}
+                            {% if user.is_staff %}
+                                (Admin)
+                            {% elif user.groups.all.0.name == 'Expert' %}
+                                (Expert)
+                            {% elif user.groups.all.0.name == 'Farmer' %}
+                                (Farmer)
+                            {% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted">Giữ Ctrl (Windows) hoặc Command (Mac) để chọn nhiều người</small>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="text-center mt-5">
+                <button type="submit" class="btn btn-submit">
+                    <i class="bi bi-send-fill"></i> Gửi bài viết
+                </button>
+                <a href="{% url 'blog_list' %}" class="btn btn-cancel ms-3">
+                    <i class="bi bi-x-circle"></i> Hủy
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Image preview
+    document.getElementById('image').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const previewContainer = document.getElementById('preview-container');
+        const preview = document.getElementById('preview');
+        
+        if (file) {
+            if (!file.type.match('image.*')) {
+                alert('Vui lòng chọn file ảnh!');
+                this.value = '';
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File ảnh không được vượt quá 5MB!');
+                this.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                preview.src = event.target.result;
+                previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewContainer.style.display = 'none';
+        }
+    });
+
+    // Drag and drop
+    const uploadZone = document.querySelector('.upload-zone');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight() {
+        uploadZone.style.borderColor = '#2E7D32';
+        uploadZone.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(46, 125, 50, 0.15) 100%)';
+    }
+
+    function unhighlight() {
+        uploadZone.style.borderColor = '#4CAF50';
+        uploadZone.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(46, 125, 50, 0.05) 100%)';
+    }
+
+    uploadZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        document.getElementById('image').files = files;
+        
+        // Trigger change event
+        const event = new Event('change');
+        document.getElementById('image').dispatchEvent(event);
+    }
+
+    // Show/hide allowed viewers based on visibility
+    document.getElementById('visibility').addEventListener('change', function() {
+        const allowedViewersDiv = document.getElementById('allowed_viewers_div');
+        if (this.value === 'specific') {
+            allowedViewersDiv.style.display = 'block';
+        } else {
+            allowedViewersDiv.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

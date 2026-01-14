@@ -1,21 +1,1328 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Home{% endblock %}
+{% block title %}Plant Health - Chăm Sóc Cây Trồng Thông Minh{% endblock %}
 {% block content %}
-<div class="hero-section py-5 text-center">
-    <div class="container">
-        <h1 class="display-4 fw-bold mb-3">Plant Health</h1>
-        <p class="lead mb-4">Phân tích sức khỏe cây trồng thông minh bằng công nghệ AI.  
-            Tải lên hình ảnh và nhận kết quả ngay lập tức!</p>
-        
-        <img src="{% static 'images/plants.png' %}" alt="Plant Health Illustration" class="img-fluid mb-4" style="max-height: 300px;">
+<style>
+    /* Global Styles */
+    body {
+        font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    }
+    
+    /* Hero Section - Plantix Style */
+    .hero-section {
+        background: linear-gradient(135deg, rgba(246, 247, 246, 1) 0%);
+        min-height: auto;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        padding: 3rem 0;
+        margin-top: 90px;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        opacity: 0.3;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        color: white;
+    }
+    
+    .hero-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.25);
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+        backdrop-filter: blur(10px);
+        color: white !important;
+        text-shadow: none;
+        font-weight: 700;
+    }
+    
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin-bottom: 1.5rem;
+        text-shadow: none;
+        color: white !important;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.3rem;
+        margin-bottom: 2.5rem;
+        max-width: 600px;
+        line-height: 1.6;
+        color: white !important;
+        opacity: 1;
+        text-shadow: none;
+        font-weight: 600;
+    }
+    
+    .hero-cta {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-primary-hero {
+        background: white;
+        color: #1B5E20;
+        padding: 1rem 2.5rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border: 2px solid white;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary-hero:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        background: #1B5E20;
+        color: white;
+    }
+    
+    .btn-secondary-hero {
+        background: white;
+        color: #1B5E20;
+        padding: 1rem 2.5rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border: 2px solid white;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-secondary-hero:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        background: #1B5E20;
+        color: white;
+    }
+    
+    .hero-image {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .hero-image img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+    
+    /* Showcase Section */
+    .showcase-section {
+        background: #F1F8E9;
+        padding: 4rem 0;
+    }
+    
+    .showcase-card {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: all 0.4s ease;
+        cursor: pointer;
+        height: 300px;
+    }
+    
+    .showcase-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    }
+    
+    .showcase-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.4s ease;
+    }
+    
+    .showcase-card:hover .showcase-img {
+        transform: scale(1.1);
+    }
+    
+    .showcase-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+        padding: 2rem 1.5rem;
+        color: white;
+        transform: translateY(20px);
+        transition: transform 0.4s ease;
+    }
+    
+    .showcase-card:hover .showcase-overlay {
+        transform: translateY(0);
+    }
+    
+    .showcase-overlay h4 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: white;
+    }
+    
+    .showcase-overlay p {
+        font-size: 0.95rem;
+        margin: 0;
+        opacity: 0.95;
+        color: #E8F5E9;
+    }
+    
+    /* Features Section - Plantix Style */
+    .section-header {
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    
+    .section-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+        color: #2E7D32;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .section-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #1B5E20;
+        margin-bottom: 1rem;
+    }
+    
+    .section-description {
+        font-size: 1.1rem;
+        color: #2E7D32;
+        max-width: 700px;
+        margin: 0 auto;
+        font-weight: 500;
+    }
+    
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+    }
+    
+    .feature-card-modern {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 2px solid #E8F5E9;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+    
+    .feature-card-modern:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(76, 175, 80, 0.2);
+        border-color: #4CAF50;
+    }
+    
+    .feature-icon-modern {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2.5rem;
+        color: white;
+        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+    }
+    
+    .feature-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1B5E20;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-description {
+        font-size: 1rem;
+        color: #2E7D32;
+        line-height: 1.6;
+        font-weight: 500;
+    }
+    
+    /* How It Works Section */
+    .how-it-works {
+        background: linear-gradient(135deg, #F1F8E9 100%);
+        padding: 5rem 0;
+    }
+    
+    .steps-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+    }
+    
+    .step-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        position: relative;
+    }
+    
+    .step-number {
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: white;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+    }
+    
+    .step-icon {
+        font-size: 3rem;
+        color: #4CAF50;
+        margin: 2rem 0 1rem;
+    }
+    
+    .step-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1B5E20;
+        margin-bottom: 1rem;
+    }
+    
+    .step-description {
+        font-size: 1rem;
+        color: #2E7D32;
+        line-height: 1.6;
+        font-weight: 500;
+    }
+    
+    /* CTA Section */
+    .cta-section {
+        background: linear-gradient(135deg, #dfe7e0ff 0%, );
+        padding: 2rem 0;
+        color: white;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        opacity: 0.3;
+    }
+    
+    .cta-content {
+        position: relative;
+        z-index: 1;
+        padding: 1rem 0;
+    }
+    
+    .cta-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        color: white !important;
+        text-shadow: none;
+    }
+    
+    .cta-subtitle {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        color: white !important;
+        opacity: 1;
+        text-shadow: none;
+        font-weight: 600;
+    }
+    
+    /* Weather Widget */
+    .weather-widget {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 2px solid #E8F5E9;
+        margin-bottom: 2rem;
+    }
 
-        {% if user.is_authenticated %}
-            <a href="{% url 'prediction' %}" class="custom-btn">Tải lên hình ảnh</a>
-        {% else %}
-            <p class="mb-3">Hãy <a href="{% url 'login' %}" class="highlight-link">ĐĂNG NHẬP</a> hoặc 
-            <a href="{% url 'register' %}" class="highlight-link">ĐĂNG KÝ</a> để sử dụng toàn bộ chức năng.</p>
-        {% endif %}
+    .weather-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .weather-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1B5E20;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .weather-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    #citySelector {
+        min-width: 200px;
+        border: 2px solid #4CAF50;
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        color: #1B5E20;
+    }
+
+    #citySelector:focus {
+        border-color: #2E7D32;
+        box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+    }
+
+    .weather-main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .weather-temp-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .weather-icon-large {
+        font-size: 4rem;
+        color: #4CAF50;
+    }
+
+    .weather-icon-large i {
+        display: inline-block;
+    }
+
+    /* Weather icon animations */
+    .rain-animation i {
+        animation: rain-bounce 2s ease-in-out infinite;
+        color: #2196F3;
+    }
+
+    .sun-animation i {
+        animation: sun-spin 20s linear infinite;
+        color: #FFC107;
+    }
+
+    .cloud-animation i {
+        animation: cloud-float 3s ease-in-out infinite;
+        color: #90A4AE;
+    }
+
+    @keyframes rain-bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    @keyframes sun-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes cloud-float {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(10px); }
+    }
+
+    .weather-temp-main {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .weather-temp-value {
+        font-size: 4rem;
+        font-weight: 700;
+        color: #424242;
+        line-height: 1;
+    }
+
+    .weather-feels-like {
+        color: #666;
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #E0E0E0;
+    }
+
+    .weather-detail-row {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #E0E0E0;
+    }
+
+    .weather-detail-item-inline {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .weather-details {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .weather-detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .weather-detail-info {
+        flex: 1;
+    }
+
+    .weather-detail-label {
+        font-size: 0.8rem;
+        color: #999;
+        margin-bottom: 0.25rem;
+    }
+
+    .weather-detail-value {
+        font-size: 1rem;
+        color: #333;
+        font-weight: 700;
+        color: #1B5E20;
+    }
+
+    .weather-location {
+        color: #4CAF50;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .weather-loading {
+        text-align: center;
+        padding: 2rem;
+        color: #66BB6A;
+    }
+
+    /* Forecast Section */
+    .forecast-section {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid #E8F5E9;
+    }
+
+    .forecast-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1B5E20;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .forecast-chart {
+        background: #F9FBE7;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        min-height: 250px;
+    }
+
+    .forecast-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 1rem;
+    }
+
+    .forecast-card {
+        background: linear-gradient(135deg, #E8F5E9 0%, #F1F8E9 100%);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .forecast-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.2);
+    }
+
+    .forecast-date {
+        font-size: 0.75rem;
+        color: #66BB6A;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .forecast-day {
+        font-size: 0.9rem;
+        color: #2E7D32;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .forecast-icon {
+        font-size: 2.5rem;
+        margin: 0.5rem 0;
+    }
+
+    .forecast-temp {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1B5E20;
+        margin-top: 0.5rem;
+    }
+
+    .forecast-temp-range {
+        font-size: 0.75rem;
+        color: #66BB6A;
+    }
+
+    .forecast-desc {
+        font-size: 0.75rem;
+        color: #2E7D32;
+        margin-top: 0.25rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.1rem;
+        }
+        
+        .hero-cta {
+            flex-direction: column;
+        }
+        
+        .btn-primary-hero,
+        .btn-secondary-hero {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+        }
+        
+        .cta-title {
+            font-size: 2rem;
+        }
+        
+        .feature-grid,
+        .steps-container {
+            grid-template-columns: 1fr;
+        }
+
+        .weather-main {
+            grid-template-columns: 1fr;
+        }
+
+        .weather-details {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 hero-content">
+                <div class="hero-badge" style="color: #1B5E20 !important; background: white !important;">
+                    <i class="bi bi-stars"></i> AI-Powered Plant Care
+                </div>
+                <h1 class="hero-title" style="color: #1B5E20 !important;">
+                    Chăm Sóc Cây Trồng<br>Thông Minh Với AI
+                </h1>
+                <p class="hero-subtitle" style="color: #2E7D32 !important;">
+                    Phát hiện bệnh cây trồng chỉ trong vài giây. Nhận lời khuyên từ chuyên gia và bảo vệ mùa màng của bạn với công nghệ AI tiên tiến.
+                </p>
+                <div class="hero-cta">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'prediction' %}" class="btn-primary-hero">
+                            <i class="bi bi-camera-fill"></i> Bắt Đầu Chẩn Đoán
+                        </a>
+                        <a href="{% url 'disease_library' %}" class="btn-secondary-hero">
+                            <i class="bi bi-book"></i> Thư Viện Bệnh
+                        </a>
+                    {% else %}
+                        <a href="{% url 'register' %}" class="btn-primary-hero">
+                            <i class="bi bi-person-plus-fill"></i> Đăng Ký Miễn Phí
+                        </a>
+                        <a href="{% url 'login' %}" class="btn-secondary-hero">
+                            <i class="bi bi-box-arrow-in-right"></i> Đăng Nhập
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 hero-image">
+                <img src="{% static 'images/hero-plant.png' %}" 
+                     alt="Plant Health Detection" 
+                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=600&h=600&fit=crop&q=80'"
+                     loading="lazy">
+            </div>
+        </div>
     </div>
-</div>
+</section>
+
+<!-- Showcase Section -->
+<section class="showcase-section">
+    <div class="container">
+        <!-- Weather Widget -->
+        <div class="weather-widget" id="weatherWidget">
+            <div class="weather-header">
+                <h3 class="weather-title">
+                    <i class="bi bi-cloud-sun"></i> Thời Tiết
+                </h3>
+                <div class="weather-controls">
+                    <select id="citySelector" class="form-select form-select-sm">
+                        <option value="hanoi">Hà Nội, Việt Nam</option>
+                        <option value="tokyo">Tokyo, Nhật Bản</option>
+                        <option value="sapporo">Sapporo, Hokkaido (Nhật Bản)</option>
+                        <option value="beijing">Bắc Kinh, Trung Quốc</option>
+                        <option value="seoul">Seoul, Hàn Quốc</option>
+                        <option value="bangkok">Bangkok, Thái Lan</option>
+                        <option value="singapore">Singapore</option>
+                        <option value="kualalumpur">Kuala Lumpur, Malaysia</option>
+                        <option value="jakarta">Jakarta, Indonesia</option>
+                        <option value="manila">Manila, Philippines</option>
+                        <option value="newdelhi">New Delhi, Ấn Độ</option>
+                        <option value="london">London, Anh</option>
+                        <option value="paris">Paris, Pháp</option>
+                        <option value="berlin">Berlin, Đức</option>
+                        <option value="moscow">Moscow, Nga</option>
+                        <option value="washington">Washington DC, Mỹ</option>
+                        <option value="ottawa">Ottawa, Canada</option>
+                        <option value="canberra">Canberra, Úc</option>
+                        <option value="sydney">Sydney, Úc</option>
+                    </select>
+                    <span class="weather-location" id="weatherLocation">
+                        <i class="bi bi-geo-alt"></i> Đang tải...
+                    </span>
+                </div>
+            </div>
+
+            <div class="weather-loading" id="weatherLoading">
+                <i class="bi bi-hourglass-split"></i> Đang tải dữ liệu thời tiết...
+            </div>
+
+            <div id="weatherContent" style="display: none;">
+                <!-- Main temperature display -->
+                <div class="weather-temp-main">
+                    <div class="weather-icon-large" id="weatherIcon">☀️</div>
+                    <div class="weather-temp-value">
+                        <span id="weatherTemp">--</span>°C
+                    </div>
+                </div>
+
+                <!-- Feels like and description -->
+                <div class="weather-feels-like" id="weatherFeelsLike">
+                    Cảm giác như --°C. Trời quang đãng. Gió nhẹ
+                </div>
+
+                <div class="weather-main">
+                    <!-- Wind and visibility row -->
+                    <div class="weather-detail-row">
+                        <div class="weather-detail-item-inline">
+                            <i class="bi bi-arrow-down-circle" id="windIcon" style="font-size: 1.2rem;"></i>
+                            <span id="weatherWindDetail">-- m/s --</span>
+                        </div>
+                        <div class="weather-detail-item-inline">
+                            <i class="bi bi-circle"></i>
+                            <span id="weatherPressureHpa">----hPa</span>
+                        </div>
+                    </div>
+
+                    <div class="weather-details">
+                        <div class="weather-detail-item">
+                            <div class="weather-detail-info">
+                                <div class="weather-detail-label">Độ ẩm:</div>
+                                <div class="weather-detail-value">
+                                    <span id="weatherHumidity">--</span>%
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="weather-detail-item">
+                            <div class="weather-detail-info">
+                                <div class="weather-detail-label">Điểm sương:</div>
+                                <div class="weather-detail-value">
+                                    <span id="weatherDewPoint">--</span>°C
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="weather-detail-item">
+                            <div class="weather-detail-info">
+                                <div class="weather-detail-label">Tầm nhìn:</div>
+                                <div class="weather-detail-value">
+                                    <span id="weatherVisibility">--</span> km
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 8-Day Forecast -->
+                <div class="forecast-section" id="forecastSection" style="display: none;">
+                    <h4 class="forecast-title">
+                        <i class="bi bi-calendar3"></i> Dự báo 6 ngày tới
+                    </h4>
+                    <div class="forecast-chart">
+                        <canvas id="forecastChart" height="80"></canvas>
+                    </div>
+                    <div class="forecast-cards" id="forecastCards">
+                        <!-- Forecast cards will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 align-items-center">
+            <div class="col-md-4">
+                <div class="showcase-card">
+                    <img src="https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400&h=300&fit=crop&q=80" 
+                         alt="AI Detection" 
+                         class="showcase-img"
+                         loading="lazy">
+                    <div class="showcase-overlay">
+                        <h4>Chẩn Đoán Thông Minh</h4>
+                        <p>Công nghệ AI tiên tiến nhận diện bệnh chính xác</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="showcase-card">
+                    <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400&h=300&fit=crop&q=80" 
+                         alt="Expert Advice" 
+                         class="showcase-img"
+                         loading="lazy">
+                    <div class="showcase-overlay">
+                        <h4>Tư Vấn Chuyên Gia</h4>
+                        <p>Nhận lời khuyên từ các chuyên gia nông nghiệp</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="showcase-card">
+                    <img src="https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=400&h=300&fit=crop&q=80" 
+                         alt="Healthy Plants" 
+                         class="showcase-img"
+                         loading="lazy">
+                    <div class="showcase-overlay">
+                        <h4>Cây Trồng Khỏe Mạnh</h4>
+                        <p>Bảo vệ mùa màng hiệu quả và bền vững</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-badge">
+                <i class="bi bi-stars"></i> Tính Năng Nổi Bật
+            </div>
+            <h2 class="section-title">Tại Sao Chọn Plant Health ?</h2>
+            <p class="section-description">
+                Công nghệ AI tiên tiến giúp bạn phát hiện và điều trị bệnh cây trồng hiệu quả
+            </p>
+        </div>
+        
+        <div class="feature-grid">
+            <div class="feature-card-modern">
+                <div class="feature-icon-modern">
+                    <i class="bi bi-cpu"></i>
+                </div>
+                <h3 class="feature-title">AI Thông Minh</h3>
+                <p class="feature-description">
+                    Công nghệ Deep Learning nhận diện chính xác hơn 40+ loại bệnh trên cây trồng
+                </p>
+            </div>
+            
+            <div class="feature-card-modern">
+                <div class="feature-icon-modern">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                </div>
+                <h3 class="feature-title">Siêu Nhanh</h3>
+                <p class="feature-description">
+                    Kết quả chẩn đoán trong vài giây, giúp bạn xử lý kịp thời
+                </p>
+            </div>
+            
+            <div class="feature-card-modern">
+                <div class="feature-icon-modern">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <h3 class="feature-title">Chuyên Gia Hỗ Trợ</h3>
+                <p class="feature-description">
+                    Hỏi đáp trực tiếp với chuyên gia nông nghiệp 24/7
+                </p>
+            </div>
+            
+            <div class="feature-card-modern">
+                <div class="feature-icon-modern">
+                    <i class="bi bi-book-fill"></i>
+                </div>
+                <h3 class="feature-title">Thư Viện Đầy Đủ</h3>
+                <p class="feature-description">
+                    Cơ sở dữ liệu bệnh cây trồng với triệu chứng và cách điều trị chi tiết
+                </p>
+            </div>
+            
+            <div class="feature-card-modern">
+                <div class="feature-icon-modern">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <h3 class="feature-title">Theo Dõi Lịch Sử</h3>
+                <p class="feature-description">
+                    Lưu trữ và quản lý lịch sử chẩn đoán để theo dõi sức khỏe cây trồng
+                </p>
+            </div>
+            
+            <div class="feature-card-modern">
+                <div class="feature-icon-modern">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h3 class="feature-title">An Toàn & Bảo Mật</h3>
+                <p class="feature-description">
+                    Dữ liệu của bạn được bảo vệ với tiêu chuẩn bảo mật cao nhất
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-it-works">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-badge">
+                <i class="bi bi-question-circle"></i> Cách Hoạt Động
+            </div>
+            <h2 class="section-title">Chỉ 3 Bước Đơn Giản</h2>
+            <p class="section-description">
+                Chăm sóc cây trồng chưa bao giờ dễ dàng đến thế
+            </p>
+        </div>
+        
+        <div class="steps-container">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-icon">
+                    <i class="bi bi-camera"></i>
+                </div>
+                <h3 class="step-title">Chụp Ảnh</h3>
+                <p class="step-description">
+                    Chụp ảnh lá cây hoặc phần bị bệnh của cây trồng
+                </p>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-icon">
+                    <i class="bi bi-gear"></i>
+                </div>
+                <h3 class="step-title">AI Phân Tích</h3>
+                <p class="step-description">
+                    Hệ thống AI phân tích và nhận diện bệnh trong vài giây
+                </p>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <h3 class="step-title">Nhận Kết Quả</h3>
+                <p class="step-description">
+                    Xem chẩn đoán chi tiết và hướng dẫn điều trị hiệu quả
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="cta-content">
+        <div class="container">
+            <h2 class="cta-title" style="color: #1B5E20 !important;">Sẵn Sàng Bảo Vệ Cây Trồng?</h2>
+            <p class="cta-subtitle" style="color: #2E7D32 !important;">
+                Tham gia cộng đồng hàng nghìn nông dân đang sử dụng Plant Health để tăng năng suất
+            </p>
+            <div class="hero-cta justify-content-center">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'prediction' %}" class="btn-primary-hero">
+                        <i class="bi bi-rocket-takeoff-fill"></i> Bắt Đầu Ngay
+                    </a>
+                {% else %}
+                    <a href="{% url 'register' %}" class="btn-primary-hero">
+                        <i class="bi bi-person-plus-fill"></i> Đăng Ký Miễn Phí
+                    </a>
+                    <a href="{% url 'login' %}" class="btn-secondary-hero">
+                        <i class="bi bi-box-arrow-in-right"></i> Đăng Nhập
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Weather widget functionality
+    let forecastChart = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadWeather('hanoi');
+
+        // City selector change event
+        document.getElementById('citySelector').addEventListener('change', function(e) {
+            loadWeather(e.target.value);
+        });
+
+        // Refresh weather every 10 minutes
+        setInterval(function() {
+            const selectedCity = document.getElementById('citySelector').value;
+            loadWeather(selectedCity);
+        }, 600000);
+    });
+
+    // Dịch tên ngày sang tiếng Việt
+    const dayNames = {
+        'Mon': 'T2',
+        'Tue': 'T3',
+        'Wed': 'T4',
+        'Thu': 'T5',
+        'Fri': 'T6',
+        'Sat': 'T7',
+        'Sun': 'CN'
+    };
+
+    // Dịch mô tả gió sang tiếng Việt
+    function getVietnameseWindDesc(windSpeed) {
+        if (windSpeed < 0.5) return 'Gió tĩnh';
+        if (windSpeed < 1.5) return 'Gió nhẹ';
+        if (windSpeed < 3.3) return 'Gió hơi nhẹ';
+        if (windSpeed < 5.5) return 'Gió nhẹ vừa';
+        if (windSpeed < 7.9) return 'Gió vừa';
+        return 'Gió mạnh';
+    }
+
+    function loadWeather(city = 'hanoi') {
+        const weatherLoading = document.getElementById('weatherLoading');
+        const weatherContent = document.getElementById('weatherContent');
+        const forecastSection = document.getElementById('forecastSection');
+        
+        // Show loading
+        weatherLoading.style.display = 'block';
+        weatherContent.style.display = 'none';
+        forecastSection.style.display = 'none';
+        
+        fetch(`{% url 'get_weather' %}?city=${city}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Hide loading, show content
+                    weatherLoading.style.display = 'none';
+                    weatherContent.style.display = 'block';
+
+                    // Update location
+                    document.getElementById('weatherLocation').innerHTML = 
+                        `<i class="bi bi-geo-alt"></i> ${data.city}, ${data.country}`;
+
+                    // Update temperature
+                    document.getElementById('weatherTemp').textContent = Math.round(data.temperature);
+                    
+                    // Get Vietnamese wind description
+                    const windSpeed = data.wind_speed;
+                    const windDesc = getVietnameseWindDesc(windSpeed);
+                    
+                    // Update "Feels like" line in Vietnamese
+                    document.getElementById('weatherFeelsLike').textContent = 
+                        `Cảm giác như ${Math.round(data.feels_like)}°C. ${data.weather_description}. ${windDesc}`;
+
+                    // Update weather icon with Bootstrap Icons
+                    const weatherIconEl = document.getElementById('weatherIcon');
+                    weatherIconEl.innerHTML = `<i class="bi bi-${data.weather_icon}"></i>`;
+                    
+                    // Add animation based on weather
+                    weatherIconEl.className = 'weather-icon-large';
+                    if (data.weather === 'Rain' || data.weather === 'Drizzle') {
+                        weatherIconEl.classList.add('rain-animation');
+                    } else if (data.weather === 'Clear') {
+                        weatherIconEl.classList.add('sun-animation');
+                    } else if (data.weather === 'Clouds') {
+                        weatherIconEl.classList.add('cloud-animation');
+                    }
+
+                    // Convert wind direction to compass
+                    const windDir = data.wind_direction;
+                    let compass = 'N';
+                    if (windDir >= 337.5 || windDir < 22.5) compass = 'N';
+                    else if (windDir < 67.5) compass = 'NE';
+                    else if (windDir < 112.5) compass = 'E';
+                    else if (windDir < 157.5) compass = 'SE';
+                    else if (windDir < 202.5) compass = 'S';
+                    else if (windDir < 247.5) compass = 'SW';
+                    else if (windDir < 292.5) compass = 'W';
+                    else compass = 'NW';
+                    
+                    // Update wind detail (show in m/s like the image)
+                    document.getElementById('weatherWindDetail').textContent = 
+                        `${data.wind_speed}m/s ${compass}`;
+                    
+                    // Rotate wind icon based on direction
+                    const windIcon = document.getElementById('windIcon');
+                    windIcon.style.transform = `rotate(${data.wind_direction}deg)`;
+                    
+                    // Update pressure
+                    document.getElementById('weatherPressureHpa').textContent = `${data.pressure}hPa`;
+
+                    // Update details
+                    document.getElementById('weatherHumidity').textContent = data.humidity;
+                    document.getElementById('weatherDewPoint').textContent = Math.round(data.dew_point);
+                    document.getElementById('weatherVisibility').textContent = data.visibility;
+
+                    // Add demo mode indicator if needed
+                    if (data.demo_mode) {
+                        document.getElementById('weatherLocation').innerHTML += 
+                            ' <small style="color: #FF9800;">(Dữ liệu mẫu)</small>';
+                    }
+
+                    // Render 8-day forecast if available
+                    if (data.forecast && data.forecast.length > 0) {
+                        renderForecast(data.forecast);
+                        forecastSection.style.display = 'block';
+                    }
+                } else {
+                    weatherLoading.innerHTML = 
+                        '<i class="bi bi-exclamation-triangle"></i> Không thể tải dữ liệu thời tiết';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading weather:', error);
+                weatherLoading.innerHTML = 
+                    '<i class="bi bi-exclamation-triangle"></i> Lỗi khi tải thời tiết';
+            });
+    }
+
+    function renderForecast(forecastData) {
+        // Render forecast cards
+        const forecastCards = document.getElementById('forecastCards');
+        forecastCards.innerHTML = '';
+        
+        forecastData.forEach(day => {
+            const dayNameVi = dayNames[day.day_name] || day.day_name;
+            const card = document.createElement('div');
+            card.className = 'forecast-card';
+            card.innerHTML = `
+                <div class="forecast-date">${day.date}</div>
+                <div class="forecast-day">${dayNameVi}</div>
+                <div class="forecast-icon">
+                    <i class="bi bi-${day.icon}"></i>
+                </div>
+                <div class="forecast-temp">${Math.round(day.temp_day)}°C</div>
+                <div class="forecast-temp-range">${Math.round(day.temp_min)}° - ${Math.round(day.temp_max)}°</div>
+                <div class="forecast-desc">${day.weather_description}</div>
+            `;
+            forecastCards.appendChild(card);
+        });
+
+        // Render chart
+        const ctx = document.getElementById('forecastChart');
+        
+        // Destroy existing chart if any
+        if (forecastChart) {
+            forecastChart.destroy();
+        }
+
+        const labels = forecastData.map(day => {
+            const dayNameVi = dayNames[day.day_name] || day.day_name;
+            return `${dayNameVi} ${day.date}`;
+        });
+        
+        const temps = forecastData.map(day => day.temp_day);
+        const tempMaxs = forecastData.map(day => day.temp_max);
+        const tempMins = forecastData.map(day => day.temp_min);
+        const humidity = forecastData.map(day => day.humidity);
+
+        forecastChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Nhiệt độ trung bình (°C)',
+                    data: temps,
+                    borderColor: '#4CAF50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#4CAF50',
+                }, {
+                    label: 'Nhiệt độ cao nhất (°C)',
+                    data: tempMaxs,
+                    borderColor: '#FF5722',
+                    backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#FF5722',
+                }, {
+                    label: 'Nhiệt độ thấp nhất (°C)',
+                    data: tempMins,
+                    borderColor: '#2196F3',
+                    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#2196F3',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            },
+                            color: '#1B5E20',
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(27, 94, 32, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 12,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + Math.round(context.parsed.y) + '°C';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: 'rgba(76, 175, 80, 0.1)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + '°C';
+                            },
+                            color: '#2E7D32',
+                            font: {
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#2E7D32',
+                            font: {
+                                weight: 'bold',
+                                size: 11
+                            },
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
 {% endblock %}

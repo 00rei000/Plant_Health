@@ -9,288 +9,661 @@
     {% load static %}
     <!-- Bootstrap 5.3.0 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <!-- Favicon -->
     <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     
-    <!-- CSS tùy chỉnh cho navbar của farmer_dashboard và expert_dashboard -->
+    <!-- Block for additional CSS from child templates -->
+    {% block extra_css %}{% endblock %}
+    
+    <!-- CSS tùy chỉnh cho navbar chuyên nghiệp -->
     <style>
-        {% for group in request.user.groups.all %}
-            {% if group.name == 'Farmer' or group.name == 'Expert' %}
-            .navbar .container {
-                padding-left: 0;
+        /* Professional Navbar Styling */
+        .navbar-professional {
+            background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%) !important;
+            box-shadow: 0 4px 20px rgba(76, 175, 80, 0.25);
+            padding: 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1030;
+            backdrop-filter: blur(10px);
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        .navbar-professional .container {
+            padding: 0.6rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        
+        /* Logo Section */
+        .navbar-brand-professional {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 0.5rem 0;
+            transition: all 0.3s ease;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: 0.3px;
+        }
+        
+        .navbar-brand-professional:hover {
+            transform: scale(1.05);
+        }
+        
+        .logo-img {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            background: white;
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Navigation Links */
+        .navbar-nav-professional {
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-item-professional {
+            position: relative;
+        }
+        
+        .nav-link-professional {
+            color: #ffffff !important;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.6rem 1rem !important;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+        
+        .nav-link-professional:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .nav-link-professional.active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Nav text color override */
+        .navbar-professional .nav-link-professional,
+        .navbar-professional .nav-link-professional *,
+        .navbar-professional .navbar-brand-professional,
+        .navbar-professional .navbar-brand-professional * {
+            color: #ffffff !important;
+        }
+        
+        /* Dropdown Menu */
+        .dropdown-menu-professional {
+            background: white;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            min-width: 220px;
+        }
+        
+        .dropdown-item-professional {
+            border-radius: 8px;
+            padding: 0.65rem 1rem;
+            font-weight: 500;
+            font-size: 0.925rem;
+            color: #2E7D32;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+        }
+        
+        .dropdown-item-professional:hover {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(67, 160, 71, 0.1));
+            color: #1B5E20;
+            transform: translateX(5px);
+        }
+        
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            border-color: rgba(76, 175, 80, 0.2);
+        }
+        
+        /* Icon Buttons */
+        .icon-btn-professional {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .icon-btn-professional:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+        
+        /* Notification Badge */
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #FF5252;
+            color: white;
+            border-radius: 10px;
+            padding: 0.15rem 0.4rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            min-width: 18px;
+            text-align: center;
+            border: 2px solid #4CAF50;
+        }
+        
+        /* Mobile Toggle */
+        .navbar-toggler-professional {
+            border: none;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .navbar-toggler-professional:focus {
+            box-shadow: none;
+        }
+        
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.9)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='3' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+            width: 24px;
+            height: 24px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 991px) {
+            .navbar-nav-professional {
+                padding: 1rem 0;
+                gap: 0.3rem;
             }
-            .navbar-nav .nav-item {
-                margin-right: 1rem;
+            
+            .nav-link-professional {
+                padding: 0.7rem 1rem !important;
             }
-            .navbar-nav .nav-link {
-                padding: 0.5rem 0.75rem;
-                white-space: nowrap;
+            
+            .icon-btn-professional {
+                width: 100%;
+                justify-content: flex-start;
+                padding-left: 1rem;
+                border-radius: 8px;
             }
-            @media (max-width: 991px) {
-                .navbar-nav .nav-item {
-                    margin-right: 0;
-                    margin-bottom: 0.5rem;
-                }
+        }
+        
+        /* Modal z-index */
+        .modal-backdrop {
+            z-index: 1040;
+        }
+        .modal {
+            z-index: 1050;
+        }
+        
+        /* Smooth scroll offset for fixed navbar */
+        html {
+            scroll-padding-top: 80px;
+        }
+        
+        /* Navbar Layout Adjustments */
+        .navbar-collapse {
+            flex-grow: 1;
+            display: flex !important;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar-nav-professional {
+            flex-direction: row !important;
+            margin-left: auto !important;
+            gap: 0.5rem;
+        }
+        
+        /* Notification Badge */
+        .nav-link-professional .badge {
+            font-size: 0.65rem;
+            padding: 0.25rem 0.45rem;
+            font-weight: 700;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
             }
-            {% endif %}
-        {% endfor %}
+            50% {
+                transform: scale(1.1);
+            }
+        }
+        }
+        
+        /* Right Side Icons Group */
+        .navbar-icons-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+        
+        /* Brand positioning */
+        .navbar-brand-professional {
+            margin-left: 0;
+            padding-left: 0.5rem;
+        }
+        
+        /* Global Rule: White text ONLY on green background sections */
+        .hero-section > .container,
+        .hero-section .hero-content .hero-badge,
+        .hero-section .hero-content .hero-title,
+        .hero-section .hero-content .hero-subtitle,
+        .cta-section .cta-content .cta-title,
+        .cta-section .cta-content .cta-subtitle,
+        .admin-header h1,
+        .admin-header p,
+        .welcome-header h1,
+        .welcome-header p,
+        .expert-header h1,
+        .expert-header p,
+        .admin-chart-card h3,
+        .prediction-header h1,
+        .prediction-header p,
+        .feedback-header h1,
+        .feedback-header p,
+        .notification-header h1,
+        .notification-header p,
+        .ask-header h1,
+        .ask-header p,
+        footer p,
+        footer small {
+            color: white !important;
+        }
+        
+        /* Buttons on green background should have white bg + green text */
+        .btn-primary-hero,
+        .btn-secondary-hero,
+        .btn-cta {
+            background: white !important;
+            color: #1B5E20 !important;
+        }
+        
+        .btn-primary-hero:hover,
+        .btn-secondary-hero:hover,
+        .btn-cta:hover {
+            background: #1B5E20 !important;
+            color: white !important;
+        }
     </style>
 </head>
 <body>
-    <!-- Navbar cố định trên cùng -->
-    <header class="py-3 border-bottom fixed-top">
+    <!-- Professional Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-professional">
         <div class="container">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="logo">
-                    <a href="{% if request.user.is_authenticated %}
-                                {% if request.user.is_staff %}{% url 'admin_dashboard' %}
-                                {% else %}
-                                    {% for group in request.user.groups.all %}
-                                        {% if group.name == 'Expert' %}{% url 'expert_dashboard' %}
-                                        {% elif group.name == 'Farmer' %}{% url 'farmer_dashboard' %}
-                                        {% endif %}
-                                    {% endfor %}
-                                    {% if not request.user.groups.all %}{% url 'home' %}{% endif %}
-                                {% endif %}
-                              {% else %}
-                                {% url 'home' %}
-                              {% endif %}" 
-                       title="Quay về dashboard" 
-                       class="d-flex align-items-center text-decoration-none"
-                       aria-label="Quay về trang chủ Plant Health">
-                        <img src="{% static 'images/logo.png' %}" 
-                             alt="Logo Plant Health" 
-                             width="50" 
-                             class="me-2 logo-img"
-                             data-light="{% static 'images/logo.png' %}"
-                             data-dark="{% static 'images/logo.png' %}">
-                        <span>Plant Health</span>
-                    </a>
-                </div>
-                <nav class="navbar navbar-expand-lg">
-                    <button class="navbar-toggler" 
-                            type="button" 
-                            data-bs-toggle="collapse" 
-                            data-bs-target="#navbarNav" 
-                            aria-controls="navbarNav" 
-                            aria-expanded="false" 
-                            aria-label="Chuyển đổi điều hướng">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <div class="collapse navbar-collapse" id="navbarNav">
-                        <ul class="navbar-nav ms-auto">
-                            <!-- Prediction Dropdown -->
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" 
-                                   href="{% url 'prediction' %}" 
-                                   id="predictionDropdown" 
-                                   role="button" 
-                                   data-bs-toggle="dropdown" 
-                                   aria-expanded="false"
-                                   aria-label="Dự đoán sức khỏe cây trồng">
-                                    DỰ ĐOÁN
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="predictionDropdown">
-                                    <li><a class="dropdown-item" 
-                                           href="{% url 'prediction' %}"
-                                           aria-label="Tạo dự đoán mới">Tạo Dự Đoán</a></li>
-                                    <li><a class="dropdown-item" 
-                                           href="{% url 'prediction_history' %}"
-                                           aria-label="Xem lịch sử dự đoán">Lịch Sử Dự Đoán</a></li>
-                                </ul>
-                            </li>
-                            <!-- Farmer: More Dropdown -->
-                            {% for group in request.user.groups.all %}
-                                {% if group.name == 'Farmer' %}
-                                <li class="nav-item">
-                                    <a href="{% url 'disease_list' %}" 
-                                       class="nav-link"
-                                       aria-label="Thư viện bệnh">BỆNH CÂY</a>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" 
-                                       href="#" 
-                                       id="farmerMoreDropdown" 
-                                       role="button" 
-                                       data-bs-toggle="dropdown" 
-                                       aria-expanded="false"
-                                       aria-label="Các chức năng khác">
-                                        THÊM
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="farmerMoreDropdown">
-                                        <li><a class="dropdown-item" 
-                                               href="{% url 'my_questions' %}"
-                                               aria-label="Câu hỏi của tôi">Câu Hỏi Của Tôi</a></li>
-                                        <li><a class="dropdown-item" 
-                                               href="{% url 'ask_expert' %}"
-                                               aria-label="Hỏi chuyên gia">Hỏi Chuyên Gia</a></li>
-                                        <li><a class="dropdown-item" 
-                                               href="{% url 'feedback' %}"
-                                               aria-label="Gửi phản hồi">Phản Hồi</a></li>
-                                    </ul>
-                                </li>
-                                {% endif %}
-                            {% endfor %}
-                            <!-- Expert: More Dropdown -->
-                            {% for group in request.user.groups.all %}
-                                {% if group.name == 'Expert' %}
-                                <li class="nav-item">
-                                    <a href="{% url 'disease_list' %}" 
-                                       class="nav-link"
-                                       aria-label="Thư viện bệnh">BỆNH CÂY</a>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" 
-                                       href="#" 
-                                       id="expertMoreDropdown" 
-                                       role="button" 
-                                       data-bs-toggle="dropdown" 
-                                       aria-expanded="false"
-                                       aria-label="Các chức năng khác">
-                                        THÊM
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="expertMoreDropdown">
-                                        <li><a class="dropdown-item" 
-                                               href="{% url 'expert_questions' %}"
-                                               aria-label="Câu hỏi cho chuyên gia">Câu Hỏi</a></li>
-                                        <li><a class="dropdown-item" 
-                                               href="{% url 'feedback' %}"
-                                               aria-label="Gửi phản hồi">Phản Hồi</a></li>
-                                    </ul>
-                                </li>
-                                {% endif %}
-                            {% endfor %}
-                            <!-- Admin: Manage and More Dropdown -->
+            <!-- Logo / Brand -->
+            <a class="navbar-brand-professional" href="{% url 'home' %}"
+                   aria-label="Plant Health - Trang chủ">
+                <i class="bi bi-flower1"></i>
+                <img src="{% static 'images/logo.png' %}" 
+                     alt="Logo" 
+                     class="logo-img"
+                     data-light="{% static 'images/logo.png' %}"
+                     data-dark="{% static 'images/logo.png' %}">
+                <span>Plant Health</span>
+            </a>
+            
+            <!-- Mobile Toggle Button -->
+            <button class="navbar-toggler navbar-toggler-professional" 
+                    type="button" 
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" 
+                    aria-expanded="false" 
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Navbar Links -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto navbar-nav-professional">
+                    <!-- Thống Kê Link - Role Based -->
+                    {% if request.user.is_authenticated %}
+                        <li class="nav-item nav-item-professional">
                             {% if request.user.is_staff %}
-                            <li class="nav-item">
-                                <a href="{% url 'disease_list' %}" 
-                                   class="nav-link"
-                                   aria-label="Thư viện bệnh">BỆNH CÂY</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{% url 'manage' %}" 
-                                   class="nav-link"
-                                   aria-label="Quản lý hệ thống">QUẢN LÝ</a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" 
-                                   href="#" 
-                                   id="adminMoreDropdown" 
-                                   role="button" 
-                                   data-bs-toggle="dropdown" 
-                                   aria-expanded="false"
-                                   aria-label="Các chức năng khác">
-                                    THÊM
+                                <a href="{% url 'admin_dashboard' %}" class="nav-link nav-link-professional">
+                                    <i class="bi bi-bar-chart-line-fill"></i> Thống Kê
                                 </a>
-                                <ul class="dropdown-menu" aria-labelledby="adminMoreDropdown">
-                                    <li><a class="dropdown-item" 
-                                           href="{% url 'feedback' %}"
-                                           aria-label="Gửi phản hồi">Phản Hồi</a></li>
-                                </ul>
-                            </li>
-                            {% endif %}
-                            <!-- Non-authenticated users: Feedback and Disease Library -->
-                            {% if not request.user.is_authenticated %}
-                            <li class="nav-item">
-                                <a href="{% url 'feedback' %}" 
-                                   class="nav-link" 
-                                   aria-label="Gửi phản hồi">PHẢN HỒI</a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{% url 'disease_list' %}" 
-                                   class="nav-link"
-                                   aria-label="Thư viện bệnh">BỆNH CÂY</a>
-                            </li>
-                            {% endif %}
-                            <!-- Notification Dropdown (Authenticated Users Only) -->
-                            {% if request.user.is_authenticated %}
-                            <li class="nav-item dropdown notification-dropdown">
-                                <a class="nav-link dropdown-toggle position-relative" 
-                                   href="#" 
-                                   id="notificationDropdown" 
-                                   role="button" 
-                                   data-bs-toggle="dropdown" 
-                                   aria-expanded="false"
-                                   aria-label="Thông báo">
-                                    <i class="bi bi-bell"></i>
-                                    <span class="badge badge-pill badge-danger position-absolute top-0 start-100 translate-middle" 
-                                          id="unread-count" 
-                                          style="display: none;">0</span>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end" 
-                                    aria-labelledby="notificationDropdown">
-                                    <li>
-                                        <a class="dropdown-item" 
-                                           href="{% url 'all_notifications' %}" 
-                                           aria-label="Xem tất cả thông báo">
-                                            <strong>Thông báo</strong>
+                            {% else %}
+                                {% for group in request.user.groups.all %}
+                                    {% if group.name == 'Expert' %}
+                                        <a href="{% url 'expert_dashboard' %}" class="nav-link nav-link-professional">
+                                            <i class="bi bi-bar-chart-line-fill"></i> Thống Kê
                                         </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <div id="notification-list"></div> 
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item text-center mark-all-read" 
-                                           href="{% url 'mark_all_notifications_read' %}" 
-                                           aria-label="Đánh dấu tất cả đã đọc"
-                                           style="display: none;">Đánh dấu tất cả đã đọc</a>
-                                    </li>
-                                </ul>
-                            </li>
-                            {% endif %}
-                            <!-- User Dropdown -->
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" 
-                                   href="#" 
-                                   id="userDropdown" 
-                                   role="button" 
-                                   data-bs-toggle="dropdown" 
-                                   aria-expanded="false"
-                                   aria-label="Tài khoản người dùng">
-                                    <i class="bi bi-person-circle"></i>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end" 
-                                    aria-labelledby="userDropdown">
-                                    {% if request.user.is_authenticated %}
-                                        <li><a class="dropdown-item" 
-                                               href="{% url 'profile' %}"
-                                               aria-label="Xem hồ sơ">Hồ sơ</a></li>
-                                        <li><a class="dropdown-item" 
-                                               href="{% url 'change_password' %}"
-                                               aria-label="Đổi mật khẩu">Đổi Mật Khẩu</a></li>
-                                        <li><a class="dropdown-item" 
-                                               href="{% url 'logout' %}"
-                                               aria-label="Đăng xuất">Đăng Xuất</a></li>
-                                    {% else %}
-                                        <li><a class="dropdown-item" 
-                                               href="{% url 'login' %}"
-                                               aria-label="Đăng nhập">Đăng Nhập</a></li>
+                                    {% elif group.name == 'Farmer' %}
+                                        <a href="{% url 'farmer_dashboard' %}" class="nav-link nav-link-professional">
+                                            <i class="bi bi-bar-chart-line-fill"></i> Thống Kê
+                                        </a>
                                     {% endif %}
-                                </ul>
+                                {% endfor %}
+                            {% endif %}
+                        </li>
+                    {% endif %}
+                    
+                    <!-- Prediction Dropdown - Only for non-admin users -->
+                    {% if not request.user.is_staff %}
+                    <li class="nav-item nav-item-professional dropdown">
+                        <a class="nav-link nav-link-professional dropdown-toggle" 
+                           href="#" 
+                           id="predictionDropdown" 
+                           role="button" 
+                           data-bs-toggle="dropdown" 
+                           aria-expanded="false">
+                            <i class="bi bi-cpu"></i> Dự Đoán
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-professional" aria-labelledby="predictionDropdown">
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'prediction' %}">
+                                <i class="bi bi-plus-circle"></i> Tạo Dự Đoán
+                            </a></li>
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'prediction_history' %}">
+                                <i class="bi bi-clock-history"></i> Lịch Sử
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Blog Menu -->
+                    {% if request.user.is_authenticated %}
+                    <li class="nav-item nav-item-professional dropdown">
+                        <a class="nav-link nav-link-professional dropdown-toggle" 
+                           href="#" 
+                           id="blogDropdown" 
+                           role="button" 
+                           data-bs-toggle="dropdown" 
+                           aria-expanded="false">
+                            <i class="bi bi-newspaper"></i> Blog
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-professional" aria-labelledby="blogDropdown">
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'blog_list' %}">
+                                <i class="bi bi-list-ul"></i> Tất cả bài viết
+                            </a></li>
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'blog_create' %}">
+                                <i class="bi bi-plus-circle"></i> Tạo bài viết
+                            </a></li>
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'my_blog_posts' %}">
+                                <i class="bi bi-file-earmark-text"></i> Bài viết của tôi
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Farmer Menu -->
+                    {% for group in request.user.groups.all %}
+                        {% if group.name == 'Farmer' %}
+                        <li class="nav-item nav-item-professional">
+                            <a href="{% url 'disease_library' %}" class="nav-link nav-link-professional">
+                                <i class="bi bi-book"></i> Bệnh Cây
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item-professional dropdown">
+                            <a class="nav-link nav-link-professional dropdown-toggle" 
+                               href="#" 
+                               id="farmerMoreDropdown" 
+                               role="button" 
+                               data-bs-toggle="dropdown" 
+                               aria-expanded="false">
+                                <i class="bi bi-grid"></i> Thêm
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-professional" aria-labelledby="farmerMoreDropdown">
+                                <li><a class="dropdown-item dropdown-item-professional" href="{% url 'feedback' %}">
+                                    <i class="bi bi-chat-heart"></i> Phản Hồi
+                                </a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    <!-- Expert Menu -->
+                    {% for group in request.user.groups.all %}
+                        {% if group.name == 'Expert' %}
+                        <li class="nav-item nav-item-professional">
+                            <a href="{% url 'disease_library' %}" class="nav-link nav-link-professional">
+                                <i class="bi bi-book"></i> Bệnh Cây
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item-professional dropdown">
+                            <a class="nav-link nav-link-professional dropdown-toggle" 
+                               href="#" 
+                               id="expertMoreDropdown" 
+                               role="button" 
+                               data-bs-toggle="dropdown" 
+                               aria-expanded="false">
+                                <i class="bi bi-grid"></i> Thêm
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-professional" aria-labelledby="expertMoreDropdown">
+                                <li><a class="dropdown-item dropdown-item-professional" href="{% url 'add_disease' %}">
+                                    <i class="bi bi-plus-circle"></i> Thêm Bệnh
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item dropdown-item-professional" href="{% url 'feedback' %}">
+                                    <i class="bi bi-chat-heart"></i> Phản Hồi
+                                </a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    <!-- Admin Menu -->
+                    {% if request.user.is_staff %}
+                    <li class="nav-item nav-item-professional dropdown">
+                        <a class="nav-link nav-link-professional dropdown-toggle position-relative" 
+                           href="#" 
+                           id="moderationDropdown" 
+                           role="button" 
+                           data-bs-toggle="dropdown" 
+                           aria-expanded="false">
+                            <i class="bi bi-shield-check"></i> Kiểm duyệt
+                            {% if pending_posts_count > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem;">
+                                {{ pending_posts_count }}
+                                <span class="visually-hidden">items chờ duyệt</span>
+                            </span>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-professional" aria-labelledby="moderationDropdown">
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'admin_moderation' %}">
+                                <i class="bi bi-image"></i> Duyệt ảnh đóng góp
+                            </a></li>
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'blog_pending' %}">
+                                <i class="bi bi-file-earmark-text"></i> Duyệt bài viết
+                                {% if pending_posts_count > 0 %}
+                                <span class="badge bg-danger ms-2">{{ pending_posts_count }}</span>
+                                {% endif %}
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item nav-item-professional dropdown">
+                        <a class="nav-link nav-link-professional dropdown-toggle" 
+                           href="#" 
+                           id="adminManageDropdown" 
+                           role="button" 
+                           data-bs-toggle="dropdown" 
+                           aria-expanded="false">
+                            <i class="bi bi-gear"></i> Quản Lý
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-professional" aria-labelledby="adminManageDropdown">
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'admin_dashboard' %}">
+                                <i class="bi bi-bar-chart-fill"></i> Thống Kê
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'manage' %}">
+                                <i class="bi bi-clipboard-data"></i> Quản Lý Dữ Liệu
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'prediction' %}">
+                                <i class="bi bi-cpu"></i> Tạo Dự Đoán
+                            </a></li>
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'prediction_history' %}">
+                                <i class="bi bi-clock-history"></i> Lịch Sử Dự Đoán
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'add_disease' %}">
+                                <i class="bi bi-plus-circle"></i> Thêm Bệnh
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item dropdown-item-professional" href="{% url 'feedback' %}">
+                                <i class="bi bi-chat-heart"></i> Phản Hồi
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    <!-- Guest Menu -->
+                    {% if not request.user.is_authenticated %}
+                    <li class="nav-item nav-item-professional">
+                        <a href="{% url 'disease_library' %}" class="nav-link nav-link-professional">
+                            <i class="bi bi-book"></i> Bệnh Cây
+                        </a>
+                    </li>
+                    <li class="nav-item nav-item-professional">
+                        <a href="{% url 'feedback' %}" class="nav-link nav-link-professional">
+                            <i class="bi bi-chat-heart"></i> Phản Hồi
+                        </a>
+                    </li>
+                    {% endif %}
+                    <!-- Notification Button -->
+                    {% if request.user.is_authenticated %}
+                    <li class="nav-item nav-item-professional dropdown notification-dropdown">
+                        <button class="icon-btn-professional dropdown-toggle" 
+                                id="notificationDropdown" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false"
+                                aria-label="Thông báo">
+                            <i class="bi bi-bell-fill"></i>
+                            <span class="notification-badge" id="unread-count" style="display: none;">0</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-professional dropdown-menu-end" 
+                            aria-labelledby="notificationDropdown">
+                            <li>
+                                <a class="dropdown-item dropdown-item-professional" href="{% url 'all_notifications' %}">
+                                    <i class="bi bi-bell"></i> <strong>Thông báo</strong>
+                                </a>
                             </li>
-                            <!-- Dark Mode Toggle -->
-                            <li class="nav-item">
-                                <button class="theme-toggle" 
-                                        aria-label="Chuyển đổi chế độ sáng tối">
-                                    <i class="bi bi-moon-stars-fill"></i>
-                                </button>
+                            <li><hr class="dropdown-divider"></li>
+                            <div id="notification-list"></div> 
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item dropdown-item-professional text-center mark-all-read" 
+                                   href="{% url 'mark_all_notifications_read' %}" 
+                                   style="display: none;">
+                                    <i class="bi bi-check-all"></i> Đánh dấu đã đọc
+                                </a>
                             </li>
                         </ul>
-                    </div>
-                </nav>
+                    </li>
+                    {% endif %}
+                    <!-- User Menu -->
+                    <li class="nav-item nav-item-professional dropdown">
+                        <button class="icon-btn-professional dropdown-toggle" 
+                                id="userDropdown" 
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false"
+                                aria-label="Tài khoản">
+                            <i class="bi bi-person-circle"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-professional dropdown-menu-end" 
+                            aria-labelledby="userDropdown">
+                            {% if request.user.is_authenticated %}
+                                <li><a class="dropdown-item dropdown-item-professional" href="{% url 'profile' %}">
+                                    <i class="bi bi-person"></i> Hồ Sơ
+                                </a></li>
+                                <li><a class="dropdown-item dropdown-item-professional" href="{% url 'change_password' %}">
+                                    <i class="bi bi-key"></i> Đổi Mật Khẩu
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item dropdown-item-professional" href="{% url 'logout' %}">
+                                    <i class="bi bi-box-arrow-right"></i> Đăng Xuất
+                                </a></li>
+                            {% else %}
+                                <li><a class="dropdown-item dropdown-item-professional" href="{% url 'login' %}">
+                                    <i class="bi bi-box-arrow-in-right"></i> Đăng Nhập
+                                </a></li>
+                                <li><a class="dropdown-item dropdown-item-professional" href="{% url 'register' %}">
+                                    <i class="bi bi-person-plus"></i> Đăng Ký
+                                </a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
-    </header>
+    </nav>
+    <!-- Hiển thị messages dưới dạng Bootstrap toasts (stacked, animated) -->
+    <div id="global-messages" aria-live="polite" aria-atomic="true">
+        <style>
+            /* Toast container positioned under the fixed header and centered */
+            #global-messages {
+                position: fixed;
+                top: 72px; /* adjust if header height changes */
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 1100; /* above navbar, below modals if needed */
+                width: auto;
+                max-width: 820px;
+                pointer-events: none;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.35rem;
+            }
+            #global-messages .toast {
+                pointer-events: auto; /* allow interactions with toast (close button) */
+                border-radius: 8px;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+                min-width: 280px;
+                max-width: 820px;
+            }
+            @media (max-width: 576px) {
+                #global-messages { left: 12px; transform: none; right: 12px; max-width: calc(100% - 24px); align-items: stretch; }
+                #global-messages .toast { min-width: auto; }
+            }
+        </style>
 
-    <!-- Hiển thị messages -->
-    <div class="container mt-4">
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+                {# Determine toast styling based on message tags. #}
+                <div class="toast {% if 'success' in message.tags %}text-bg-success{% elif 'error' in message.tags or 'danger' in message.tags %}text-bg-danger{% elif 'warning' in message.tags %}bg-warning text-dark{% elif 'info' in message.tags %}text-bg-info{% else %}text-bg-secondary{% endif %} border-0 fade" role="alert" aria-live="assertive" aria-atomic="true"
+                     data-bs-autohide="{% if 'no-autohide' in message.tags %}false{% else %}true{% endif %}" data-bs-delay="{% if 'no-autohide' in message.tags %}0{% else %}3000{% endif %}">
+                    <div class="d-flex">
+                        <div class="toast-body">{{ message }}</div>
+                        <button type="button" class="{% if 'warning' in message.tags %}btn-close{% else %}btn-close btn-close-white{% endif %} me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
                 </div>
             {% endfor %}
         {% endif %}
@@ -302,9 +675,16 @@
         {% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="text-center py-3">
-        <p>© Plant Health App {{ current_date|date:"Y" }}</p>
+    <!-- Professional Footer -->
+    <footer class="text-center py-4" style="background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%); margin-top: 4rem;">
+        <div class="container">
+            <p style="color: white; margin: 0; font-weight: 500;">
+                <i class="bi bi-flower1"></i> Plant Health {{ current_date|date:"Y" }}
+            </p>
+            <small style="color: rgba(255,255,255,0.8);">
+                AI-Powered Plant Disease Detection & Management
+            </small>
+        </div>
     </footer>
 
     <!-- Bootstrap JS -->
@@ -312,26 +692,9 @@
     <!-- Load JavaScript -->
     <script src="{% static 'js/upload.js' %}"></script>
 
-    <!-- Dark Mode và Notification Script -->
+    <!-- Notification Script -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Dark Mode
-            const themeToggle = document.querySelector('.theme-toggle');
-            const logoImg = document.querySelector('.logo-img');
-            const currentTheme = localStorage.getItem('theme') || 'light';
-            
-            document.documentElement.setAttribute('data-theme', currentTheme);
-            logoImg.src = currentTheme === 'dark' ? logoImg.dataset.dark : logoImg.dataset.light;
-            themeToggle.querySelector('i').className = currentTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
-
-            themeToggle.addEventListener('click', () => {
-                const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-                logoImg.src = newTheme === 'dark' ? logoImg.dataset.dark : logoImg.dataset.light;
-                themeToggle.querySelector('i').className = newTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
-            });
-
             // Xử lý đóng modal
             document.querySelectorAll('.btn-close, .btn-secondary').forEach(button => {
                 button.addEventListener('click', () => {
@@ -400,7 +763,6 @@
                                     fetch(`{% url 'mark_notification_read' 0 %}`.replace('0', notificationId), {
                                         method: 'POST',
                                         headers: {
-                                            'X-CSRFToken': '{{ csrf_token }}',
                                             'Content-Type': 'application/json'
                                         }
                                     }).then(() => {
@@ -425,7 +787,6 @@
                 fetch('{% url 'mark_all_notifications_read' %}', {
                     method: 'POST',
                     headers: {
-                        'X-CSRFToken': '{{ csrf_token }}',
                         'Content-Type': 'application/json'
                     }
                 }).then(() => {
@@ -438,8 +799,166 @@
             // Fetch notifications on page load
             {% if request.user.is_authenticated %}
                 fetchNotifications();
-                setInterval(fetchNotifications, 30000);
+                // Poll every 2 minutes (120000ms) instead of 30 seconds to reduce server load
+                setInterval(fetchNotifications, 120000);
             {% endif %}
+        });
+    </script>
+    <!-- CSRF token disabled -->
+    <!-- Global AJAX delete helper: intercept forms with .ajax-delete -->
+    <script>
+        (function(){
+
+            // Helper to create and show a Bootstrap toast in the global messages container
+            function showToast(message, level = 'success', autohide = true, delay = 3000, undo) {
+                const container = document.getElementById('global-messages') || document.body;
+                const toast = document.createElement('div');
+                // choose classes
+                let toastClass = 'text-bg-secondary';
+                let useWhiteClose = true;
+                if (level === 'success') { toastClass = 'text-bg-success'; }
+                else if (level === 'error' || level === 'danger') { toastClass = 'text-bg-danger'; }
+                else if (level === 'warning') { toastClass = 'bg-warning text-dark'; useWhiteClose = false; }
+                else if (level === 'info') { toastClass = 'text-bg-info'; }
+
+                toast.className = `toast ${toastClass} border-0 fade`;
+                toast.setAttribute('role', 'alert');
+                toast.setAttribute('aria-live', 'assertive');
+                toast.setAttribute('aria-atomic', 'true');
+                toast.setAttribute('data-bs-autohide', autohide ? 'true' : 'false');
+                toast.setAttribute('data-bs-delay', String(delay));
+
+                const btnCloseClass = useWhiteClose ? 'btn-close btn-close-white me-2 m-auto' : 'btn-close me-2 m-auto';
+                if (undo && undo.url) {
+                    toast.innerHTML = `
+                        <div class="d-flex">
+                            <div class="toast-body">${message}</div>
+                            <button type="button" class="btn btn-link btn-sm me-2 undo-btn">Hoàn tác</button>
+                            <button type="button" class="${btnCloseClass}" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>`;
+                } else {
+                    toast.innerHTML = `
+                        <div class="d-flex">
+                            <div class="toast-body">${message}</div>
+                            <button type="button" class="${btnCloseClass}" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>`;
+                }
+
+                container.appendChild(toast);
+                try {
+                    const bsToast = new bootstrap.Toast(toast, { autohide: autohide, delay: delay });
+                    bsToast.show();
+                } catch (err) {
+                    // fallback: remove after delay
+                    setTimeout(() => toast.remove(), delay + 200);
+                }
+
+                if (undo && undo.url) {
+                    const undoBtn = toast.querySelector('.undo-btn');
+                    undoBtn.addEventListener('click', function() {
+                        fetch(undo.url, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'same-origin'
+                        }).then(r => r.json()).then(resp => {
+                            if (resp.status === 'success') {
+                                showToast(resp.message || 'Đã hoàn tác.', 'success', true, 1500);
+                                setTimeout(() => location.reload(), 800);
+                            } else {
+                                showToast(resp.message || 'Không thể hoàn tác.', 'danger', true, 3000);
+                            }
+                        }).catch(err => {
+                            console.error('Undo error', err);
+                            showToast('Lỗi mạng.', 'danger', true, 3000);
+                        });
+                    });
+                }
+            }
+
+            document.addEventListener('submit', function(e) {
+                const form = e.target;
+                if (!form.classList || !form.classList.contains('ajax-delete')) return;
+                e.preventDefault();
+
+                // Optional confirm already handled by modal; proceed to submit via fetch
+                const url = form.getAttribute('action');
+                const method = (form.getAttribute('method') || 'POST').toUpperCase();
+                const formData = new FormData(form);
+                // include next if present
+                const headers = {
+                    'X-Requested-With': 'XMLHttpRequest'
+                };
+
+                fetch(url, {
+                    method: method,
+                    headers: headers,
+                    body: formData,
+                    credentials: 'same-origin'
+                }).then(res => {
+                    const contentType = res.headers.get('content-type') || '';
+                    if (contentType.indexOf('application/json') !== -1) return res.json();
+                    // non-json fallback: treat as error
+                    return res.text().then(text => ({status: 'error', message: 'Server did not return JSON.'}));
+                }).then(data => {
+                    if (!data) return;
+                    if (data.status === 'success') {
+                        // close parent modal if any
+                        const modalEl = form.closest('.modal');
+                        if (modalEl) {
+                            try {
+                                const bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                                bsModal.hide();
+                            } catch (err) {
+                                modalEl.classList.remove('show');
+                                modalEl.style.display = 'none';
+                            }
+                        }
+                        // remove target element if provided
+                        const target = form.dataset.deleteTarget;
+                        if (target) {
+                            const el = document.querySelector(target);
+                            if (el) el.remove();
+                        }
+                        // show a short success toast
+                        showToast(data.message || 'Đã xóa thành công.', 'success', true, 2500, null);
+                        // If backend provided a backup_id, show an "Undo" toast
+                        if (data.backup_id) {
+                            const undoUrlTemplate = "{% url 'undo_delete' 0 %}"; // will replace '0' with id
+                            const undoUrl = undoUrlTemplate.replace('0', data.backup_id);
+                            showToast(data.message || 'Đã xóa.', 'info', true, 6000, { url: undoUrl });
+                        }
+                    } else {
+                        showToast(data.message || 'Đã xảy ra lỗi.', 'danger', true, 4000);
+                    }
+                }).catch(err => {
+                    showToast('Lỗi mạng hoặc máy chủ.', 'danger', true, 4000);
+                    console.error('AJAX delete error:', err);
+                });
+            });
+        })();
+    </script>
+    <!-- Initialize Bootstrap toasts for messages rendered in #global-messages -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                const container = document.getElementById('global-messages');
+                if (!container) return;
+                const toastEls = container.querySelectorAll('.toast');
+                toastEls.forEach(el => {
+                    // read attributes
+                    const autohideAttr = el.getAttribute('data-bs-autohide');
+                    const delayAttr = parseInt(el.getAttribute('data-bs-delay')) || 3000;
+                    const autohide = autohideAttr === 'false' ? false : true;
+                    // create and show the toast
+                    const t = new bootstrap.Toast(el, { autohide: autohide, delay: delayAttr });
+                    t.show();
+                });
+            } catch (err) {
+                console.error('Toast init error:', err);
+            }
         });
     </script>
 </body>
