@@ -2,59 +2,254 @@
 {% load static %}
 {% block title %}Quản Lý Hệ Thống{% endblock %}
 {% block content %}
-<div class="container my-5">
-    <h1 class="mb-4 text-center">Quản Lý Hệ Thống</h1>
-    <div class="alert alert-info text-center">
-        Chào mừng {{ user.username }}! Bạn đang ở khu vực Quản Lý (Chỉ dành cho Admin).
-    </div>
+<style>
+    /* Manage Page Professional Styling */
+    .manage-container {
+        padding: 2rem 0;
+        margin-top: 80px;
+    }
+    
+    .manage-header {
+        background: linear-gradient(135deg, #1B5E20 0%, #0D3012 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(27, 94, 32, 0.4);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .manage-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .manage-header h1 {
+        font-weight: 800;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        color: white !important;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .manage-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        color: white !important;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .manage-controls {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .manage-controls label {
+        font-weight: 600;
+        color: #1B5E20;
+        margin-bottom: 0.5rem;
+    }
+    
+    .manage-controls .form-select,
+    .manage-controls .form-control {
+        border: 2px solid #E8F5E9;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+    
+    .manage-controls .form-select:focus,
+    .manage-controls .form-control:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+    }
+    
+    .manage-controls .btn {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .manage-controls .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    .manage-table-section {
+        background: white;
+        border-radius: 15px;
+        padding: 0;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .manage-table-section h2 {
+        background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+        color: white;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin: 0;
+        padding: 1.5rem 2rem;
+    }
+    
+    .manage-table-section .table-responsive {
+        padding: 2rem;
+    }
+    
+    .manage-table {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #E0E0E0;
+        margin-bottom: 0;
+    }
+    
+    .manage-table thead {
+        background: #F1F8E9;
+        border-bottom: 2px solid #4CAF50;
+    }
+    
+    .manage-table thead th {
+        color: #1B5E20 !important;
+        font-weight: 700;
+        padding: 1rem;
+        border: none;
+        font-size: 1rem;
+    }
+    
+    .manage-table tbody tr {
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .manage-table tbody tr:hover {
+        background: #F1F8E9;
+        transform: scale(1.001);
+    }
+    
+    .manage-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        font-size: 1rem;
+        color: #333333 !important;
+        border-bottom: 1px solid #E8F5E9;
+    }
+    
+    .manage-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 2rem 2rem 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .manage-pagination .btn {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.6rem 1.5rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .manage-pagination .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    .back-button {
+        text-align: center;
+        margin-top: 2rem;
+    }
+    
+    .back-button .btn {
+        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .back-button .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+    }
+</style>
 
-    <!-- Dropdown để chọn bảng và form tìm kiếm -->
-    <div class="row mb-4">
-        <div class="col-md-4 offset-md-4">
-            <div class="dropdown-container">
-                <label for="tableSelect" class="form-label">Chọn Dữ Liệu để Xem:</label>
-                <select id="tableSelect" class="form-select" onchange="updateTable(this.value)">
-                    <option value="users" {% if selected_table == 'users' %}selected{% endif %}>Người Dùng</option>
-                    <option value="feedback" {% if selected_table == 'feedback' %}selected{% endif %}>Phản Hồi</option>
-                    <option value="prediction_history" {% if selected_table == 'prediction_history' %}selected{% endif %}>Lịch Sử Dự Đoán</option>
-                </select>
+<div class="manage-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="manage-header">
+            <h1><i class="bi bi-gear-fill"></i> Quản Lý Hệ Thống</h1>
+            <p>Chào mừng <strong>{{ user.username }}</strong>! Quản lý dữ liệu hệ thống Plant Health AI.</p>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="manage-controls">
+            <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <label for="tableSelect"><i class="bi bi-table"></i> Chọn Dữ Liệu:</label>
+                    <select id="tableSelect" class="form-select" onchange="updateTable(this.value)">
+                        <option value="users" {% if selected_table == 'users' %}selected{% endif %}>👥 Người Dùng</option>
+                        <option value="feedback" {% if selected_table == 'feedback' %}selected{% endif %}>💬 Phản Hồi</option>
+                        <option value="prediction_history" {% if selected_table == 'prediction_history' %}selected{% endif %}>📊 Lịch Sử Dự Đoán</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="searchInput"><i class="bi bi-search"></i> Tìm Kiếm:</label>
+                    <form method="get" action="{% url 'manage' %}">
+                        <div class="input-group">
+                            <input type="hidden" name="table" value="{{ selected_table }}">
+                            <input type="text" name="search" id="searchInput" class="form-control" placeholder="Nhập từ khóa..." value="{{ search_query }}">
+                            <button type="submit" class="btn"><i class="bi bi-search"></i> Tìm</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Form tìm kiếm -->
-    <div class="row mb-4">
-        <div class="col-md-6 offset-md-3">
-            <form method="get" action="{% url 'manage' %}">
-                <div class="input-group">
-                    <input type="hidden" name="table" value="{{ selected_table }}">
-                    <input type="text" name="search" class="form-control" placeholder="Tìm kiếm..." value="{{ search_query }}">
-                    <button type="submit" class="btn btn-primary">Tìm</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Bảng Users -->
-    {% if selected_table == 'users' %}
-    <h2 class="mt-5">Danh Sách Người Dùng</h2>
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Tên Đăng Nhập</th>
-                    <th>Email</th>
-                    <th>Tuổi</th>
-                    <th>Số điện thoại</th>
-                    <th>Quốc tịch</th>
-                    <th>Ngày Tham Gia</th>
-                    <th>Trạng thái</th>
-                    <th>Hành Động</th>
-                </tr>
-            </thead>
-            <tbody>
+        <!-- Users Table -->
+        {% if selected_table == 'users' %}
+        <div class="manage-table-section">
+            <h2><i class="bi bi-people-fill"></i> Danh Sách Người Dùng</h2>
+            <div class="table-responsive">
+                <table class="table manage-table">
+                    <thead>
+                        <tr>
+                            <th>Tên Đăng Nhập</th>
+                            <th>Email</th>
+                            <th>Tuổi</th>
+                            <th>Số điện thoại</th>
+                            <th>Quốc tịch</th>
+                            <th>Ngày Tham Gia</th>
+                            <th>Trạng thái</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                 {% for user in users %}
-                <tr>
+                <tr id="user-row-{{ user.id }}">
                     <td>{{ user.username }}</td>
                     <td>{{ user.email|default:"Không có" }}</td>
                     <td>{{ user.profile_info.age|default:"Không có" }}</td>
@@ -74,143 +269,168 @@
                     </td>
                     <td>
                         {% if not user.is_superuser %}
-                            <form method="post" action="{% url 'delete_user' user.id %}" style="display:inline;">
+                            <form method="post" action="{% url 'delete_user' user.id %}" style="display:inline;" class="ajax-delete" data-delete-target="#user-row-{{ user.id }}">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa người dùng {{ user.username }}?')">Xóa</button>
+                                <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
                             </form>
                         {% else %}
                             <span class="text-muted">Không thể xóa</span>
                         {% endif %}
                     </td>
                 </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="8" class="text-center">Không tìm thấy người dùng nào.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <!-- Phân trang cho Users -->
-    <div class="d-flex justify-content-between mt-3">
-        <div>
-            {% if users.has_previous %}
-                <a href="?table=users&user_page={{ users.previous_page_number }}&search={{ search_query }}" class="btn btn-outline-primary">← Trang trước</a>
-            {% endif %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem; color: #A5D6A7;"></i>
+                                <p class="mb-0 mt-2">Không tìm thấy người dùng nào.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div class="manage-pagination">
+                <div>
+                    {% if users.has_previous %}
+                        <a href="?table=users&user_page={{ users.previous_page_number }}&search={{ search_query }}" class="btn"><i class="bi bi-arrow-left"></i> Trang trước</a>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="text-muted">Trang {{ users.number }} / {{ users.paginator.num_pages }}</span>
+                </div>
+                <div>
+                    {% if users.has_next %}
+                        <a href="?table=users&user_page={{ users.next_page_number }}&search={{ search_query }}" class="btn">Trang sau <i class="bi bi-arrow-right"></i></a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <div>
-            {% if users.has_next %}
-                <a href="?table=users&user_page={{ users.next_page_number }}&search={{ search_query }}" class="btn btn-outline-primary">Trang sau →</a>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <!-- Bảng Prediction History -->
-    {% if selected_table == 'prediction_history' %}
-    <h2 class="mt-5">Lịch Sử Dự Đoán</h2>
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Hình Ảnh</th>
-                    <th>Người Dùng</th>
-                    <th>Bệnh</th>
-                    <th>Độ Tin Cậy</th>
-                    <th>Ngày Tải Lên</th>
-                    <th>Hành Động</th>
-                </tr>
-            </thead>
-            <tbody>
+        <!-- Prediction History Table -->
+        {% if selected_table == 'prediction_history' %}
+        <div class="manage-table-section">
+            <h2><i class="bi bi-graph-up-arrow"></i> Lịch Sử Dự Đoán</h2>
+            <div class="table-responsive">
+                <table class="table manage-table">
+                    <thead>
+                        <tr>
+                            <th>Hình Ảnh</th>
+                            <th>Người Dùng</th>
+                            <th>Bệnh</th>
+                            <th>Độ Tin Cậy</th>
+                            <th>Ngày Tải Lên</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                 {% for image in prediction_history %}
-                <tr>
+                <tr id="manage-prediction-{{ image.id }}">
                     <td><img src="{{ image.image.url }}" alt="Plant Image" class="img-fluid" style="max-width: 100px;"></td>
                     <td>{{ image.user.username|default:"Ẩn danh" }}</td>
                     <td>{{ image.disease|default:"Chưa dự đoán" }}</td>
                     <td>{{ image.confidence|floatformat:1|default:"N/A" }}%</td>
                     <td>{{ image.uploaded_at|date:"d/m/Y H:i" }}</td>
                     <td>
-                        <form method="post" action="{% url 'delete_prediction' image.id %}" style="display:inline;">
+                        <form method="post" action="{% url 'delete_prediction' image.id %}" style="display:inline;" class="ajax-delete" data-delete-target="#manage-prediction-{{ image.id }}">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa ảnh này?')">Xóa</button>
+                            <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
                         </form>
                     </td>
                 </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6" class="text-center">Không tìm thấy lịch sử dự đoán nào.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <!-- Phân trang cho Prediction History -->
-    <div class="d-flex justify-content-between mt-3">
-        <div>
-            {% if prediction_history.has_previous %}
-                <a href="?table=prediction_history&prediction_page={{ prediction_history.previous_page_number }}&search={{ search_query }}" class="btn btn-outline-primary">← Trang trước</a>
-            {% endif %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem; color: #A5D6A7;"></i>
+                                <p class="mb-0 mt-2">Không tìm thấy lịch sử dự đoán nào.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div class="manage-pagination">
+                <div>
+                    {% if prediction_history.has_previous %}
+                        <a href="?table=prediction_history&prediction_page={{ prediction_history.previous_page_number }}&search={{ search_query }}" class="btn"><i class="bi bi-arrow-left"></i> Trang trước</a>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="text-muted">Trang {{ prediction_history.number }} / {{ prediction_history.paginator.num_pages }}</span>
+                </div>
+                <div>
+                    {% if prediction_history.has_next %}
+                        <a href="?table=prediction_history&prediction_page={{ prediction_history.next_page_number }}&search={{ search_query }}" class="btn">Trang sau <i class="bi bi-arrow-right"></i></a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <div>
-            {% if prediction_history.has_next %}
-                <a href="?table=prediction_history&prediction_page={{ prediction_history.next_page_number }}&search={{ search_query }}" class="btn btn-outline-primary">Trang sau →</a>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <!-- Bảng Feedback -->
-    {% if selected_table == 'feedback' %}
-    <h2 class="mt-5">Danh Sách Phản Hồi</h2>
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Người Dùng</th>
-                    <th>Nội Dung</th>
-                    <th>Ngày Gửi</th>
-                    <th>Hành Động</th>
-                </tr>
-            </thead>
-            <tbody>
+        <!-- Feedback Table -->
+        {% if selected_table == 'feedback' %}
+        <div class="manage-table-section">
+            <h2><i class="bi bi-chat-left-heart-fill"></i> Danh Sách Phản Hồi</h2>
+            <div class="table-responsive">
+                <table class="table manage-table">
+                    <thead>
+                        <tr>
+                            <th>Người Dùng</th>
+                            <th>Nội Dung</th>
+                            <th>Ngày Gửi</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                 {% for feedback in feedbacks %}
-                <tr>
+                <tr id="feedback-row-{{ feedback.id }}">
                     <td>{{ feedback.user.username|default:"Ẩn danh" }}</td>
                     <td>{{ feedback.feedback_text|truncatewords:20 }}</td>
                     <td>{{ feedback.created_at|date:"d/m/Y H:i" }}</td>
                     <td>
                         <a href="{% url 'edit_feedback' feedback.id %}" class="btn btn-primary btn-sm">Chỉnh Sửa</a>
-                        <form method="post" action="{% url 'delete_feedback' feedback.id %}" style="display:inline;">
+                        <form method="post" action="{% url 'delete_feedback' feedback.id %}" style="display:inline;" class="ajax-delete" data-delete-target="#feedback-row-{{ feedback.id }}">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa phản hồi này?')">Xóa</button>
+                            <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
                         </form>
                     </td>
                 </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center">Không tìm thấy phản hồi nào.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    <!-- Phân trang cho Feedback -->
-    <div class="d-flex justify-content-between mt-3">
-        <div>
-            {% if feedbacks.has_previous %}
-                <a href="?table=feedback&feedback_page={{ feedbacks.previous_page_number }}&search={{ search_query }}" class="btn btn-outline-primary">← Trang trước</a>
-            {% endif %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem; color: #A5D6A7;"></i>
+                                <p class="mb-0 mt-2">Không tìm thấy phản hồi nào.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div class="manage-pagination">
+                <div>
+                    {% if feedbacks.has_previous %}
+                        <a href="?table=feedback&feedback_page={{ feedbacks.previous_page_number }}&search={{ search_query }}" class="btn"><i class="bi bi-arrow-left"></i> Trang trước</a>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="text-muted">Trang {{ feedbacks.number }} / {{ feedbacks.paginator.num_pages }}</span>
+                </div>
+                <div>
+                    {% if feedbacks.has_next %}
+                        <a href="?table=feedback&feedback_page={{ feedbacks.next_page_number }}&search={{ search_query }}" class="btn">Trang sau <i class="bi bi-arrow-right"></i></a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <div>
-            {% if feedbacks.has_next %}
-                <a href="?table=feedback&feedback_page={{ feedbacks.next_page_number }}&search={{ search_query }}" class="btn btn-outline-primary">Trang sau →</a>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <div class="mt-4 text-center">
-        <a href="{% url 'home' %}" class="btn btn-primary">Quay Lại Trang Chủ</a>
+        <!-- Back Button -->
+        <div class="back-button">
+            <a href="{% url 'home' %}" class="btn"><i class="bi bi-house-fill"></i> Quay Lại Trang Chủ</a>
+        </div>
     </div>
 </div>
 

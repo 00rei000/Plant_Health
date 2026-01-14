@@ -1,0 +1,482 @@
+{% extends 'base.html' %}
+{% block title %}Blog - Chia sẻ kinh nghiệm{% endblock %}
+
+{% block extra_css %}
+<style>
+    .blog-container {
+        margin-top: 100px;
+        padding: 2rem 0 3rem;
+    }
+
+    .blog-header {
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(46, 125, 50, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .blog-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .blog-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        color: white !important;
+    }
+
+    .blog-header h1 i {
+        color: white !important;
+    }
+
+    .blog-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        color: white !important;
+    }
+
+    .blog-header .row,
+    .blog-header .col-lg-8,
+    .blog-header .col-lg-4 {
+        background: transparent !important;
+    }
+
+    .filter-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 2px solid #E8F5E9;
+    }
+
+    .filter-card label {
+        color: #2E7D32;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .filter-card .form-select,
+    .filter-card .form-control {
+        border: 2px solid #E8F5E9;
+        border-radius: 12px;
+        padding: 0.7rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-card .form-select:focus,
+    .filter-card .form-control:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.15);
+    }
+
+    .blog-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .blog-card {
+        background: white;
+        border: 2px solid #E8F5E9;
+        border-radius: 16px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        cursor: pointer;
+        position: relative;
+    }
+
+    .blog-card:hover {
+        border-color: #4CAF50;
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.15);
+        transform: translateX(5px);
+    }
+
+    .blog-card-top {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .blog-image {
+        width: 150px;
+        height: 150px;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 2px solid #E8F5E9;
+        flex-shrink: 0;
+    }
+
+    .blog-placeholder {
+        width: 150px;
+        height: 150px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #E8F5E9 0%, #F1F8E9 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #4CAF50;
+        flex-shrink: 0;
+    }
+
+    .blog-main {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .blog-title {
+        color: #1B5E20;
+        font-weight: 700;
+        font-size: 1.4rem;
+        line-height: 1.5;
+        margin-bottom: 0.75rem;
+    }
+
+    .blog-title:hover {
+        color: #4CAF50;
+        text-decoration: none;
+    }
+
+    .blog-excerpt {
+        color: #2E7D32;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 0.75rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .blog-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        font-size: 0.875rem;
+        color: #66BB6A;
+    }
+
+    .blog-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .blog-meta i {
+        color: #4CAF50;
+    }
+
+    .blog-badges {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.75rem;
+    }
+
+    .visibility-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.85rem;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        gap: 0.35rem;
+    }
+
+    .visibility-badge.public {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .visibility-badge.private {
+        background: #FFF3E0;
+        color: #F57C00;
+    }
+
+    .visibility-badge.specific {
+        background: #E3F2FD;
+        color: #1976D2;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        color: white;
+    }
+
+    .btn-new-post {
+        background: linear-gradient(135deg, #66BB6A, #43A047);
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 2rem;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        color: white;
+    }
+
+    .btn-new-post:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+        background: linear-gradient(135deg, #4CAF50, #388E3C);
+        color: white;
+    }
+
+    .pagination {
+        margin-top: 3rem;
+    }
+
+    .pagination .page-link {
+        border: 2px solid #E8F5E9;
+        color: #4CAF50;
+        font-weight: 600;
+        padding: 0.6rem 1rem;
+        margin: 0 0.3rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .pagination .page-link:hover {
+        background: #4CAF50;
+        color: white;
+        border-color: #4CAF50;
+        transform: translateY(-2px);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border-color: #4CAF50;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        color: #E8F5E9;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h4 {
+        color: #2E7D32;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        color: #66BB6A;
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container blog-container">
+    <div class="blog-header">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1><i class="bi bi-newspaper"></i> Blog - Chia sẻ kinh nghiệm</h1>
+                <p>Khám phá và chia sẻ kinh nghiệm về chăm sóc cây trồng</p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <a href="{% url 'blog_create' %}" class="btn btn-new-post">
+                    <i class="bi bi-plus-circle-fill"></i> Tạo bài viết mới
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-card">
+        <form method="get" class="row g-3">
+            <div class="col-sm-6 col-md-4">
+                <label for="visibility" class="form-label">
+                    <i class="bi bi-funnel"></i> Chế độ hiển thị
+                </label>
+                <select name="visibility" id="visibility" class="form-select">
+                    <option value="">Tất cả</option>
+                    <option value="public" {% if visibility_filter == 'public' %}selected{% endif %}>Công khai</option>
+                    <option value="private" {% if visibility_filter == 'private' %}selected{% endif %}>Riêng tư</option>
+                    <option value="specific" {% if visibility_filter == 'specific' %}selected{% endif %}>Chỉ định</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <label for="author" class="form-label">
+                    <i class="bi bi-person"></i> Tác giả
+                </label>
+                <input type="text" name="author" id="author" class="form-control" 
+                       placeholder="Nhập tên tác giả" value="{{ author_filter }}">
+            </div>
+            <div class="col-sm-12 col-md-4 d-flex align-items-end justify-content-end gap-2">
+                <button type="submit" class="btn btn-primary" style="font-weight: 600;">
+                    <i class="bi bi-search"></i> Lọc
+                </button>
+                <a href="{% url 'blog_list' %}" class="btn btn-primary" style="font-weight: 600; background-color: #6c757d; border-color: #6c757d;">
+                    <i class="bi bi-arrow-clockwise"></i> Xóa lọc
+                </a>
+            </div>
+        </form>
+    </div>
+
+    {% if page_obj %}
+        <div class="blog-list">
+            {% for post in page_obj %}
+                <div class="blog-card" onclick="window.location.href='{% url 'blog_detail' post.id %}'">
+                    <div class="blog-card-top">
+                        <!-- Image -->
+                        {% if post.image %}
+                            <img src="{{ post.image.url }}" alt="{{ post.title }}" class="blog-image">
+                        {% else %}
+                            <div class="blog-placeholder">
+                                <i class="bi bi-file-earmark-text"></i>
+                            </div>
+                        {% endif %}
+
+                        <!-- Main Content -->
+                        <div class="blog-main">
+                            <a href="{% url 'blog_detail' post.id %}" style="text-decoration: none;">
+                                <h3 class="blog-title">{{ post.title }}</h3>
+                            </a>
+                            <p class="blog-excerpt">{{ post.content|truncatewords:30 }}</p>
+                            
+                            <div class="blog-meta">
+                                <span>
+                                    <i class="bi bi-person-circle"></i>
+                                    {{ post.author.username }}
+                                    {% if post.author.is_staff %}
+                                        <span class="badge bg-danger">Admin</span>
+                                    {% elif post.author.groups.all.0.name == 'Expert' %}
+                                        <span class="badge bg-info">Expert</span>
+                                    {% elif post.author.groups.all.0.name == 'Farmer' %}
+                                        <span class="badge bg-success">Farmer</span>
+                                    {% endif %}
+                                </span>
+                                <span>
+                                    <i class="bi bi-calendar-event"></i>
+                                    {{ post.created_at|date:"d/m/Y H:i" }}
+                                </span>
+                                <span>
+                                    <i class="bi bi-eye"></i>
+                                    {{ post.views_count }} lượt xem
+                                </span>
+                                <span>
+                                    <i class="bi bi-chat-dots"></i>
+                                    {{ post.comments.count }} bình luận
+                                </span>
+                            </div>
+
+                            <div class="blog-badges">
+                                {% if post.visibility == 'public' %}
+                                    <span class="visibility-badge public">
+                                        <i class="bi bi-globe"></i> Công khai
+                                    </span>
+                                {% elif post.visibility == 'private' %}
+                                    <span class="visibility-badge private">
+                                        <i class="bi bi-lock"></i> Riêng tư
+                                    </span>
+                                {% elif post.visibility == 'specific' %}
+                                    <span class="visibility-badge specific">
+                                        <i class="bi bi-people"></i> Chỉ định
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <nav class="mt-5" aria-label="Phân trang">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if visibility_filter %}&visibility={{ visibility_filter }}{% endif %}{% if author_filter %}&author={{ author_filter }}{% endif %}">
+                                <i class="bi bi-chevron-left"></i> Trước
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if visibility_filter %}&visibility={{ visibility_filter }}{% endif %}{% if author_filter %}&author={{ author_filter }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if visibility_filter %}&visibility={{ visibility_filter }}{% endif %}{% if author_filter %}&author={{ author_filter }}{% endif %}">
+                                Sau <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h4>Chưa có bài viết nào</h4>
+            <p>Hãy là người đầu tiên chia sẻ kinh nghiệm của bạn</p>
+            <a href="{% url 'blog_create' %}" class="btn btn-new-post mt-3">
+                <i class="bi bi-plus-circle-fill"></i> Tạo bài viết đầu tiên
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+// Prevent card click when clicking on badges or other interactive elements
+document.addEventListener('DOMContentLoaded', function() {
+    const badges = document.querySelectorAll('.blog-card .badge');
+    badges.forEach(badge => {
+        badge.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+});
+</script>
+{% endblock %}

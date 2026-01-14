@@ -1,0 +1,457 @@
+{% extends 'base.html' %}
+{% block title %}Bài viết của tôi{% endblock %}
+
+{% block extra_css %}
+<style>
+    .my-posts-container {
+        margin-top: 100px;
+        padding: 2rem 0 3rem;
+    }
+
+    .my-posts-header {
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(46, 125, 50, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .my-posts-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .my-posts-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        color: white !important;
+    }
+
+    .my-posts-header h1 i {
+        color: white !important;
+    }
+
+    .my-posts-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        color: white !important;
+    }
+
+    .my-posts-header .row,
+    .my-posts-header .col-lg-8,
+    .my-posts-header .col-lg-4 {
+        background: transparent !important;
+    }
+
+    .post-card {
+        background: white;
+        border: 2px solid #E8F5E9;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .post-card:hover {
+        border-color: #4CAF50;
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.15);
+        transform: translateX(5px);
+    }
+
+    .post-title {
+        color: #1B5E20;
+        font-weight: 700;
+        font-size: 1.3rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .post-excerpt {
+        color: #2E7D32;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .post-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        font-size: 0.875rem;
+        color: #66BB6A;
+        margin-bottom: 1rem;
+    }
+
+    .post-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .post-meta i {
+        color: #4CAF50;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.85rem;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        gap: 0.35rem;
+    }
+
+    .status-badge.pending {
+        background: #FFF3E0;
+        color: #F57C00;
+    }
+
+    .status-badge.approved {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .status-badge.rejected {
+        background: #FFEBEE;
+        color: #C62828;
+    }
+
+    .status-badge.draft {
+        background: #E0E0E0;
+        color: #424242;
+    }
+
+    .visibility-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.85rem;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        gap: 0.35rem;
+    }
+
+    .visibility-badge.public {
+        background: #E8F5E9;
+        color: #2E7D32;
+    }
+
+    .visibility-badge.private {
+        background: #FFF3E0;
+        color: #F57C00;
+    }
+
+    .visibility-badge.specific {
+        background: #E3F2FD;
+        color: #1976D2;
+    }
+
+    .post-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        padding-top: 1rem;
+        border-top: 1px solid #E8F5E9;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        color: white;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid #4CAF50;
+        color: #4CAF50;
+        background: white;
+        border-radius: 10px;
+        padding: 0.5rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-outline-primary:hover {
+        background: #4CAF50;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-danger {
+        background: #F44336;
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-danger:hover {
+        background: #D32F2F;
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .btn-new-post {
+        background: linear-gradient(135deg, #66BB6A, #43A047);
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 2rem;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        color: white;
+    }
+
+    .btn-new-post:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+        background: linear-gradient(135deg, #4CAF50, #388E3C);
+        color: white;
+    }
+
+    .pagination {
+        margin-top: 3rem;
+    }
+
+    .pagination .page-link {
+        border: 2px solid #E8F5E9;
+        color: #4CAF50;
+        font-weight: 600;
+        padding: 0.6rem 1rem;
+        margin: 0 0.3rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .pagination .page-link:hover {
+        background: #4CAF50;
+        color: white;
+        border-color: #4CAF50;
+        transform: translateY(-2px);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border-color: #4CAF50;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        color: #E8F5E9;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h4 {
+        color: #2E7D32;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        color: #66BB6A;
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-posts-container">
+    <div class="my-posts-header">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1><i class="bi bi-file-earmark-text"></i> Bài viết của tôi</h1>
+                <p>Quản lý và theo dõi các bài viết bạn đã tạo</p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <a href="{% url 'blog_create' %}" class="btn btn-new-post">
+                    <i class="bi bi-plus-circle-fill"></i> Tạo bài viết mới
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if page_obj %}
+        {% for post in page_obj %}
+            <div class="post-card">
+                <h3 class="post-title">{{ post.title }}</h3>
+                <p class="post-excerpt">{{ post.content|truncatewords:30 }}</p>
+                
+                <div class="post-meta">
+                    <span>
+                        <i class="bi bi-calendar-event"></i>
+                        {{ post.created_at|date:"d/m/Y H:i" }}
+                    </span>
+                    <span>
+                        <i class="bi bi-eye"></i>
+                        {{ post.views_count }} lượt xem
+                    </span>
+                    <span>
+                        <i class="bi bi-chat-dots"></i>
+                        {{ post.comments.count }} bình luận
+                    </span>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap mb-3">
+                    {% if post.status == 'pending' %}
+                        <span class="status-badge pending">
+                            <i class="bi bi-hourglass-split"></i> Chờ duyệt
+                        </span>
+                    {% elif post.status == 'approved' %}
+                        <span class="status-badge approved">
+                            <i class="bi bi-check-circle"></i> Đã duyệt
+                        </span>
+                    {% elif post.status == 'rejected' %}
+                        <span class="status-badge rejected">
+                            <i class="bi bi-x-circle"></i> Từ chối
+                        </span>
+                    {% elif post.status == 'draft' %}
+                        <span class="status-badge draft">
+                            <i class="bi bi-file-earmark"></i> Nháp
+                        </span>
+                    {% endif %}
+
+                    {% if post.visibility == 'public' %}
+                        <span class="visibility-badge public">
+                            <i class="bi bi-globe"></i> Công khai
+                        </span>
+                    {% elif post.visibility == 'private' %}
+                        <span class="visibility-badge private">
+                            <i class="bi bi-lock"></i> Riêng tư
+                        </span>
+                    {% elif post.visibility == 'specific' %}
+                        <span class="visibility-badge specific">
+                            <i class="bi bi-people"></i> Chỉ định
+                        </span>
+                    {% endif %}
+                </div>
+
+                {% if post.status == 'rejected' and post.rejection_reason %}
+                    <div class="alert alert-danger" role="alert" style="background: #FFEBEE; border: 2px solid #F44336; border-radius: 12px; margin-bottom: 1rem;">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.5rem; color: #F44336; margin-right: 0.75rem;"></i>
+                            <div>
+                                <h6 style="color: #C62828; font-weight: 700; margin-bottom: 0.5rem;">
+                                    <i class="bi bi-info-circle"></i> Lý do từ chối:
+                                </h6>
+                                <p style="color: #D32F2F; margin: 0; line-height: 1.6;">
+                                    {{ post.rejection_reason }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="post-actions">
+                    {% if post.status == 'approved' %}
+                        <a href="{% url 'blog_detail' post.id %}" class="btn btn-primary">
+                            <i class="bi bi-eye"></i> Xem chi tiết
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'blog_edit' post.id %}" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Chỉnh sửa
+                    </a>
+                    <form method="post" action="{% url 'blog_delete' post.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" 
+                                onclick="return confirm('Bạn có chắc muốn xóa bài viết này?')">
+                            <i class="bi bi-trash"></i> Xóa
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+
+        {% if page_obj.has_other_pages %}
+            <nav class="mt-5" aria-label="Phân trang">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                                <i class="bi bi-chevron-left"></i> Trước
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                                Sau <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h4>Bạn chưa có bài viết nào</h4>
+            <p>Hãy bắt đầu chia sẻ kinh nghiệm của bạn với cộng đồng</p>
+            <a href="{% url 'blog_create' %}" class="btn btn-new-post mt-3">
+                <i class="bi bi-plus-circle-fill"></i> Tạo bài viết đầu tiên
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

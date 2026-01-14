@@ -1,40 +1,264 @@
 {% extends 'base.html' %}
 {% block title %}Thông báo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notifications-container {
+        margin-top: 90px;
+        padding: 2rem 0;
+    }
+
+    .notification-header {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 8px 30px rgba(76, 175, 80, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .notification-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .notification-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .notification-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .notification-item {
+        background: white;
+        border-radius: 20px;
+        padding: 1.75rem;
+        margin-bottom: 1rem;
+        border: 2px solid #E8F5E9;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: block;
+        color: inherit;
+    }
+    
+    .notification-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(76, 175, 80, 0.15);
+        border-color: #4CAF50;
+        text-decoration: none;
+    }
+    
+    .notification-item.unread {
+        border-left: 5px solid #4CAF50;
+        background: linear-gradient(to right, rgba(76, 175, 80, 0.08), white);
+    }
+
+    .notification-item.unread:hover {
+        background: linear-gradient(to right, rgba(76, 175, 80, 0.12), white);
+    }
+
+    .notification-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #E8F5E9, #F1F8E9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #4CAF50;
+        flex-shrink: 0;
+    }
+
+    .notification-icon.unread {
+        background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        color: white;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .notification-content h5 {
+        color: #1B5E20;
+        font-size: 1.05rem;
+        line-height: 1.6;
+        margin-bottom: 0.5rem;
+    }
+
+    .notification-item.unread .notification-content h5 {
+        font-weight: 700;
+    }
+
+    .notification-time {
+        color: #66BB6A;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .notification-badge {
+        background: linear-gradient(135deg, #FF9800, #F57C00);
+        color: white;
+        padding: 0.4rem 0.9rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        white-space: nowrap;
+        box-shadow: 0 2px 10px rgba(255, 152, 0, 0.3);
+    }
+    
+    .btn-mark-read {
+        background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        color: white;
+        border: none;
+        padding: 1rem 3rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-mark-read:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        border: 2px solid #E8F5E9;
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        color: #E8F5E9;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state h4 {
+        color: #2E7D32;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        color: #66BB6A;
+        font-size: 1.1rem;
+    }
+
+    .btn-login {
+        background: linear-gradient(135deg, #FF9800, #F57C00);
+        color: white;
+        border: none;
+        padding: 1rem 3rem;
+        border-radius: 12px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+        color: white;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-5" style="background-color: var(--background-color);">
-    <h2 class="mb-4" style="color: var(--text-color);">Thông báo của bạn</h2>
+<div class="container notifications-container">
+    <div class="notification-header">
+        <h1><i class="bi bi-bell-fill"></i> Thông báo của bạn</h1>
+        <p>Theo dõi các cập nhật và hoạt động quan trọng</p>
+    </div>
+
     {% if user.is_authenticated %}
         {% if notifications %}
-            <div class="list-group" style="background-color: var(--card-background);">
+            <div class="notification-list">
                 {% for notification in notifications %}
                 <a href="{% if notification.link %}{{ notification.link }}{% else %}#{% endif %}" 
-                   class="list-group-item list-group-item-action"
-                   style="{% if notification.is_read %}color: var(--text-color); opacity: 0.7;{% else %}color: var(--text-color); font-weight: bold;{% endif %}"
+                   class="notification-item {% if not notification.is_read %}unread{% endif %}"
                    aria-label="Xem thông báo: {{ notification.message|truncatechars:50 }}">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1" style="color: var(--text-color);">{{ notification.message }}</h5>
-                        <small style="color: var(--text-color); opacity: 0.7;">{{ notification.created_at|date:"d/m/Y H:i" }}</small>
+                    <div class="d-flex align-items-start gap-3">
+                        <!-- Icon -->
+                        <div class="notification-icon {% if not notification.is_read %}unread{% endif %}">
+                            {% if not notification.is_read %}
+                                <i class="bi bi-bell-fill"></i>
+                            {% else %}
+                                <i class="bi bi-check-circle"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- Content -->
+                        <div class="notification-content flex-grow-1">
+                            <h5>{{ notification.message }}</h5>
+                            <div class="notification-time">
+                                <i class="bi bi-clock"></i> 
+                                {{ notification.created_at|date:"d/m/Y H:i" }}
+                            </div>
+                        </div>
+
+                        <!-- Badge -->
+                        {% if not notification.is_read %}
+                            <span class="notification-badge">
+                                <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i> Mới
+                            </span>
+                        {% endif %}
                     </div>
-                    {% if not notification.is_read %}
-                        <span class="badge" style="background-color: var(--error-bg); color: var(--error-text);">Chưa đọc</span>
-                    {% endif %}
                 </a>
                 {% endfor %}
             </div>
-            <div class="mt-3">
+
+            <div class="text-center mt-5">
                 <a href="{% url 'mark_all_notifications_read' %}" 
-                   class="btn"
-                   style="background-color: var(--primary-color); color: var(--text-light);"
-                   onmouseover="this.style.backgroundColor='var(--custom-btn-hover)'"
-                   onmouseout="this.style.backgroundColor='var(--primary-color)'"
-                   aria-label="Đánh dấu tất cả thông báo đã đọc">Đánh dấu tất cả đã đọc</a>
+                   class="btn-mark-read"
+                   aria-label="Đánh dấu tất cả thông báo đã đọc">
+                    <i class="bi bi-check-all"></i> Đánh dấu tất cả đã đọc
+                </a>
             </div>
         {% else %}
-            <p class="text-muted" style="color: var(--text-color); opacity: 0.7;">Bạn chưa có thông báo nào.</p>
+            <div class="empty-state">
+                <i class="bi bi-bell-slash"></i>
+                <h4>Bạn chưa có thông báo nào</h4>
+                <p>Các thông báo mới sẽ xuất hiện ở đây</p>
+            </div>
         {% endif %}
     {% else %}
-        <div class="alert alert-danger" style="background-color: var(--error-bg); color: var(--error-text);">
-            Vui lòng đăng nhập để xem thông báo.
+        <div class="empty-state">
+            <i class="bi bi-lock-fill" style="color: #FF9800;"></i>
+            <h4>Vui lòng đăng nhập</h4>
+            <p>Đăng nhập để xem thông báo của bạn</p>
+            <a href="{% url 'login' %}" class="btn-login mt-3">
+                <i class="bi bi-box-arrow-in-right"></i> Đăng nhập ngay
+            </a>
         </div>
     {% endif %}
 </div>

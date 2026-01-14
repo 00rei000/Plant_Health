@@ -2,154 +2,322 @@
 {% load static %}
 {% block title %}Hồ Sơ Của Tôi{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <h2>Hồ Sơ Của Tôi</h2>
-    <p>Chào mừng, {{ user.username }}!</p>
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
+<style>
+    .profile-container {
+        margin-top: 90px;
+        padding: 2rem 0;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(76, 175, 80, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .profile-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+        color: white !important;
+    }
+    
+    .profile-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .profile-menu-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        border: 2px solid #E8F5E9;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+    
+    .profile-menu-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(76, 175, 80, 0.2);
+        border-color: #4CAF50;
+    }
+    
+    .profile-menu-card h5 {
+        margin: 0;
+    }
+    
+    .profile-menu-card a {
+        color: #2E7D32;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .profile-menu-card a:hover {
+        color: #1B5E20;
+    }
+    
+    .profile-menu-card i {
+        font-size: 1.2rem;
+        color: #4CAF50;
+    }
+    
+    .profile-info-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border: 2px solid #E8F5E9;
+    }
+    
+    .profile-info-card h3 {
+        color: #1B5E20;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #E8F5E9;
+    }
+    
+    .profile-info-card h3 i {
+        color: #4CAF50;
+        font-size: 1.5rem;
+    }
+    
+    .profile-info-card h4 {
+        color: #2E7D32;
+        font-weight: 600;
+        margin-top: 2rem;
+        margin-bottom: 1.5rem;
+        font-size: 1.3rem;
+    }
+    
+    .profile-info-card .form-label {
+        font-weight: 600;
+        color: #1B5E20;
+        margin-bottom: 0.5rem;
+    }
+    
+    .profile-info-card .form-control {
+        border: 2px solid #E8F5E9;
+        border-radius: 10px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .profile-info-card .form-control:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        outline: none;
+    }
+    
+    .profile-info-card .btn-primary {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border: none;
+        padding: 0.8rem 2rem;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    .profile-info-card .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+    
+    .info-display {
+        background: #F1F8E9;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        color: #2E7D32;
+        font-weight: 500;
+    }
+</style>
+
+<div class="container profile-container">
+    <div class="profile-header">
+        <h1><i class="bi bi-person-circle"></i> Hồ Sơ Của Tôi</h1>
+        <p>Chào mừng, <strong>{{ user.username }}</strong>! Quản lý thông tin cá nhân của bạn.</p>
+    </div>
+    
+    {# Messages displayed centrally in base.html (#global-messages). #}
 
     <div class="row">
         <!-- Cột trái cho các chức năng -->
-        <div class="col-md-3">
+        <div class="col-lg-3 col-md-4 mb-4">
             {% if is_staff %}
-                <div class="card mb-3 custom-green">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <a href="{% url 'manage' %}" class="text-decoration-none">Quản lý Người dùng</a>
-                        </h5>
-                    </div>
+                <div class="profile-menu-card">
+                    <h5>
+                        <a href="{% url 'manage' %}">
+                            <i class="bi bi-people-fill"></i> Quản lý Người dùng
+                        </a>
+                    </h5>
                 </div>
-                <div class="card mb-3 custom-green">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <a href="{% url 'admin_dashboard' %}#predictions-section" class="text-decoration-none">Lịch sử Dự đoán</a>
-                        </h5>
-                    </div>
+                <div class="profile-menu-card">
+                    <h5>
+                        <a href="{% url 'admin_dashboard' %}#predictions-section">
+                            <i class="bi bi-clock-history"></i> Lịch sử Dự đoán
+                        </a>
+                    </h5>
                 </div>
-                <div class="card mb-3 custom-green">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <a href="{% url 'admin_dashboard' %}#feedbacks-section" class="text-decoration-none">Quản lý Phản hồi</a>
-                        </h5>
-                    </div>
+                <div class="profile-menu-card">
+                    <h5>
+                        <a href="{% url 'admin_dashboard' %}#feedbacks-section">
+                            <i class="bi bi-chat-square-text"></i> Quản lý Phản hồi
+                        </a>
+                    </h5>
                 </div>
             {% elif is_expert %}
-                <div class="card mb-3 custom-green">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <a href="{% url 'expert_questions' %}" class="text-decoration-none">Câu hỏi từ nông dân</a>
-                        </h5>
-                    </div>
+                <div class="profile-menu-card">
+                    <h5>
+                        <a href="{% url 'blog_list' %}">
+                            <i class="bi bi-journal-text"></i> Xem blog
+                        </a>
+                    </h5>
                 </div>
-                <div class="card mb-3 custom-green">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <a href="{% url 'disease_library' %}" class="text-decoration-none">Quản lý thư viện bệnh</a>
-                        </h5>
-                    </div>
+                <div class="profile-menu-card">
+                    <h5>
+                        <a href="{% url 'disease_library' %}">
+                            <i class="bi bi-book-fill"></i> Quản lý thư viện bệnh
+                        </a>
+                    </h5>
                 </div>
-                <div class="card mb-3 custom-green">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <a href="{% url 'prediction_history' %}" class="text-decoration-none">Xem lịch sử dự đoán</a>
-                        </h5>
-                    </div>
+                <div class="profile-menu-card">
+                    <h5>
+                        <a href="{% url 'prediction_history' %}">
+                            <i class="bi bi-clock-history"></i> Xem lịch sử dự đoán
+                        </a>
+                    </h5>
                 </div>
             {% elif is_farmer %}
-                <div class="card mb-3 custom-green">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <a href="{% url 'prediction' %}" class="text-decoration-none">Tải ảnh cây trồng</a>
-                        </h5>
-                    </div>
+                <div class="profile-menu-card">
+                    <h5>
+                        <a href="{% url 'prediction' %}">
+                            <i class="bi bi-camera-fill"></i> Tải ảnh cây trồng
+                        </a>
+                    </h5>
                 </div>
-                <div class="card mb-3 custom-green">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <a href="{% url 'prediction_history' %}" class="text-decoration-none">Lịch sử dự đoán</a>
-                        </h5>
-                    </div>
+                <div class="profile-menu-card">
+                    <h5>
+                        <a href="{% url 'prediction_history' %}">
+                            <i class="bi bi-clock-history"></i> Lịch sử dự đoán
+                        </a>
+                    </h5>
                 </div>
-                <div class="card mb-3 custom-green">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <a href="{% url 'ask_expert' %}" class="text-decoration-none">Hỏi chuyên gia</a>
-                        </h5>
-                    </div>
+                <div class="profile-menu-card">
+                    <h5>
+                        <a href="{% url 'blog_list' %}">
+                            <i class="bi bi-journal-text"></i> Xem blog
+                        </a>
+                    </h5>
                 </div>
-                <div class="card mb-3 custom-green">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <a href="{% url 'disease_library' %}" class="text-decoration-none">Thư viện bệnh</a>
-                        </h5>
-                    </div>
+                <div class="profile-menu-card">
+                    <h5>
+                        <a href="{% url 'disease_library' %}">
+                            <i class="bi bi-book-fill"></i> Thư viện bệnh
+                        </a>
+                    </h5>
                 </div>
-                <div class="card mb-3 custom-green">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">
-                            <a href="{% url 'my_questions' %}" class="text-decoration-none">Câu hỏi của tôi</a>
-                        </h5>
-                    </div>
+                <div class="profile-menu-card">
+                    <h5>
+                        <a href="{% url 'my_blog_posts' %}">
+                            <i class="bi bi-journal-text"></i> Bài viết của tôi
+                        </a>
+                    </h5>
                 </div>
             {% endif %}
-            <div class="card mb-3 custom-green">
-                <div class="card-body text-center">
-                    <h5 class="card-title">
-                        {% if is_staff %}
-                            <a href="{% url 'admin_dashboard' %}" class="text-decoration-none">Quay lại Trang chính</a>
-                        {% elif is_expert %}
-                            <a href="{% url 'expert_dashboard' %}" class="text-decoration-none">Quay lại Trang chính</a>
-                        {% elif is_farmer %}
-                            <a href="{% url 'farmer_dashboard' %}" class="text-decoration-none">Quay lại Trang chính</a>
-                        {% endif %}
-                    </h5>
-                </div>
+            <div class="profile-menu-card">
+                <h5>
+                    {% if is_staff %}
+                        <a href="{% url 'admin_dashboard' %}">
+                            <i class="bi bi-house-door-fill"></i> Quay lại Trang chính
+                        </a>
+                    {% elif is_expert %}
+                        <a href="{% url 'expert_dashboard' %}">
+                            <i class="bi bi-house-door-fill"></i> Quay lại Trang chính
+                        </a>
+                    {% elif is_farmer %}
+                        <a href="{% url 'farmer_dashboard' %}">
+                            <i class="bi bi-house-door-fill"></i> Quay lại Trang chính
+                        </a>
+                    {% endif %}
+                </h5>
             </div>
-            <div class="card mb-3 custom-green">
-                <div class="card-body text-center">
-                    <h5 class="card-title">
-                        <a href="{% url 'change_password' %}" class="text-decoration-none">Đổi Mật Khẩu</a>
-                    </h5>
-                </div>
+            <div class="profile-menu-card">
+                <h5>
+                    <a href="{% url 'change_password' %}">
+                        <i class="bi bi-key-fill"></i> Đổi Mật Khẩu
+                    </a>
+                </h5>
             </div>
         </div>
 
-        <!-- Cột giữa cho thông tin hồ sơ -->
-        <div class="col-md-9">
-            <div class="card">
-                <div class="card-body">
-                    <h3 class="mt-4">Thông Tin Hồ Sơ</h3>
-                    <p><strong>Tên đăng nhập:</strong> {{ user.username }}</p>
-                    <form method="post" class="mb-5">
-                        {% csrf_token %}
-                        <div class="form-group mb-3">
-                            <label for="id_email" class="form-label">Email</label>
-                            {{ email_form.email }}
-                        </div>
-                        <button type="submit" class="btn btn-primary">Cập nhật Email</button>
-                    </form>
-
-                    <h4 class="mt-4">Thông Tin Cá Nhân</h4>
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="form-group mb-3">
-                            <label for="id_age" class="form-label">Tuổi</label>
-                            {{ profile_form.age }}
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="id_phone_number" class="form-label">Số điện thoại</label>
-                            {{ profile_form.phone_number }}
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="id_nationality" class="form-label">Quốc tịch</label>
-                            {{ profile_form.nationality }}
-                        </div>
-                        <button type="submit" class="btn btn-primary">Cập nhật Thông Tin</button>
-                    </form>
+        <!-- Cột phải cho thông tin hồ sơ -->
+        <div class="col-lg-9 col-md-8 mb-4">
+            <div class="profile-info-card">
+                <h3><i class="bi bi-person-badge-fill"></i> Thông Tin Hồ Sơ</h3>
+                <div class="info-display">
+                    <strong>Tên đăng nhập:</strong> {{ user.username }}
                 </div>
+                <form method="post" class="mb-5">
+                    {% csrf_token %}
+                    <div class="form-group mb-4">
+                        <label for="id_email" class="form-label"><i class="bi bi-envelope-fill"></i> Email</label>
+                        {{ email_form.email }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle-fill"></i> Cập nhật Email
+                    </button>
+                </form>
+
+                <h4><i class="bi bi-person-lines-fill"></i> Thông Tin Cá Nhân</h4>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group mb-4">
+                        <label for="id_age" class="form-label"><i class="bi bi-calendar-fill"></i> Tuổi</label>
+                        {{ profile_form.age }}
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="id_phone_number" class="form-label"><i class="bi bi-telephone-fill"></i> Số điện thoại</label>
+                        {{ profile_form.phone_number }}
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="id_nationality" class="form-label"><i class="bi bi-flag-fill"></i> Quốc tịch</label>
+                        {{ profile_form.nationality }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle-fill"></i> Cập nhật Thông Tin
+                    </button>
+                </form>
             </div>
         </div>
     </div>

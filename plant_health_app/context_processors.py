@@ -1,8 +1,8 @@
-from django.contrib.auth.models import Group
+from .models import BlogPost
 
-def user_roles(request):
-    return {
-        'is_farmer': request.user.is_authenticated and request.user.groups.filter(name='Farmer').exists(),
-        'is_expert': request.user.is_authenticated and request.user.groups.filter(name='Expert').exists(),
-        'is_admin': request.user.is_authenticated and request.user.is_staff,
-    }
+def pending_posts_count(request):
+    """Context processor to add pending blog posts count to all templates."""
+    if request.user.is_authenticated and request.user.is_staff:
+        count = BlogPost.objects.filter(status='pending').count()
+        return {'pending_posts_count': count}
+    return {'pending_posts_count': 0}

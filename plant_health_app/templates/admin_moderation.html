@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Quản lý kiểm duyệt ảnh{% endblock %}
+{% block content %}
+<style>
+    .moderation-container {
+        margin-top: 90px;
+        padding: 2rem 0;
+    }
+    
+    .moderation-header {
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(46, 125, 50, 0.3);
+    }
+    
+    .moderation-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        color: white !important;
+    }
+    
+    .prediction-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        border: 2px solid #FFEBEE;
+        transition: all 0.3s ease;
+    }
+    
+    .prediction-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .prediction-image {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 2px solid #FFEBEE;
+    }
+    
+    .badge-ai-agreed {
+        background: #4CAF50;
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    .badge-user-corrected {
+        background: #FF9800;
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    .info-box {
+        background: #F5F5F5;
+        padding: 0.8rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        border-left: 4px solid #2E7D32;
+    }
+    
+    .info-box strong {
+        color: #2E7D32;
+    }
+    
+    .btn-approve {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-approve:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        color: white;
+    }
+    
+    .btn-reject {
+        background: linear-gradient(135deg, #F44336 0%, #C62828 100%);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-reject:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        color: white;
+    }
+    
+    .no-predictions {
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+    
+    .no-predictions i {
+        font-size: 4rem;
+        color: #BDBDBD;
+        margin-bottom: 1rem;
+    }
+</style>
+
+<div class="container moderation-container">
+    <div class="moderation-header">
+        <h1><i class="bi bi-shield-check"></i> Quản lý kiểm duyệt ảnh</h1>
+        <p>Phê duyệt các ảnh đóng góp từ người dùng</p>
+    </div>
+    
+    {% if predictions %}
+        <div class="mb-3">
+            <p class="text-muted">Tổng số ảnh chờ duyệt: <strong>{{ predictions.paginator.count }}</strong></p>
+        </div>
+        
+        {% for pred in predictions %}
+        <div class="prediction-card">
+            <div class="row">
+                <div class="col-md-3 text-center">
+                    <img src="{{ pred.image.url }}" alt="Prediction Image" class="prediction-image">
+                </div>
+                
+                <div class="col-md-6">
+                    <h5>
+                        ID: {{ pred.id }} | User: <strong>{{ pred.user.username }}</strong>
+                    </h5>
+                    
+                    <div class="info-box">
+                        <strong>AI dự đoán:</strong> {{ pred.disease }} ({{ pred.confidence|floatformat:1 }}%)
+                    </div>
+                    
+                    <div class="info-box">
+                        <strong>User xác nhận:</strong> {{ pred.user_confirmed_disease }}
+                        {% if pred.user_agreed_with_ai %}
+                            <span class="badge-ai-agreed ms-2">
+                                <i class="bi bi-check-circle"></i> Đồng ý với AI
+                            </span>
+                        {% else %}
+                            <span class="badge-user-corrected ms-2">
+                                <i class="bi bi-pencil"></i> User sửa nhãn: {{ pred.disease }} → {{ pred.user_confirmed_disease }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="info-box">
+                        <strong>Loại cây:</strong> {{ pred.plant_type }}
+                    </div>
+                    
+                    <div class="info-box">
+                        <strong>Thời gian upload:</strong> {{ pred.uploaded_at|date:"d/m/Y H:i" }}
+                    </div>
+                    
+                    {% if pred.confidence < 70 and pred.user_agreed_with_ai %}
+                    <div class="alert alert-warning mb-0 mt-2">
+                        <i class="bi bi-exclamation-triangle"></i> <strong>Cảnh báo:</strong> User đồng ý với AI nhưng confidence thấp ({{ pred.confidence|floatformat:0 }}%). Kiểm tra kỹ!
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-3 d-flex flex-column justify-content-center gap-2">
+                    <!-- Button Approve với modal (Admin có thể sửa nhãn) -->
+                    <button type="button" class="btn btn-approve w-100" data-bs-toggle="modal" data-bs-target="#approveModal{{ pred.id }}">
+                        <i class="bi bi-check-circle"></i> Duyệt
+                    </button>
+                    
+                    <!-- Button Reject với modal -->
+                    <button type="button" class="btn btn-reject w-100" data-bs-toggle="modal" data-bs-target="#rejectModal{{ pred.id }}">
+                        <i class="bi bi-x-circle"></i> Từ chối
+                    </button>
+                    
+                    <!-- View full prediction -->
+                    <a href="{% url 'plant_image_detail' pred.id %}" class="btn btn-secondary w-100">
+                        <i class="bi bi-eye"></i> Xem chi tiết
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Duyệt (Admin có thể sửa nhãn) -->
+        <div class="modal fade" id="approveModal{{ pred.id }}" tabindex="-1" aria-labelledby="approveModalLabel{{ pred.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title" id="approveModalLabel{{ pred.id }}">
+                            <i class="bi bi-check-circle"></i> Duyệt ảnh ID {{ pred.id }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="post" action="{% url 'approve_contribution' pred.id %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> <strong>Admin có thể sửa nhãn trước khi duyệt.</strong>
+                                <br>Bỏ trống nếu giữ nguyên nhãn hiện tại.
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>🌿 Loại cây hiện tại:</strong></label>
+                                        <p class="form-control-plaintext bg-light p-2 rounded">{{ pred.plant_type }}</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="adminPlantType{{ pred.id }}" class="form-label">
+                                            <strong>Sửa thành (nếu cần):</strong>
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="adminPlantType{{ pred.id }}" 
+                                               name="admin_plant_type"
+                                               list="plantTypeList{{ pred.id }}"
+                                               placeholder="Ví dụ: Mango, Dragon Fruit...">
+                                        <datalist id="plantTypeList{{ pred.id }}">
+                                            {% for plant in PLANT_TYPE_CLASSES %}
+                                            <option value="{{ plant }}">
+                                            {% endfor %}
+                                        </datalist>
+                                        <small class="form-text text-muted">
+                                             Dùng khi phát hiện cây lạ (ví dụ: AI đoán Potato nhưng đây là Mango)
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong> Nhãn bệnh hiện tại:</strong></label>
+                                        <p class="form-control-plaintext bg-light p-2 rounded">{{ pred.user_confirmed_disease }}</p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="adminDisease{{ pred.id }}" class="form-label">
+                                            <strong>Sửa thành (nếu cần):</strong>
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="adminDisease{{ pred.id }}" 
+                                               name="admin_disease"
+                                               list="diseaseList{{ pred.id }}"
+                                               placeholder="Ví dụ: Early Blight, Healthy...">
+                                        <datalist id="diseaseList{{ pred.id }}">
+                                            {% for disease in all_diseases %}
+                                            <option value="{{ disease }}">
+                                            {% endfor %}
+                                        </datalist>
+                                        <small class="form-text text-muted">
+                                             Dùng khi user gán nhãn sai
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-success mb-0">
+                                <strong>Sau khi duyệt:</strong> Ảnh sẽ được lưu với nhãn đã chỉnh sửa (nếu có) 
+                                và có thể dùng để train lại model.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Xác nhận duyệt
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal từ chối -->
+        <div class="modal fade" id="rejectModal{{ pred.id }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ pred.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="rejectModalLabel{{ pred.id }}">
+                            <i class="bi bi-x-circle"></i> Từ chối ảnh ID {{ pred.id }}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="post" action="{% url 'reject_contribution' pred.id %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <label for="reason{{ pred.id }}" class="form-label"><strong>Lý do từ chối:</strong></label>
+                            <textarea name="reason" id="reason{{ pred.id }}" class="form-control" rows="4" placeholder="Ví dụ: Ảnh mờ, không rõ nét, nhãn sai..." required></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-x-circle"></i> Xác nhận từ chối
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Pagination -->
+        {% if predictions.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if predictions.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ predictions.previous_page_number }}">Trước</a>
+                </li>
+                {% endif %}
+                
+                {% for num in predictions.paginator.page_range %}
+                    {% if predictions.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > predictions.number|add:'-3' and num < predictions.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if predictions.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ predictions.next_page_number }}">Sau</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="no-predictions">
+            <i class="bi bi-inbox"></i>
+            <h3>Không có ảnh nào chờ duyệt</h3>
+            <p class="text-muted">Tất cả ảnh đóng góp đã được xử lý.</p>
+        </div>
+    {% endif %}
+    
+    <div class="text-center mt-4">
+        <a href="{% url 'admin_dashboard' %}" class="btn btn-primary">
+            <i class="bi bi-arrow-left"></i> Quay lại Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

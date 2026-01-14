@@ -1,36 +1,163 @@
 {% extends 'base.html' %}
 {% block title %}Login{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-sm-8">
-            <div class="auth-container">
-                <h2 class="text-center mb-4">Đăng nhập</h2>
-                {% if messages %}
-                    <div class="messages mb-3">
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
+<style>
+    .auth-wrapper {
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(46, 125, 50, 0.1) 100%);
+    }
+    
+    .auth-card {
+        background: white;
+        border-radius: 25px;
+        padding: 3.5rem;
+        box-shadow: 0 20px 60px rgba(76, 175, 80, 0.15);
+        border: none;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+    
+    .auth-header h2 {
+        font-weight: 800;
+        color: #1B5E20;
+        margin-bottom: 0.5rem;
+        font-size: 2.2rem;
+    }
+    
+    .auth-header p {
+        color: #558B2F;
+        font-size: 1.05rem;
+    }
+    
+    .auth-icon {
+        width: 90px;
+        height: 90px;
+        background: linear-gradient(135deg, #66BB6A 0%, #43A047 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2.8rem;
+        color: white;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    .form-group-modern {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group-modern label {
+        font-weight: 600;
+        color: #1B5E20;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-group-modern input {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem 1.3rem;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+    
+    .form-group-modern input:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+    }
+    
+    .btn-login {
+        background: linear-gradient(135deg, #66BB6A 0%, #43A047 100%);
+        color: white;
+        border: none;
+        padding: 1.1rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        width: 100%;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(67, 160, 71, 0.3);
+    }
+    
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67, 160, 71, 0.4);
+        color: white;
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .auth-footer a {
+        color: #4CAF50;
+        font-weight: 700;
+        text-decoration: none;
+    }
+    
+    .auth-footer a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="auth-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <div class="auth-icon">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <h2>Đăng nhập</h2>
+                        <p>Chào mừng trở lại!</p>
                     </div>
-                {% endif %}
-                <form method="POST" action="{% url 'login' %}">
-                    {% csrf_token %}
-                    <div class="form-group mb-3">
-                        <label for="username" class="form-label">Tên đăng nhập:</label>
-                        <input type="text" id="username" name="username" class="form-control" required>
+                    
+                    {# Messages are shown centrally in base.html (#global-messages) to avoid duplicates #}
+                    
+                    <form method="POST" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        
+                        <div class="form-group-modern">
+                            <label for="username">
+                                <i class="bi bi-person-fill"></i> Tên đăng nhập
+                            </label>
+                            <input type="text" id="username" name="username" class="form-control" 
+                                   placeholder="Nhập tên đăng nhập" required>
+                        </div>
+                        
+                        <div class="form-group-modern">
+                            <label for="password">
+                                <i class="bi bi-lock-fill"></i> Mật khẩu
+                            </label>
+                            <input type="password" id="password" name="password" class="form-control" 
+                                   placeholder="Nhập mật khẩu" required>
+                        </div>
+                        
+                        <button type="submit" class="btn-login">
+                            <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+                        </button>
+                    </form>
+                    
+                    <div class="auth-footer">
+                        <p class="text-muted mb-0">Bạn chưa có tài khoản?</p>
+                        <a href="{% url 'register' %}">Đăng ký ngay <i class="bi bi-arrow-right"></i></a>
                     </div>
-                    <div class="form-group mb-3">
-                        <label for="password" class="form-label">Mật khẩu:</label>
-                        <input type="password" id="password" name="password" class="form-control" required>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Đăng nhập</button>
-                    </div>
-                </form>
-                <p class="text-center mt-3">Bạn chưa có tài khoản? <a href="{% url 'register' %}" class="text-primary">Đăng ký tại đây</a></p>
+                </div>
             </div>
         </div>
     </div>

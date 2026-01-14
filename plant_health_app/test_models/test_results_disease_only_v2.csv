@@ -1,0 +1,34 @@
+Filename	Relative Path	Plant Type	Disease	Disease Confidence (%)	Status	
+AppleCedarRust1.JPG	AppleCedarRust1.JPG	Apple	Cedar Apple Rust	99.96	Success	
+AppleCedarRust2.JPG	AppleCedarRust2.JPG	Apple	Black Rot	57.49	Success	
+AppleCedarRust3.JPG	AppleCedarRust3.JPG	Apple	Cedar Apple Rust	96.63	Success	
+AppleCedarRust4.JPG	AppleCedarRust4.JPG	Apple	Cedar Apple Rust	99.92	Success	
+AppleScab1.JPG	AppleScab1.JPG	Apple	Apple Scab	99.66	Success	
+AppleScab2.JPG	AppleScab2.JPG	Apple	Apple Scab	99.66	Success	
+AppleScab3.JPG	AppleScab3.JPG	Apple	Apple Scab	98.39	Success	
+CornCommonRust1.JPG	CornCommonRust1.JPG	Corn	Common Rust	99.86	Success	
+CornCommonRust2.JPG	CornCommonRust2.JPG	Corn	Common Rust	99.77	Success	
+CornCommonRust3.JPG	CornCommonRust3.JPG	Corn	Common Rust	99.99	Success	
+PotatoEarlyBlight1.JPG	PotatoEarlyBlight1.JPG	Potato	Early Blight	95.03	Success	
+PotatoEarlyBlight2.JPG	PotatoEarlyBlight2.JPG	Potato	Early Blight	99.64	Success	
+PotatoEarlyBlight3.JPG	PotatoEarlyBlight3.JPG	Potato	Early Blight	91.17	Success	
+PotatoEarlyBlight4.JPG	PotatoEarlyBlight4.JPG	Potato	Early Blight	96.52	Success	
+PotatoEarlyBlight5.JPG	PotatoEarlyBlight5.JPG	Potato	Early Blight	99.15	Success	
+PotatoHealthy1.JPG	PotatoHealthy1.JPG	Potato	Healthy	99.25	Success	
+PotatoHealthy2.JPG	PotatoHealthy2.JPG	Potato	Healthy	98.61	Success	
+TomatoEarlyBlight1.JPG	TomatoEarlyBlight1.JPG	Tomato	Late Blight	91.02	Success	
+TomatoEarlyBlight2.JPG	TomatoEarlyBlight2.JPG	Tomato	Late Blight	68.64	Success	
+TomatoEarlyBlight3.JPG	TomatoEarlyBlight3.JPG	Tomato	Early Blight	91.63	Success	
+TomatoEarlyBlight4.JPG	TomatoEarlyBlight4.JPG	Tomato	Early Blight	97.5	Success	
+TomatoEarlyBlight5.JPG	TomatoEarlyBlight5.JPG	Tomato	Early Blight	99.51	Success	
+TomatoEarlyBlight6.JPG	TomatoEarlyBlight6.JPG	Tomato	Early Blight	60.48	Success	
+TomatoHealthy1.JPG	TomatoHealthy1.JPG	Tomato	Healthy	80.29	Success	
+TomatoHealthy2.JPG	TomatoHealthy2.JPG	Tomato	Target Spot	76.38	Success	
+TomatoHealthy3.JPG	TomatoHealthy3.JPG	Tomato	Healthy	76.31	Success	
+TomatoHealthy4.JPG	TomatoHealthy4.JPG	Tomato	Target Spot	79.34	Success	
+TomatoYellowCurlVirus1.JPG	TomatoYellowCurlVirus1.JPG	Tomato	Tomato Yellow Leaf Curl Virus	99.99	Success	
+TomatoYellowCurlVirus2.JPG	TomatoYellowCurlVirus2.JPG	Tomato	Tomato Yellow Leaf Curl Virus	99.98	Success	
+TomatoYellowCurlVirus3.JPG	TomatoYellowCurlVirus3.JPG	Tomato	Tomato Yellow Leaf Curl Virus	96.47	Success	
+TomatoYellowCurlVirus4.JPG	TomatoYellowCurlVirus4.JPG	Tomato	Tomato Yellow Leaf Curl Virus	99.52	Success	
+TomatoYellowCurlVirus5.JPG	TomatoYellowCurlVirus5.JPG	Tomato	Tomato Yellow Leaf Curl Virus	96.36	Success	
+TomatoYellowCurlVirus6.JPG	TomatoYellowCurlVirus6.JPG	Tomato	Tomato Yellow Leaf Curl Virus	88.65	Success	

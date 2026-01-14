@@ -1,60 +1,642 @@
 {% extends 'base.html' %}
 {% block title %}Trang Quản Lý Chuyên Gia{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <h2>Trang Quản Lý Chuyên Gia</h2>
-    <p>Chào mừng, {{ user.username }}!</p>
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
+<style>
+    /* Expert Dashboard Container */
+    .expert-dashboard {
+        padding: 2rem 0;
+        margin-top: 80px;
+    }
+    
+    /* Expert Welcome Header */
+    .expert-header {
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(46, 125, 50, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .expert-header::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 250px;
+        height: 250px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    
+    .expert-header h1 {
+        font-weight: 800;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .expert-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Expert Stats Cards */
+    .expert-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .expert-stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.8rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border-left: 4px solid #2E7D32;
+        transition: all 0.3s ease;
+    }
+    
+    .expert-stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(46, 125, 50, 0.2);
+    }
+    
+    .expert-stat-card .stat-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: white;
+        margin-bottom: 1rem;
+    }
+    
+    .expert-stat-card .stat-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #1B5E20;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .expert-stat-card .stat-label {
+        font-size: 1rem;
+        color: #558B2F;
+        font-weight: 500;
+    }
+    
+    /* Expert Quick Actions */
+    .expert-actions {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .expert-actions h3 {
+        color: #1B5E20;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .expert-action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .expert-action-btn {
+        background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+        border: 2px solid #2E7D32;
+        border-radius: 12px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .expert-action-btn:hover {
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(46, 125, 50, 0.3);
+    }
+    
+    .expert-action-btn i {
+        font-size: 2rem;
+        color: #1B5E20;
+        transition: color 0.3s ease;
+    }
+    
+    .expert-action-btn:hover i {
+        color: white;
+    }
+    
+    .expert-action-btn span {
+        font-weight: 600;
+        color: #1B5E20;
+        font-size: 1rem;
+        transition: color 0.3s ease;
+    }
+    
+    .expert-action-btn:hover span {
+        color: white;
+    }
+    
+    /* Expert Chart Cards */
+    .expert-chart-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .expert-chart-card h3 {
+        color: #1B5E20;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .expert-chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .expert-chart-badge {
+        background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+        color: #1B5E20;
+        padding: 0.5rem 1.2rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .chart-wrapper {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    /* Expert Activity Table */
+    .expert-activity {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .expert-activity h3 {
+        color: #1B5E20;
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .activity-table {
+        background: #F1F8E9;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .activity-table table {
+        margin-bottom: 0;
+    }
+    
+    .activity-table thead {
+        background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+    }
+    
+    .activity-table thead th {
+        color: white;
+        font-weight: 600;
+        padding: 1rem;
+        border: none;
+    }
+    
+    .activity-table tbody tr {
+        transition: all 0.3s ease;
+    }
+    
+    .activity-table tbody tr:hover {
+        background: #E8F5E9;
+        transform: scale(1.01);
+    }
+    
+    .activity-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    .expert-empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+    
+    .expert-empty-state i {
+        font-size: 4rem;
+        color: #C8E6C9;
+        margin-bottom: 1rem;
+    }
+    
+    .expert-empty-state p {
+        color: #7CB342;
+        font-size: 1.1rem;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .expert-header h1 {
+            font-size: 2rem;
+        }
+        
+        .expert-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        .expert-action-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .expert-chart-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
 
-    <div class="row">
-        <!-- Cột trái cho các chức năng -->
-        <div class="col-md-3">
-            <div class="card mb-3 custom-green">
-                <div class="card-body text-center">
-                    <h5 class="card-title">
-                        <a href="{% url 'expert_questions' %}" class="text-decoration-none">Câu hỏi từ nông dân</a>
-                    </h5>
+<div class="expert-dashboard">
+    <div class="container">
+        <!-- Expert Welcome Header -->
+        <div class="expert-header">
+            <h1><i class="bi bi-person-badge-fill"></i> Bảng Điều Khiển Chuyên Gia</h1>
+            <p>Chào mừng trở lại, <strong>{{ user.username }}</strong>! Hỗ trợ nông dân với chuyên môn của bạn.</p>
+        </div>
+        
+        {# Messages are displayed centrally in base.html (#global-messages) to avoid duplicates #}
+        
+        <!-- Expert Stats Overview -->
+        <div class="expert-stats">
+            <div class="expert-stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-chat-left-dots-fill"></i>
                 </div>
+                <div class="stat-value">{{ total_answers|default:0 }}</div>
+                <div class="stat-label">Câu Trả Lời</div>
             </div>
-            <div class="card mb-3 custom-green">
-                <div class="card-body text-center">
-                    <h5 class="card-title">
-                        <a href="{% url 'prediction_history' %}" class="text-decoration-none">Xem lịch sử dự đoán</a>
-                    </h5>
+            
+            <div class="expert-stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-graph-up-arrow"></i>
                 </div>
+                <div class="stat-value">{{ total_predictions }}</div>
+                <div class="stat-label">Dự Đoán Hệ Thống</div>
+            </div>
+            
+            <div class="expert-stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-activity"></i>
+                </div>
+                <div class="stat-value">{{ plant_type_chart.labels|length|default:0 }}</div>
+                <div class="stat-label">Loại Cây Theo Dõi</div>
             </div>
         </div>
-
-        <!-- Cột giữa cho thông tin -->
-        <div class="col-md-9">
-            <div class="card">
-                <div class="card-body">
-                    <h3 class="mt-4">Thông Tin Hoạt Động</h3>
-                    <p>Chưa có thông tin hoạt động để hiển thị.</p>
-                    <!-- Nếu có dữ liệu như danh sách câu hỏi đã trả lời, bạn có thể thêm vòng lặp tương tự farmer_dashboard -->
-                    {% comment %}
-                    Ví dụ nếu có danh sách câu hỏi đã trả lời:
-                    {% if answered_questions %}
-                        <ul class="list-group">
-                            {% for question in answered_questions %}
-                                <li class="list-group-item">
-                                    <strong>Câu hỏi:</strong> {{ question.question_text }}<br>
-                                    <strong>Trả lời:</strong> {{ question.answer_text }}<br>
-                                    <small>Trả lời vào {{ question.created_at|date:"d/m/Y H:i" }}</small>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Chưa có câu hỏi nào được trả lời.</p>
-                    {% endif %}
-                    {% endcomment %}
+        
+        <!-- Expert Quick Actions -->
+        <div class="expert-actions">
+            <h3><i class="bi bi-lightning-charge-fill"></i> Thao Tác Nhanh</h3>
+            <div class="expert-action-grid">
+                <a href="{% url 'prediction' %}" class="expert-action-btn">
+                    <i class="bi bi-cloud-upload-fill"></i>
+                    <span>Tải Ảnh Cây Trồng</span>
+                </a>
+                <a href="{% url 'prediction_history' %}" class="expert-action-btn">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Lịch Sử Dự Đoán</span>
+                </a>
+                <a href="{% url 'disease_library' %}" class="expert-action-btn">
+                    <i class="bi bi-bug-fill"></i>
+                    <span>Thư Viện Bệnh Cây</span>
+                </a>
+                <a href="{% url 'all_notifications' %}" class="expert-action-btn">
+                    <i class="bi bi-bell-fill"></i>
+                    <span>Thông Báo</span>
+                </a>
+                <a href="{% url 'blog_list' %}" class="expert-action-btn">
+                    <i class="bi bi-book-fill"></i>
+                    <span>Xem Blog</span>
+                </a>
+                <a href="{% url 'blog_create' %}" class="expert-action-btn">
+                    <i class="bi bi-pencil-square"></i>
+                    <span>Tạo Bài Viết</span>
+                </a>
+                <a href="{% url 'my_blog_posts' %}" class="expert-action-btn">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Bài Viết Của Tôi</span>
+                </a>
+                <a href="{% url 'feedback' %}" class="expert-action-btn">
+                    <i class="bi bi-chat-square-text-fill"></i>
+                    <span>Phản Hồi</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Charts Section -->
+        <div class="row">
+            <!-- Biểu đồ Theo Loại Cây (Bar Chart) -->
+            {% if plant_type_chart.labels %}
+            <div class="col-lg-6 col-md-12">
+                <div class="expert-chart-card">
+                    <div class="expert-chart-header">
+                        <h3><i class="bi bi-bar-chart-line-fill"></i> {{ plant_type_chart.title }}</h3>
+                        <div class="expert-chart-badge">
+                            <i class="bi bi-collection"></i> {{ plant_type_chart.labels|length }} loại cây
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="plantTypeChart"></canvas>
+                    </div>
                 </div>
             </div>
+            {% endif %}
+
+            <!-- Biểu đồ Theo Bệnh (Pie Chart) -->
+            {% if disease_chart.labels %}
+            <div class="col-lg-6 col-md-12">
+                <div class="expert-chart-card">
+                    <div class="expert-chart-header">
+                        <h3><i class="bi bi-pie-chart-fill"></i> {{ disease_chart.title }}</h3>
+                        <div class="expert-chart-badge">
+                            <i class="bi bi-bug"></i> {{ disease_chart.labels|length }} loại bệnh
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="diseaseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Bài Viết Gần Đây -->
+        <div class="expert-activity">
+            <h3><i class="bi bi-activity"></i> Bài Viết Của Tôi</h3>
+            {% if my_blog_posts %}
+                <div class="expert-chart-badge mb-3">
+                    <i class="bi bi-check-circle-fill"></i> Tổng số bài viết: {{ my_blog_posts.count }}
+                </div>
+                <div class="activity-table">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th><i class="bi bi-file-text"></i> Tiêu Đề</th>
+                                    <th><i class="bi bi-chat-left-text"></i> Nội Dung</th>
+                                    <th><i class="bi bi-eye"></i> Lượt Xem</th>
+                                    <th><i class="bi bi-clock"></i> Thời Gian</th>
+                                    <th><i class="bi bi-gear"></i> Hành Động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for post in my_blog_posts %}
+                                    <tr id="blog-row-{{ post.id }}">
+                                        <td>
+                                            <strong>{{ post.title }}</strong>
+                                            {% if post.status == 'pending' %}
+                                                <span class="badge bg-warning ms-1">Chờ duyệt</span>
+                                            {% elif post.status == 'approved' %}
+                                                <span class="badge bg-success ms-1">Đã duyệt</span>
+                                            {% elif post.status == 'rejected' %}
+                                                <span class="badge bg-danger ms-1">Từ chối</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ post.content|truncatewords:15 }}</td>
+                                        <td>{{ post.views_count }}</td>
+                                        <td>{{ post.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            {% if post.status == 'approved' %}
+                                                <a href="{% url 'blog_detail' post.id %}" class="btn btn-sm btn-success me-1" title="Xem chi tiết">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'blog_edit' post.id %}" class="btn btn-sm btn-primary me-1" title="Chỉnh sửa">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            {% if post.status == 'rejected' and post.rejection_reason %}
+                                                <button type="button" class="btn btn-sm btn-danger" 
+                                                        data-bs-toggle="modal" data-bs-target="#rejectionModal{{ post.id }}"
+                                                        title="Xem lý do từ chối">
+                                                    <i class="bi bi-info-circle"></i>
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Modal hiển thị lý do từ chối -->
+                                    {% if post.status == 'rejected' and post.rejection_reason %}
+                                    <div class="modal fade" id="rejectionModal{{ post.id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-danger text-white">
+                                                    <h5 class="modal-title">
+                                                        <i class="bi bi-x-circle"></i> Lý do từ chối
+                                                    </h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="alert alert-danger mb-0">
+                                                        <h6 class="alert-heading"><i class="bi bi-file-text"></i> Bài viết: {{ post.title }}</h6>
+                                                        <hr>
+                                                        <p class="mb-0">{{ post.rejection_reason }}</p>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                                    <a href="{% url 'blog_edit' post.id %}" class="btn btn-primary">
+                                                        <i class="bi bi-pencil"></i> Chỉnh sửa bài viết
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% else %}
+                <div class="expert-empty-state">
+                    <i class="bi bi-journal-plus"></i>
+                    <p>Chưa có bài viết nào. Hãy <a href="{% url 'blog_create' %}" style="color: #2E7D32; font-weight: 600;">tạo bài viết mới</a> để bắt đầu!</p>
+                </div>
+            {% endif %}
         </div>
     </div>
 </div>
+
+<!-- Script cho Chart.js (chỉ render nếu có data) -->
+{% if plant_type_chart.labels or disease_chart.labels %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    {% if plant_type_chart.labels %}
+    // Biểu đồ theo loại cây (Bar Chart) - Expert Design
+    const plantCtx = document.getElementById('plantTypeChart').getContext('2d');
+    new Chart(plantCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ plant_type_chart.labels|safe }},
+            datasets: [{
+                label: 'Số lượng dự đoán',
+                data: {{ plant_type_chart.data|safe }},
+                backgroundColor: 'rgba(76, 175, 80, 0.8)',
+                borderColor: 'rgba(46, 125, 50, 1)',
+                borderWidth: 2,
+                borderRadius: 8,
+                hoverBackgroundColor: 'rgba(46, 125, 50, 1)',
+                hoverBorderColor: 'rgba(27, 94, 32, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: { size: 12, weight: '500' },
+                        color: '#558B2F'
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { size: 12, weight: '600' },
+                        color: '#1B5E20'
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(27, 94, 32, 0.95)',
+                    padding: 12,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    cornerRadius: 8
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+    {% endif %}
+
+    {% if disease_chart.labels %}
+    // Biểu đồ theo bệnh (Doughnut Chart) - Expert Design
+    const diseaseCtx = document.getElementById('diseaseChart').getContext('2d');
+    new Chart(diseaseCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ disease_chart.labels|safe }},
+            datasets: [{
+                data: {{ disease_chart.data|safe }},
+                backgroundColor: [
+                    'rgba(76, 175, 80, 0.8)',
+                    'rgba(139, 195, 74, 0.8)',
+                    'rgba(205, 220, 57, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(255, 152, 0, 0.8)',
+                    'rgba(255, 87, 34, 0.8)',
+                    'rgba(233, 30, 99, 0.8)',
+                    'rgba(156, 39, 176, 0.8)',
+                    'rgba(103, 58, 183, 0.8)',
+                    'rgba(63, 81, 181, 0.8)'
+                ],
+                borderColor: '#fff',
+                borderWidth: 3,
+                hoverBorderWidth: 4,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { 
+                    position: 'right',
+                    labels: {
+                        font: { size: 12, weight: '500' },
+                        color: '#1B5E20',
+                        padding: 15,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(27, 94, 32, 0.95)',
+                    padding: 12,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.parsed || 0;
+                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            let percentage = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' (' + percentage + '%)';
+                        }
+                    }
+                }
+            },
+            animation: {
+                animateRotate: true,
+                animateScale: true,
+                duration: 1500,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+    {% endif %}
+</script>
+{% endif %}
 {% endblock %}

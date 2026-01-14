@@ -1,31 +1,77 @@
-/* Root variables for light and dark mode */
+/* Root variables - Plant Health Theme (Light Mode Only) */
 :root {
-    --primary-color: #68D69D;
-    --text-color: #1A3C34;
-    --background-color: #f4f4f4;
-    --card-background: white;
+    /* Primary Green Palette - Inspired by healthy plants */
+    --primary-color: #4CAF50;          /* Fresh green - main brand color */
+    --primary-dark: #388E3C;           /* Dark green for hover states */
+    --primary-light: #81C784;          /* Light green for backgrounds */
+    --primary-gradient-start: #66BB6A; /* Gradient start */
+    --primary-gradient-end: #43A047;   /* Gradient end */
+    
+    /* Secondary Green Shades */
+    --leaf-green: #8BC34A;             /* Young leaf green */
+    --forest-green: #2E7D32;           /* Deep forest green */
+    --mint-green: #A5D6A7;             /* Soft mint for cards */
+    
+    /* Nature-inspired Accent Colors */
+    --earth-brown: #795548;            /* Soil/earth tone */
+    --sky-blue: #4FC3F7;               /* Clear sky for info */
+    --sun-yellow: #FDD835;             /* Sunlight for warnings */
+    
+    /* Text Colors */
+    --text-color: #1B5E20;             /* Dark green text */
+    --text-secondary: #2E7D32;         /* Medium green text - more readable */
+    --text-muted: #558B2F;             /* Muted green for less important text */
+    
+    /* Background Colors */
+    --background-color: #F1F8E9;       /* Very light green background */
+    --card-background: #FFFFFF;        /* Pure white cards */
     --text-light: white;
-    --error-bg: #f8d7da;
-    --error-text: #721c24;
-    --success-bg: #d4edda;
-    --success-text: #155724;
-    --info-bg: #d1ecf1;
-    --info-text: #0c5460;
-    --dashboard-green: #68D69D;
-    --custom-btn-bg: #1A3C34;
-    --custom-btn-hover: #14332C;
+    
+    /* Status Colors */
+    --success-bg: #C8E6C9;             /* Light green success */
+    --success-text: #2E7D32;           /* Dark green text */
+    --error-bg: #FFCDD2;               /* Light red error */
+    --error-text: #C62828;             /* Dark red text */
+    --warning-bg: #FFF9C4;             /* Light yellow warning */
+    --warning-text: #F57F17;           /* Dark yellow text */
+    --info-bg: #B3E5FC;                /* Light blue info */
+    --info-text: #01579B;              /* Dark blue text */
+    
+    /* Dashboard & Buttons */
+    --dashboard-green: #4CAF50;
+    --custom-btn-bg: #43A047;
+    --custom-btn-hover: #388E3C;
 }
 
-[data-theme="dark"] {
-    --primary-color: #3a8c61;
-    --text-color: #e0e0e0;
-    --background-color: #1A3C34;
-    --card-background: #2a4a44;
-    --text-light: #e0e0e0;
-    --dashboard-green: #3a8c61;
-    --custom-btn-bg: #2a4a44;
-    --custom-btn-hover: #1f3a36;
-    --info-bg: #2a4a44;
+/* Style cho placeholder của ô tìm kiếm */
+.form-control::placeholder {
+    color: #000000;
+    opacity: 0.7;
+}
+
+.form-control::-webkit-input-placeholder {
+    color: #000000;
+    opacity: 0.7;
+}
+
+.form-control::-moz-placeholder {
+    color: #000000; /* Chế độ sáng */
+    opacity: 0.7;
+}
+
+[data-theme="dark"] .form-control::-moz-placeholder {
+    color: #ffffff; /* Chế độ tối */
+    opacity: 0.7;
+}
+
+.form-control:-ms-input-placeholder {
+    color: #000000; /* Chế độ sáng */
+    opacity: 0.7;
+}
+
+[data-theme="dark"] .form-control:-ms-input-placeholder {
+    color: #ffffff; /* Chế độ tối */
+    opacity: 0.7;
 }
 
 /* Reset default styles */
@@ -71,7 +117,20 @@ body {
 }
 
 .btn-close {
-    background-color: var(--text-color);
+    /* Use transparent background so bootstrap's SVG X is visible and not inside a colored box */
+    background-color: transparent !important;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 6px;
+    opacity: 0.85;
+}
+
+/* Ensure close button inside alerts is small and positioned nicely */
+.alert .btn-close {
+    position: relative;
+    top: 0;
+    right: 0;
+    margin-left: 0.5rem;
 }
 
 /* Image Preview */
@@ -342,6 +401,7 @@ nav .bi-person-circle, nav .bi-bell {
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
 }
 
@@ -364,7 +424,7 @@ nav .bi-person-circle, nav .bi-bell {
 /* Main Content */
 main {
     flex: 1 0 auto;
-    padding-top: 80px;
+    padding-top: 0;
     padding-bottom: 20px;
     position: relative;
     z-index: auto;
@@ -382,15 +442,16 @@ main {
 }
 
 .hero-section h1 {
-    color: var(--text-color);
+    color: white;
     font-size: 2.5rem;
     margin-bottom: 20px;
 }
 
 .hero-section p.lead {
-    color: var(--text-color) !important;
+    color: white !important;
     font-size: 1.2rem;
     margin-bottom: 30px;
+    opacity: 0.95;
 }
 
 .hero-section .custom-btn {
@@ -411,7 +472,7 @@ main {
 }
 
 .hero-section a.custom-link {
-    color: var(--text-color);
+    color: white;
     font-weight: bold;
     text-decoration: none;
 }
@@ -419,6 +480,7 @@ main {
 .hero-section a.custom-link:hover {
     text-decoration: underline;
     color: #E8F5E9;
+    opacity: 0.9;
 }
 
 .hero-section a.highlight-link {
@@ -491,7 +553,6 @@ main {
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    width: 100%;
     font-size: 16px;
     text-decoration: none;
     display: inline-block;
@@ -537,13 +598,13 @@ main {
 .btn-secondary:hover {
     background-color: #5a6268;
 }
-
 /* Messages */
 .messages p, .alert {
     padding: 10px;
     border-radius: 4px;
     margin-bottom: 10px;
     text-align: center;
+    font-weight: 500;
 }
 
 .messages .error, .messages .danger, .alert-danger {
@@ -561,9 +622,19 @@ main {
     color: var(--info-text);
 }
 
+.alert-warning {
+    background-color: var(--warning-bg);
+    color: var(--warning-text);
+}
+
 [data-theme="dark"] .alert-info {
     background-color: var(--info-bg) !important;
     color: #ffffff !important;
+}
+
+[data-theme="dark"] .alert-warning {
+    background-color: var(--warning-bg) !important;
+    color: var(--warning-text) !important;
 }
 
 /* Container trong main */
@@ -595,25 +666,34 @@ main .container {
     height: auto;
     display: block;
     margin: 0 auto;
+    object-fit: contain;
+}
+
+/* Global image styles - prevent breaking layout */
+img {
+    max-width: 100%;
+    height: auto;
 }
 
 /* Kết quả dự đoán */
 main .card-title {
-    color: #000000;
+    color: var(--text-color);
     margin: 0 !important;
+    font-weight: 700;
 }
 
 [data-theme="dark"] main .card-title {
-    color: #ffffff;
+    color: var(--text-color);
 }
 
 main .card-body p {
-    color: #000000;
+    color: var(--text-secondary);
     margin: 10px 0;
+    line-height: 1.6;
 }
 
 [data-theme="dark"] main .card-body p {
-    color: #ffffff;
+    color: var(--text-secondary);
 }
 
 /* Footer */
@@ -668,34 +748,52 @@ footer p {
     color: #ffffff;
 }
 
+/* Table Styles */
+.table {
+    color: var(--text-color);
+}
+
+/* Admin Dashboard Table Override - Force black text on white backgrounds */
+.admin-dashboard .admin-table tbody td,
+.admin-dashboard .admin-table tbody td *:not(.badge):not(.btn) {
+    color: #333333 !important;
+}
+
+.admin-dashboard .admin-table tbody td strong {
+    color: #2E7D32 !important;
+}
+
 .card-body h3, .container h2, .container h1, .container h4, .container h5 {
-    color: #000000;
+    color: var(--text-color);
+    font-weight: 700;
 }
 
 [data-theme="dark"] .card-body h3, [data-theme="dark"] .container h2, [data-theme="dark"] .container h1, [data-theme="dark"] .container h4, [data-theme="dark"] .container h5 {
-    color: #ffffff;
+    color: var(--text-color);
 }
 
-/* Table Styles */
-.table {
+.badge {
+    font-weight: 600;
     color: #000000;
 }
 
-[data-theme="dark"] .table {
+[data-theme="dark"] .badge {
     color: #ffffff;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+    opacity: 0.85;
+}
+
+[data-theme="dark"] .text-muted {
+    color: var(--text-muted) !important;
+    opacity: 0.85;
 }
 
 .table-dark {
     background-color: #343a40;
     color: var(--text-light);
-}
-
-.badge, .text-muted {
-    color: #000000;
-}
-
-[data-theme="dark"] .badge, [data-theme="dark"] .text-muted {
-    color: #ffffff;
 }
 
 /* Form and Input Specific Styles */
@@ -765,12 +863,23 @@ textarea.form-control {
 }
 
 /* Feedback and Result Pages */
-.result h3, .result p {
-    color: #000000;
+.result h3 {
+    color: var(--text-color);
+    font-weight: 700;
 }
 
-[data-theme="dark"] .result h3, [data-theme="dark"] .result p {
-    color: #ffffff;
+.result p {
+    color: var(--text-secondary);
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+[data-theme="dark"] .result h3 {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .result p {
+    color: var(--text-secondary);
 }
 
 /* Responsive design for smaller screens */
