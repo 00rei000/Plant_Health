@@ -1,1 +1,62 @@
-{"Apple": ["Apple Scab", "Black Rot", "Cedar Apple Rust", "Healthy"], "Tomato": ["Bacterial Spot", "Early Blight", "Healthy", "Late Blight", "Leaf Mold", "Septoria Leaf Spot", "Spider Mites Two-Spotted Spider Mite", "Target Spot", "Tomato Mosaic Virus", "Tomato Yellow Leaf Curl Virus"], "Potato": ["Early Blight", "Healthy", "Late Blight"], "Corn": ["Cercospora Leaf Spot Gray Leaf Spot", "Common Rust", "Healthy", "Northern Leaf Blight"], "Grape": ["Black Rot", "Esca (Black Measles)", "Healthy", "Leaf Blight (Isariopsis Leaf Spot)"], "Cherry": ["Healthy", "Powdery Mildew"], "Peach": ["Bacterial Spot", "Healthy"], "Pepper": ["Bacterial Spot", "Healthy"], "Strawberry": ["Healthy", "Leaf Scorch"]}
+{
+    "Apple": [
+        "Apple Scab",
+        "Black Rot",
+        "Cedar Apple Rust",
+        "Healthy"
+    ],
+    "Tomato": [
+        "Bacterial Spot",
+        "Early Blight",
+        "Healthy",
+        "Late Blight",
+        "Leaf Mold",
+        "Septoria Leaf Spot",
+        "Spider Mites Two-Spotted Spider Mite",
+        "Target Spot",
+        "Tomato Mosaic Virus",
+        "Tomato Yellow Leaf Curl Virus"
+    ],
+    "Potato_3": [
+        "Early Blight",
+        "Healthy",
+        "Late Blight"
+    ],
+    "Corn": [
+        "Cercospora Leaf Spot Gray Leaf Spot",
+        "Common Rust",
+        "Healthy",
+        "Northern Leaf Blight"
+    ],
+    "Grape": [
+        "Black Rot",
+        "Esca (Black Measles)",
+        "Healthy",
+        "Leaf Blight (Isariopsis Leaf Spot)"
+    ],
+    "Cherry": [
+        "Healthy",
+        "Powdery Mildew"
+    ],
+    "Peach": [
+        "Bacterial Spot",
+        "Healthy"
+    ],
+    "Pepper": [
+        "Bacterial Spot",
+        "Healthy"
+    ],
+    "Strawberry": [
+        "Healthy",
+        "Leaf Scorch"
+    ],
+    "Potato_7": [
+        "Bacteria",
+        "Fungi",
+        "Healthy",
+        "Nematode",
+        "Pest",
+        "Phytopthora",
+        "Virus"
+    ]
+}

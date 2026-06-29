@@ -172,7 +172,7 @@
                         </label>
                         <select id="plant_type" name="plant_type" class="form-select form-select-modern">
                             <option value="auto">Tự động nhận diện</option>
-                            {% for plant_type in GROUPS %}
+                            {% for plant_type in PLANT_TYPE_CLASSES %}
                                 {% if plant_type not in 'Blueberry,Orange,Raspberry,Soybean,Squash' %}
                                     <option value="{{ plant_type }}">{{ plant_type }}</option>
                                 {% endif %}

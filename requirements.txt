@@ -80,3 +80,4 @@ urllib3 @ file:///C:/b/abs_7bst06lizn/croot/urllib3_1737133657081/work
 wcwidth @ file:///home/conda/feedstock_root/build_artifacts/wcwidth_1733231326287/work
 win-inet-pton @ file:///C:/ci/win_inet_pton_1605306162074/work
 zipp @ file:///home/conda/feedstock_root/build_artifacts/zipp_1732827521216/work
+ultralytics==8.2.34

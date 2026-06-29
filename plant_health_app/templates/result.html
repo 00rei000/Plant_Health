@@ -192,14 +192,26 @@
     </div>
     
     <div class="row">
-        <!-- Nửa trái: Kết quả dự đoán -->
         <div class="col-lg-6 col-md-12 mb-4">
             <div class="result-card">
                 <h2><i class="bi bi-stars"></i> Kết quả dự đoán</h2>
-                {# Messages are shown centrally in base.html (#global-messages) to avoid duplicates #}
                 <div class="result text-center">
-                    <h4><i class="bi bi-image"></i> Hình ảnh đã tải lên</h4>
-                    <img src="{{ image_url }}" alt="Uploaded Image" class="result-image">
+                    <h4><i class="bi bi-image"></i> Hình ảnh phân tích</h4>
+                    <div class="row align-items-center mb-4">
+                        <div class="col-{% if cropped_image_url %}6{% else %}12{% endif %} text-center">
+                            <p class="text-muted mb-2 fw-bold">Ảnh nguyên bản</p>
+                            <img src="{{ image_url }}" alt="Uploaded Image" class="result-image w-100" style="margin-bottom: 0;">
+                        </div>
+                        
+                        {% if cropped_image_url %}
+                        <div class="col-6 text-center">
+                            <p class="text-success mb-2 fw-bold">
+                                <i class="bi bi-crop"></i> Vùng YOLO trích xuất
+                            </p>
+                            <img src="{{ cropped_image_url }}" alt="Cropped Image" class="result-image w-100" style="border: 3px dashed #4CAF50; margin-bottom: 0; padding: 5px; background: #E8F5E9;">
+                        </div>
+                        {% endif %}
+                    </div>
                     
                     <h4><i class="bi bi-clipboard-data"></i> Kết quả phân tích</h4>
                     {% if prediction %}
@@ -229,7 +241,6 @@
                     {% endif %}
                 </div>
                 
-                <!-- BƯỚC 2: Form xác nhận đóng góp -->
                 <div class="mt-4 p-4" style="background: #FFF9C4; border-radius: 15px; border: 2px solid #FBC02D;">
                     <h4 class="text-center mb-3" style="color: #F57C00;">
                         <i class="bi bi-hand-thumbs-up"></i> Bạn muốn làm gì với kết quả này?
@@ -238,7 +249,6 @@
                     <form method="post" action="{% url 'user_confirm_prediction' prediction_id %}" id="contributionForm">
                         {% csrf_token %}
                         
-                        <!-- Lựa chọn A: Chỉ xem -->
                         <div class="form-check mb-3 p-3" style="background: white; border-radius: 10px; border: 2px solid #E0E0E0;">
                             <input class="form-check-input" type="radio" name="action" value="consulting" id="consultingRadio" checked>
                             <label class="form-check-label" for="consultingRadio" style="font-weight: 600; color: #424242;">
@@ -247,7 +257,6 @@
                             <p class="text-muted ms-4 mb-0 small">Tôi chỉ muốn biết cây bị bệnh gì thôi.</p>
                         </div>
                         
-                        <!-- Lựa chọn B: Đóng góp -->
                         <div class="form-check mb-3 p-3" style="background: white; border-radius: 10px; border: 2px solid #4CAF50;">
                             <input class="form-check-input" type="radio" name="action" value="contributing" id="contributingRadio">
                             <label class="form-check-label" for="contributingRadio" style="font-weight: 600; color: #2E7D32;">
@@ -255,7 +264,6 @@
                             </label>
                             <p class="text-muted ms-4 mb-2 small">Giúp AI học tập và chẩn đoán chính xác hơn.</p>
                             
-                            <!-- Sub-options khi chọn Contributing -->
                             <div id="contributingOptions" style="display: none; margin-left: 2rem; margin-top: 1rem;">
                                 <div class="mb-3">
                                     <label class="form-label" style="font-weight: 600; color: #1B5E20;">
@@ -281,7 +289,6 @@
                                         </label>
                                     </div>
                                     
-                                    <!-- Form tự nhập loại cây và bệnh -->
                                     <div id="customDiseaseSelect" style="display: none; margin-top: 1rem; padding: 1rem; background: #F9FBE7; border-radius: 10px; border: 2px solid #CDDC39;">
                                         <div class="alert alert-info mb-3">
                                             <i class="bi bi-info-circle"></i> <strong>Hướng dẫn:</strong><br>
@@ -290,7 +297,6 @@
                                             • Ví dụ: "xoài" → "Xoài", "cây cam" → "Cây Cam"
                                         </div>
                                         
-                                        <!-- Chọn/Nhập Loại cây -->
                                         <div class="mb-3">
                                             <label class="form-label" style="font-weight: 600; color: #1B5E20;">
                                                 <i class="bi bi-tree"></i> Loại cây:
@@ -313,7 +319,6 @@
                                             </small>
                                         </div>
                                         
-                                        <!-- Chọn/Nhập Tên bệnh -->
                                         <div class="mb-3">
                                             <label class="form-label" style="font-weight: 600; color: #1B5E20;">
                                                 <i class="bi bi-bug"></i> Tên bệnh:
@@ -366,7 +371,6 @@
             </div>
         </div>
 
-        <!-- Nửa phải: Thông tin chi tiết bệnh -->
         <div class="col-lg-6 col-md-12 mb-4">
             <div class="result-card">
                 <h2><i class="bi bi-file-medical"></i> Thông tin bệnh</h2>
@@ -396,7 +400,6 @@
         </div>
     </div>
 
-    <!-- Modal chi tiết bệnh -->
     {% if prediction.disease_details %}
     <div class="modal fade" id="diseaseModal" tabindex="-1" aria-labelledby="diseaseModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">

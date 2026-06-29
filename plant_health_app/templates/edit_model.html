@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Chỉnh sửa Model{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="margin-top: 100px !important;">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Chỉnh sửa Model AI</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-info">
+                            <strong>Loại Model:</strong> 
+                            {% if model_type == 'plant_type' %}
+                                <span class="badge bg-success">Phân loại cây (Plant Type)</span>
+                            {% elif model_type == 'disease' %}
+                                <span class="badge bg-warning text-dark">Phân loại bệnh (Disease) - {{ model.plant_type }}</span>
+                            {% else %}
+                                <span class="badge bg-primary">Segmentation</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Tên Model <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   value="{{ model.name }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Mô tả</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ model.description }}</textarea>
+                        </div>
+
+                        {% if model_type != 'segmentation' %}
+                        <hr>
+                        <h5 class="mb-3">Thông tin kỹ thuật</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="architecture" class="form-label">Kiến trúc <span class="text-danger">*</span></label>
+                                <select class="form-select" id="architecture" name="architecture" required>
+                                    <option value="ResNet50" {% if model.architecture == 'ResNet50' %}selected{% endif %}>ResNet50</option>
+                                    <option value="MobileNetV2" {% if model.architecture == 'MobileNetV2' %}selected{% endif %}>MobileNetV2</option>
+                                    <option value="EfficientNet-B4" {% if model.architecture == 'EfficientNet-B4' %}selected{% endif %}>EfficientNet-B4</option>
+                                    <option value="VGG16" {% if model.architecture == 'VGG16' %}selected{% endif %}>VGG16</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="optimizer" class="form-label">Optimizer <span class="text-danger">*</span></label>
+                                <select class="form-select" id="optimizer" name="optimizer" required>
+                                    <option value="SGD" {% if model.optimizer == 'SGD' %}selected{% endif %}>SGD</option>
+                                    <option value="Adam" {% if model.optimizer == 'Adam' %}selected{% endif %}>Adam</option>
+                                    <option value="AdamW" {% if model.optimizer == 'AdamW' %}selected{% endif %}>AdamW</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {% if model_type == 'disease' %}
+                        <div class="mb-3">
+                            <label for="plant_type" class="form-label">Loại cây áp dụng <span class="text-danger">*</span></label>
+                            <select class="form-select" id="plant_type" name="plant_type" required>
+                                {% for pt in plant_types %}
+                                    <option value="{{ pt }}" {% if model.plant_type == pt %}selected{% endif %}>{{ pt }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="num_classes" class="form-label">Số lớp phân loại <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="num_classes" name="num_classes" 
+                                   min="2" value="{{ model.num_classes }}" required>
+                        </div>
+
+                        <div class="mb-3" id="label_group_field">
+                            <label for="label_group" class="form-label">Tên bộ nhãn (JSON Group) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="label_group" name="label_group" value="{{ model.label_group }}">
+                            <small class="text-muted">Nhập chính xác tên key trong file group_classes.json</small>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="file_path" class="form-label">Đường dẫn file model (.pth) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="file_path" name="file_path" required 
+                                   value="{{ model.file_path }}">
+                            <small class="text-muted">Đường dẫn tương đối từ thư mục gốc project</small>
+                        </div>
+
+                        {% if model_type != 'segmentation' %}
+                        <div class="mb-3">
+                            <label for="dataset" class="form-label">Dataset (tùy chọn)</label>
+                            <select class="form-select" id="dataset" name="dataset">
+                                <option value="">-- Không chọn dataset --</option>
+                                {% for ds in datasets %}
+                                    <option value="{{ ds.id }}" {% if model.dataset and model.dataset.id == ds.id %}selected{% endif %}>
+                                        {{ ds.name }} ({{ ds.total_images }} ảnh)
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <hr>
+                        <h5 class="mb-3">Độ chính xác</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="training_accuracy" class="form-label">Training Accuracy (%)</label>
+                                <input type="number" class="form-control" id="training_accuracy" name="training_accuracy" 
+                                       step="0.01" min="0" max="100" value="{{ model.training_accuracy|default:'' }}">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="validation_accuracy" class="form-label">Validation Accuracy (%)</label>
+                                <input type="number" class="form-control" id="validation_accuracy" name="validation_accuracy" 
+                                       step="0.01" min="0" max="100" value="{{ model.validation_accuracy|default:'' }}">
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-bounding-box"></i> Segmentation model không yêu cầu thông tin kiến trúc, dataset hoặc độ chính xác.
+                        </div>
+                        {% endif %}
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'manage_models' %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block title %}Chọn vùng lá{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="margin-top: 100px !important;">
+    <div class="row">
+        <div class="col-lg-10 offset-lg-1">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-bezier2"></i> Chọn vùng lá để dự đoán</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Click để chọn một vùng, kéo các điểm để chỉnh polygon. <br>
+                        <strong>Shift + click</strong> để thêm điểm, <strong>Alt + click</strong> để xóa điểm.
+                    </p>
+
+                    <div class="row g-3">
+                        <div class="col-lg-8">
+                            <div class="border rounded p-2 bg-light">
+                                <canvas id="segmentCanvas" class="w-100" style="max-height: 70vh; touch-action: none;"></canvas>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                <button type="button" class="btn btn-outline-secondary" id="resetSelection">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Reset vùng chọn
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" id="deleteSelection">
+                                    <i class="bi bi-trash"></i> Xóa vùng chọn
+                                </button>
+                                <button type="button" class="btn btn-success ms-auto" id="confirmSelection">
+                                    <i class="bi bi-check-circle"></i> Xác nhận vùng
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="border rounded p-3 h-100">
+                                <h6 class="mb-3"><i class="bi bi-crop"></i> Ảnh đã crop (xem trước)</h6>
+                                <img id="croppedPreview" src="" alt="Cropped preview" class="img-fluid rounded border" style="display: none;" />
+                                <p id="croppedPlaceholder" class="text-muted">Chọn hoặc chỉnh vùng để xem ảnh đã crop.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST" id="segmentForm" class="d-none" action="{{ submit_url }}">
+                        {% csrf_token %}
+                        <input type="hidden" name="selected_segment" id="selectedSegmentInput" />
+                        <input type="hidden" name="image_id" value="{{ image_id }}" />
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ segment_data|json_script:"segment-data" }}
+
+<script>
+const canvas = document.getElementById('segmentCanvas');
+const ctx = canvas.getContext('2d');
+const resetBtn = document.getElementById('resetSelection');
+const deleteBtn = document.getElementById('deleteSelection');
+const confirmBtn = document.getElementById('confirmSelection');
+const selectedInput = document.getElementById('selectedSegmentInput');
+const form = document.getElementById('segmentForm');
+const previewImg = document.getElementById('croppedPreview');
+const previewPlaceholder = document.getElementById('croppedPlaceholder');
+
+const imageUrl = "{{ image_url }}";
+const rawSegments = JSON.parse(document.getElementById('segment-data').textContent || '[]');
+
+const state = {
+    image: new Image(),
+    polygons: rawSegments.map((seg, idx) => ({
+        id: seg.id || idx,
+        points: (seg.points || seg.mask || []).map(p => ({ x: p[0], y: p[1] })),
+        selected: false,
+    })).filter(poly => poly.points.length >= 3),
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+    draggingPoint: false,
+    activePolygon: null,
+    activePointIndex: null,
+};
+
+function resizeCanvas() {
+    const parent = canvas.parentElement;
+    canvas.width = parent.clientWidth;
+    canvas.height = Math.min(parent.clientWidth * 0.75, window.innerHeight * 0.6);
+    draw();
+}
+
+function loadImage() {
+    state.image.onload = () => {
+        resizeCanvas();
+        draw();
+    };
+    state.image.src = imageUrl;
+}
+
+function draw() {
+    if (!state.image.complete) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const scale = Math.min(canvas.width / state.image.width, canvas.height / state.image.height);
+    state.scale = scale;
+    state.offsetX = (canvas.width - state.image.width * scale) / 2;
+    state.offsetY = (canvas.height - state.image.height * scale) / 2;
+
+    ctx.drawImage(
+        state.image,
+        state.offsetX,
+        state.offsetY,
+        state.image.width * scale,
+        state.image.height * scale
+    );
+
+    state.polygons.forEach((poly) => {
+        drawPolygon(poly);
+    });
+}
+
+function drawPolygon(poly) {
+    if (poly.points.length < 3) return;
+    ctx.beginPath();
+    const first = toCanvasPoint(poly.points[0]);
+    ctx.moveTo(first.x, first.y);
+    poly.points.slice(1).forEach((pt) => {
+        const cpt = toCanvasPoint(pt);
+        ctx.lineTo(cpt.x, cpt.y);
+    });
+    ctx.closePath();
+
+    ctx.strokeStyle = poly.selected ? '#198754' : '#0d6efd';
+    ctx.lineWidth = poly.selected ? 3 : 2;
+    ctx.stroke();
+
+    ctx.fillStyle = poly.selected ? 'rgba(25,135,84,0.2)' : 'rgba(13,110,253,0.15)';
+    ctx.fill();
+
+    if (poly.selected) {
+        poly.points.forEach((pt) => {
+            const cpt = toCanvasPoint(pt);
+            ctx.fillStyle = '#198754';
+            ctx.beginPath();
+            ctx.arc(cpt.x, cpt.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+}
+
+function toCanvasPoint(pt) {
+    return {
+        x: pt.x * state.scale + state.offsetX,
+        y: pt.y * state.scale + state.offsetY,
+    };
+}
+
+function toImagePoint(x, y) {
+    return {
+        x: (x - state.offsetX) / state.scale,
+        y: (y - state.offsetY) / state.scale,
+    };
+}
+
+function clearSelection() {
+    state.polygons.forEach(poly => poly.selected = false);
+    state.activePolygon = null;
+    state.activePointIndex = null;
+}
+
+function findPolygonAt(x, y) {
+    for (let i = state.polygons.length - 1; i >= 0; i -= 1) {
+        const poly = state.polygons[i];
+        if (isPointInPolygon({ x, y }, poly)) {
+            return i;
+        }
+    }
+    return null;
+}
+
+function isPointInPolygon(point, poly) {
+    const pts = poly.points.map(toCanvasPoint);
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+        const xi = pts[i].x, yi = pts[i].y;
+        const xj = pts[j].x, yj = pts[j].y;
+        const intersect = ((yi > point.y) !== (yj > point.y)) &&
+            (point.x < (xj - xi) * (point.y - yi) / (yj - yi + 1e-6) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
+function findPointHandle(x, y, poly) {
+    for (let i = 0; i < poly.points.length; i += 1) {
+        const cpt = toCanvasPoint(poly.points[i]);
+        if (Math.hypot(cpt.x - x, cpt.y - y) <= 8) {
+            return i;
+        }
+    }
+    return null;
+}
+
+function updatePreview() {
+    const poly = state.activePolygon;
+    if (!poly || poly.points.length < 3) {
+        previewImg.style.display = 'none';
+        previewPlaceholder.style.display = 'block';
+        return;
+    }
+
+    const xs = poly.points.map(p => p.x);
+    const ys = poly.points.map(p => p.y);
+    const minX = Math.max(0, Math.min(...xs));
+    const minY = Math.max(0, Math.min(...ys));
+    const maxX = Math.min(state.image.width, Math.max(...xs));
+    const maxY = Math.min(state.image.height, Math.max(...ys));
+    const width = maxX - minX;
+    const height = maxY - minY;
+    if (width <= 1 || height <= 1) {
+        previewImg.style.display = 'none';
+        previewPlaceholder.style.display = 'block';
+        return;
+    }
+
+    const off = document.createElement('canvas');
+    off.width = Math.ceil(width);
+    off.height = Math.ceil(height);
+    const octx = off.getContext('2d');
+    octx.save();
+    octx.beginPath();
+    poly.points.forEach((pt, idx) => {
+        const px = pt.x - minX;
+        const py = pt.y - minY;
+        if (idx === 0) {
+            octx.moveTo(px, py);
+        } else {
+            octx.lineTo(px, py);
+        }
+    });
+    octx.closePath();
+    octx.clip();
+    octx.drawImage(state.image, -minX, -minY);
+    octx.restore();
+
+    previewImg.src = off.toDataURL('image/png');
+    previewImg.style.display = 'block';
+    previewPlaceholder.style.display = 'none';
+}
+
+canvas.addEventListener('mousedown', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const polyIndex = findPolygonAt(x, y);
+    if (polyIndex !== null) {
+        clearSelection();
+        const poly = state.polygons[polyIndex];
+        poly.selected = true;
+        state.activePolygon = poly;
+        const handleIndex = findPointHandle(x, y, poly);
+        if (handleIndex !== null) {
+            state.draggingPoint = true;
+            state.activePointIndex = handleIndex;
+        } else if (event.shiftKey) {
+            const imgPoint = toImagePoint(x, y);
+            poly.points.push(imgPoint);
+        }
+    } else if (event.shiftKey && state.activePolygon) {
+        const imgPoint = toImagePoint(x, y);
+        state.activePolygon.points.push(imgPoint);
+    } else {
+        clearSelection();
+    }
+    draw();
+    updatePreview();
+});
+
+canvas.addEventListener('mousemove', (event) => {
+    if (!state.draggingPoint || !state.activePolygon) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const imgPoint = toImagePoint(x, y);
+    const idx = state.activePointIndex;
+    if (idx !== null) {
+        state.activePolygon.points[idx] = imgPoint;
+        draw();
+        updatePreview();
+    }
+});
+
+canvas.addEventListener('mouseup', () => {
+    state.draggingPoint = false;
+    state.activePointIndex = null;
+});
+
+canvas.addEventListener('click', (event) => {
+    if (!event.altKey || !state.activePolygon) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const idx = findPointHandle(x, y, state.activePolygon);
+    if (idx !== null && state.activePolygon.points.length > 3) {
+        state.activePolygon.points.splice(idx, 1);
+        draw();
+        updatePreview();
+    }
+});
+
+window.addEventListener('resize', resizeCanvas);
+
+resetBtn.addEventListener('click', () => {
+    clearSelection();
+    draw();
+    updatePreview();
+});
+
+deleteBtn.addEventListener('click', () => {
+    if (state.activePolygon) {
+        const index = state.polygons.findIndex(p => p.id === state.activePolygon.id);
+        if (index >= 0) {
+            state.polygons.splice(index, 1);
+        }
+        clearSelection();
+        draw();
+        updatePreview();
+    }
+});
+
+confirmBtn.addEventListener('click', () => {
+    if (!state.activePolygon || state.activePolygon.points.length < 3) {
+        alert('Vui lòng chọn một vùng lá trước khi xác nhận.');
+        return;
+    }
+    const payload = {
+        id: state.activePolygon.id,
+        points: state.activePolygon.points.map(pt => [Math.round(pt.x), Math.round(pt.y)]),
+    };
+    selectedInput.value = JSON.stringify(payload);
+    form.submit();
+});
+
+loadImage();
+</script>
+{% endblock %}
