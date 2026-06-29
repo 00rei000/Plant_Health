@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block title %}Tạo Dataset Mới{% endblock %}
+
+{% block content %}
+<style>
+    .dataset-create-container {
+        padding: 2rem 0;
+        margin-top: 80px;
+    }
+    
+    .dataset-create-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .dataset-create-card .card-header {
+        background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        border: none;
+    }
+    
+    .dataset-create-card .card-header h4 {
+        color: white !important;
+        margin: 0;
+        font-weight: 700;
+    }
+    
+    .dataset-create-card .card-body {
+        padding: 2rem;
+    }
+    
+    .info-alert {
+        background: #E3F2FD;
+        border-left: 4px solid #2196F3;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-alert i {
+        color: #2196F3;
+        margin-right: 0.5rem;
+    }
+    
+    .form-section-title {
+        color: #1B5E20;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #4CAF50;
+    }
+    
+    .form-label {
+        color: #1B5E20;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #E8F5E9;
+        border-radius: 8px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+    }
+    
+    .form-check-input {
+        width: 1.2rem;
+        height: 1.2rem;
+        border: 2px solid #4CAF50;
+        cursor: pointer;
+    }
+    
+    .form-check-input:checked {
+        background-color: #4CAF50;
+        border-color: #4CAF50;
+    }
+    
+    .form-check-label {
+        margin-left: 0.5rem;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #757575 0%, #616161 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(117, 117, 117, 0.3);
+    }
+    
+    .text-muted {
+        font-size: 0.875rem;
+        color: #757575 !important;
+    }
+</style>
+
+<div class="dataset-create-container">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="dataset-create-card card">
+                    <div class="card-header">
+                        <h4><i class="bi bi-database-fill"></i> Tạo Dataset Huấn Luyện Mới</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            
+                            <div class="info-alert">
+                                <i class="bi bi-info-circle-fill"></i>
+                                <strong>Tổng số ảnh mới đã được duyệt:</strong> {{ total_new_images }} ảnh
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Tên Dataset <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" required 
+                                       placeholder="VD: Apple Disease Dataset v1.0">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Mô tả</label>
+                                <textarea class="form-control" id="description" name="description" rows="3"
+                                          placeholder="Mô tả về dataset này..."></textarea>
+                            </div>
+
+                            <hr class="my-4">
+                            <h5 class="form-section-title"><i class="bi bi-funnel"></i> Loại Dataset</h5>
+
+                            <div class="mb-3">
+                                <label for="dataset_type" class="form-label">Loại Dataset <span class="text-danger">*</span></label>
+                                <select class="form-select" id="dataset_type" name="dataset_type" required onchange="togglePlantTypeField()">
+                                    <option value="DISEASE" selected>Phân loại bệnh (Disease Classification)</option>
+                                    <option value="PLANT_TYPE">Phân loại cây (Plant Type Classification)</option>
+                                </select>
+                                <small class="text-muted">
+                                    <strong>Phân loại bệnh:</strong> Dataset cho 1 loại cây cụ thể (Apple, Tomato, v.v.)<br>
+                                    <strong>Phân loại cây:</strong> Dataset nhận diện 9 loại cây
+                                </small>
+                            </div>
+
+                            <div class="mb-3" id="plant_type_field">
+                                <label for="plant_type" class="form-label">Loại cây <span class="text-danger">*</span></label>
+                                <select class="form-select" id="plant_type" name="plant_type">
+                                    <option value="">-- Chọn loại cây --</option>
+                                    {% for pt, count in plant_type_stats.items %}
+                                        <option value="{{ pt }}">{{ pt }} ({{ count }} ảnh mới)</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Chỉ áp dụng cho Dataset phân loại bệnh</small>
+                            </div>
+
+                            <hr class="my-4">
+                            <h5 class="form-section-title"><i class="bi bi-database"></i> Nguồn Dữ Liệu</h5>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="include_new_contributions" 
+                                       name="include_new_contributions" checked>
+                                <label class="form-check-label" for="include_new_contributions">
+                                    <strong>Bao gồm ảnh mới từ user đóng góp</strong>
+                                    <small class="text-muted d-block">{{ total_new_images }} ảnh đã được duyệt</small>
+                                </label>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="include_original_dataset" 
+                                       name="include_original_dataset">
+                                <label class="form-check-label" for="include_original_dataset">
+                                    <strong>Bao gồm ảnh từ dataset gốc (~87,000 ảnh)</strong>
+                                    <small class="text-muted d-block">Dataset PlantVillage gốc đã được train</small>
+                                </label>
+                            </div>
+
+                            <div class="mb-3" id="original_dataset_path_field" style="display: none;">
+                                <label for="original_dataset_path" class="form-label">Đường dẫn dataset gốc</label>
+                                <input type="text" class="form-control" id="original_dataset_path" name="original_dataset_path"
+                                       value="media\plant_images"
+                                       placeholder="VD: media\plant_images">
+                                <small class="text-muted">Đường dẫn tương đối từ thư mục gốc project (BASE_DIR)</small>
+                            </div>
+
+                            <hr class="my-4">
+                            <h5 class="form-section-title"><i class="bi bi-funnel"></i> Tùy chọn lọc dữ liệu</h5>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="remove_duplicates" name="remove_duplicates" checked>
+                                <label class="form-check-label" for="remove_duplicates">
+                                    <strong>Loại bỏ ảnh trùng lặp</strong>
+                                    <small class="text-muted d-block">Sử dụng thuật toán phát hiện ảnh giống nhau</small>
+                                </label>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="remove_blurry" name="remove_blurry" checked>
+                                <label class="form-check-label" for="remove_blurry">
+                                    <strong>Loại bỏ ảnh mờ</strong>
+                                    <small class="text-muted d-block">Dùng ngưỡng Laplacian variance để phát hiện ảnh mờ</small>
+                                </label>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="blur_threshold" class="form-label">Ngưỡng phát hiện mờ</label>
+                                <input type="number" class="form-control" id="blur_threshold" name="blur_threshold" 
+                                       value="100" step="10" min="50" max="500">
+                                <small class="text-muted">Giá trị thấp hơn = nghiêm ngặt hơn (100-200 là phù hợp)</small>
+                            </div>
+
+                            <h5 class="form-section-title"><i class="bi bi-shuffle"></i> Chọn mẫu ngẫu nhiên</h5>
+
+                            <div class="mb-3">
+                                <label for="sample_size" class="form-label">Số lượng ảnh mẫu (tùy chọn)</label>
+                                <input type="number" class="form-control" id="sample_size" name="sample_size" 
+                                       placeholder="VD: 85000 (để trống = lấy tất cả)">
+                                <small class="text-muted">
+                                    <strong>Ví dụ:</strong> Nhập 85000 để chọn ngẫu nhiên 85,000 ảnh từ tổng (ảnh mới + dataset gốc)<br>
+                                    <strong>Lưu ý:</strong> Sampling xảy ra TRƯỚC khi xử lý blur/duplicate để tiết kiệm thời gian
+                                </small>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                <a href="{% url 'manage_datasets' %}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Hủy
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> Tạo và Xử lý Dataset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePlantTypeField() {
+    const datasetType = document.getElementById('dataset_type').value;
+    const plantTypeField = document.getElementById('plant_type_field');
+    const plantTypeSelect = document.getElementById('plant_type');
+    
+    if (datasetType === 'DISEASE') {
+        plantTypeField.style.display = 'block';
+        plantTypeSelect.setAttribute('required', 'required');
+    } else {
+        plantTypeField.style.display = 'none';
+        plantTypeSelect.removeAttribute('required');
+        plantTypeSelect.value = '';
+    }
+}
+
+// Toggle original dataset path field
+document.getElementById('include_original_dataset').addEventListener('change', function() {
+    const pathField = document.getElementById('original_dataset_path_field');
+    if (this.checked) {
+        pathField.style.display = 'block';
+    } else {
+        pathField.style.display = 'none';
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    togglePlantTypeField();
+});
+</script>
+{% endblock %}

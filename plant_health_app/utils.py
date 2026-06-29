@@ -71,3 +71,97 @@ CLASS_NAME_TO_DISEASE = {
     'Tomato___Tomato_mosaic_virus': 'Tomato mosaic virus',
     'Tomato___Tomato_Yellow_Leaf_Curl_Virus': 'Tomato yellow leaf curl virus'
 }
+
+
+import cv2
+import numpy as np
+from PIL import Image
+import hashlib
+from pathlib import Path
+
+
+def calculate_blur_score(image_path):
+    """
+    Calculate blur score using Laplacian variance.
+    Lower score = more blurry
+    Typical threshold: 100-200
+    """
+    try:
+        # Read image
+        img = cv2.imread(str(image_path))
+        if img is None:
+            return None
+        
+        # Convert to grayscale
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Calculate Laplacian variance
+        laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+        
+        return laplacian_var
+    except Exception as e:
+        print(f"Error calculating blur score for {image_path}: {e}")
+        return None
+
+
+def is_image_blurry(image_path, threshold=100.0):
+    """
+    Check if image is blurry based on threshold.
+    """
+    score = calculate_blur_score(image_path)
+    if score is None:
+        return False
+    return score < threshold
+
+
+def calculate_image_hash(image_path):
+    """
+    Calculate perceptual hash of image for duplicate detection.
+    Uses average hash algorithm.
+    """
+    try:
+        # Open image
+        img = Image.open(image_path)
+        
+        # Resize to 8x8
+        img = img.resize((8, 8), Image.Resampling.LANCZOS)
+        
+        # Convert to grayscale
+        img = img.convert('L')
+        
+        # Get pixel data
+        pixels = list(img.getdata())
+        
+        # Calculate average
+        avg = sum(pixels) / len(pixels)
+        
+        # Create hash
+        hash_bits = ''.join('1' if pixel > avg else '0' for pixel in pixels)
+        
+        # Convert to hex
+        hash_hex = hex(int(hash_bits, 2))[2:].zfill(16)
+        
+        return hash_hex
+    except Exception as e:
+        print(f"Error calculating hash for {image_path}: {e}")
+        return None
+
+
+def find_duplicate_images(image_paths):
+    """
+    Find duplicate images based on perceptual hash.
+    Returns a dictionary mapping hash to list of image paths.
+    """
+    hash_dict = {}
+    
+    for image_path in image_paths:
+        image_hash = calculate_image_hash(image_path)
+        if image_hash:
+            if image_hash not in hash_dict:
+                hash_dict[image_hash] = []
+            hash_dict[image_hash].append(image_path)
+    
+    # Return only hashes with duplicates
+    duplicates = {k: v for k, v in hash_dict.items() if len(v) > 1}
+    
+    return duplicates

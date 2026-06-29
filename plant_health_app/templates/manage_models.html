@@ -1,0 +1,431 @@
+{% extends 'base.html' %}
+
+{% block title %}Quản lý Model{% endblock %}
+
+{% block content %}
+<style>
+    .model-container {
+        padding: 2rem 0;
+        margin-top: 80px;
+    }
+    
+    .model-header {
+        background: linear-gradient(135deg, #1B5E20 0%, #0D3012 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(27, 94, 32, 0.4);
+    }
+    
+    .model-header h1 {
+        font-weight: 800;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        color: white !important;
+    }
+    
+    .model-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        color: white !important;
+    }
+    
+    .model-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .model-section h3 {
+        color: #1B5E20;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 3px solid #4CAF50;
+    }
+    
+    .model-card {
+        background: #F1F8E9;
+        border-left: 4px solid #4CAF50;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .model-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
+    }
+    
+    .model-card.default {
+        border-left-color: #FF9800;
+        background: #FFF3E0;
+    }
+    
+    .model-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .info-label {
+        font-size: 0.85rem;
+        color: #558B2F;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-value {
+        font-size: 1rem;
+        color: #1B5E20;
+        font-weight: 500;
+    }
+</style>
+
+<div class="model-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="model-header">
+            <h1><i class="bi bi-cpu-fill"></i> Quản lý Model AI</h1>
+            <p>Quản lý các phiên bản mô hình và chọn model mặc định cho hệ thống</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Action Button -->
+        <div class="text-end mb-4">
+            <a href="{% url 'add_model' %}" class="btn btn-success btn-lg">
+                <i class="bi bi-plus-circle"></i> Thêm Model Mới
+            </a>
+        </div>
+
+        <!-- Plant Type Models -->
+        <div class="model-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0"><i class="bi bi-tree-fill"></i> Model Phân Loại Cây</h3>
+                <button class="btn btn-outline-success btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#plantTypeModelsCollapse" aria-expanded="true">
+                    <i class="bi bi-chevron-down"></i> Thu gọn/Mở rộng
+                </button>
+            </div>
+            
+            <div class="collapse show" id="plantTypeModelsCollapse">
+            {% if plant_type_models %}
+                {% for model in plant_type_models %}
+                    <div class="model-card {% if model.is_default %}default{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-2">
+                                    {{ model.name }}
+                                    {% if model.is_default %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-star-fill"></i> Đang sử dụng
+                                        </span>
+                                    {% endif %}
+                                </h5>
+                                <p class="text-muted mb-3">{{ model.description }}</p>
+                                
+                                <div class="model-info">
+                                    <div class="info-item">
+                                        <span class="info-label">Kiến trúc</span>
+                                        <span class="info-value">{{ model.architecture }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Optimizer</span>
+                                        <span class="info-value">{{ model.optimizer }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Training Acc</span>
+                                        <span class="info-value">
+                                            {% if model.training_accuracy %}
+                                                {{ model.training_accuracy|floatformat:2 }}%
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Validation Acc</span>
+                                        <span class="info-value">
+                                            {% if model.validation_accuracy %}
+                                                {{ model.validation_accuracy|floatformat:2 }}%
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Ngày tạo</span>
+                                        <span class="info-value">{{ model.created_at|date:"d/m/Y" }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Người tạo</span>
+                                        <span class="info-value">{{ model.created_by.username }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="ms-3">
+                                <a href="{% url 'edit_model' 'plant_type' model.id %}" 
+                                   class="btn btn-primary btn-sm mb-2 d-block">
+                                    <i class="bi bi-pencil-square"></i> Chỉnh sửa
+                                </a>
+                                {% if not model.is_default %}
+                                    <a href="{% url 'set_default_model' 'plant_type' model.id %}" 
+                                       class="btn btn-success btn-sm mb-2 d-block"
+                                       onclick="return confirm('Chọn model này làm mặc định?')">
+                                        <i class="bi bi-check-circle"></i> Chọn làm mặc định
+                                    </a>
+                                    <a href="{% url 'delete_model' 'plant_type' model.id %}" 
+                                       class="btn btn-danger btn-sm d-block"
+                                       onclick="return confirm('Bạn có chắc muốn xóa model này?')">
+                                        <i class="bi bi-trash"></i> Xóa
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-secondary btn-sm d-block" disabled>
+                                        <i class="bi bi-lock"></i> Đang sử dụng
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Chưa có model phân loại cây nào.
+                </div>
+            {% endif %}
+            </div>
+        </div>
+
+        <!-- Disease Models -->
+        <div class="model-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0"><i class="bi bi-bug-fill"></i> Model Phân Loại Bệnh</h3>
+                <button class="btn btn-outline-success btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#diseaseModelsCollapse" aria-expanded="true">
+                    <i class="bi bi-chevron-down"></i> Thu gọn/Mở rộng
+                </button>
+            </div>
+            
+            <div class="collapse show" id="diseaseModelsCollapse">
+            {% if disease_models_grouped %}
+                {% for plant_type, models in disease_models_grouped.items %}
+                    <!-- Accordion for each plant type -->
+                    <div class="accordion mb-3" id="accordion{{ plant_type }}">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ plant_type }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ plant_type }}" aria-expanded="false" aria-controls="collapse{{ plant_type }}">
+                                    <strong><i class="bi bi-tree"></i> {{ plant_type }}</strong>
+                                    <span class="badge bg-success ms-2">{{ models|length }} model(s)</span>
+                                </button>
+                            </h2>
+                            <div id="collapse{{ plant_type }}" class="accordion-collapse collapse" aria-labelledby="heading{{ plant_type }}" data-bs-parent="#accordion{{ plant_type }}">
+                                <div class="accordion-body">
+                    {% for model in models %}
+                        <div class="model-card {% if model.is_default %}default{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h5 class="mb-2">
+                                        {{ model.name }}
+                                        {% if model.is_default %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-star-fill"></i> Đang sử dụng
+                                            </span>
+                                        {% endif %}
+                                    </h5>
+                                    <p class="text-muted mb-3">{{ model.description }}</p>
+                                    
+                                    <div class="model-info">
+                                        <div class="info-item">
+                                            <span class="info-label">Loại cây</span>
+                                            <span class="info-value">{{ model.plant_type }}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Kiến trúc</span>
+                                            <span class="info-value">{{ model.architecture }}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Optimizer</span>
+                                            <span class="info-value">{{ model.optimizer }}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Training Acc</span>
+                                            <span class="info-value">
+                                                {% if model.training_accuracy %}
+                                                    {{ model.training_accuracy|floatformat:2 }}%
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Validation Acc</span>
+                                            <span class="info-value">
+                                                {% if model.validation_accuracy %}
+                                                    {{ model.validation_accuracy|floatformat:2 }}%
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Ngày tạo</span>
+                                            <span class="info-value">{{ model.created_at|date:"d/m/Y" }}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Người tạo</span>
+                                            <span class="info-value">
+                                                {% if model.created_by %}
+                                                    {{ model.created_by.username }}
+                                                {% else %}
+                                                    System
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="ms-3">
+                                    <a href="{% url 'edit_model' 'disease' model.id %}" 
+                                       class="btn btn-primary btn-sm mb-2 d-block">
+                                        <i class="bi bi-pencil-square"></i> Chỉnh sửa
+                                    </a>
+                                    {% if not model.is_default %}
+                                        <a href="{% url 'set_default_model' 'disease' model.id %}" 
+                                           class="btn btn-success btn-sm mb-2 d-block"
+                                           onclick="return confirm('Chọn model này làm mặc định cho {{ model.plant_type }}?')">
+                                            <i class="bi bi-check-circle"></i> Chọn làm mặc định
+                                        </a>
+                                        <a href="{% url 'delete_model' 'disease' model.id %}" 
+                                           class="btn btn-danger btn-sm d-block"
+                                           onclick="return confirm('Bạn có chắc muốn xóa model này?')">
+                                            <i class="bi bi-trash"></i> Xóa
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm d-block" disabled>
+                                            <i class="bi bi-lock"></i> Đang sử dụng
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Chưa có model phân loại bệnh nào.
+                </div>
+            {% endif %}
+            </div>
+        </div>
+
+        <!-- Segmentation Models -->
+        <div class="model-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0"><i class="bi bi-bounding-box"></i> Segmentation Models</h3>
+                <button class="btn btn-outline-success btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#segmentationModelsCollapse" aria-expanded="true">
+                    <i class="bi bi-chevron-down"></i> Thu gọn/Mở rộng
+                </button>
+            </div>
+
+            <div class="collapse show" id="segmentationModelsCollapse">
+            {% if segmentation_models %}
+                {% for model in segmentation_models %}
+                    <div class="model-card {% if model.is_default %}default{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-2">
+                                    {{ model.name }}
+                                    {% if model.is_default %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-star-fill"></i> Đang sử dụng
+                                        </span>
+                                    {% endif %}
+                                </h5>
+                                <p class="text-muted mb-3">{{ model.description }}</p>
+
+                                <div class="model-info">
+                                    <div class="info-item">
+                                        <span class="info-label">File</span>
+                                        <span class="info-value">{{ model.file_path }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Ngày tạo</span>
+                                        <span class="info-value">{{ model.created_at|date:"d/m/Y" }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Người tạo</span>
+                                        <span class="info-value">
+                                            {% if model.created_by %}
+                                                {{ model.created_by.username }}
+                                            {% else %}
+                                                System
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ms-3">
+                                <a href="{% url 'edit_model' 'segmentation' model.id %}"
+                                   class="btn btn-primary btn-sm mb-2 d-block">
+                                    <i class="bi bi-pencil-square"></i> Chỉnh sửa
+                                </a>
+                                {% if not model.is_default %}
+                                    <a href="{% url 'set_default_model' 'segmentation' model.id %}"
+                                       class="btn btn-success btn-sm mb-2 d-block"
+                                       onclick="return confirm('Chọn model segmentation này làm mặc định?')">
+                                        <i class="bi bi-check-circle"></i> Chọn làm mặc định
+                                    </a>
+                                    <a href="{% url 'delete_model' 'segmentation' model.id %}"
+                                       class="btn btn-danger btn-sm d-block"
+                                       onclick="return confirm('Bạn có chắc muốn xóa model này?')">
+                                        <i class="bi bi-trash"></i> Xóa
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-secondary btn-sm d-block" disabled>
+                                        <i class="bi bi-lock"></i> Đang sử dụng
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Chưa có segmentation model nào.
+                </div>
+            {% endif %}
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="text-center mt-4">
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary btn-lg">
+                <i class="bi bi-arrow-left"></i> Quay lại Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

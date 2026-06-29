@@ -1,32 +1,57 @@
+# Django imports
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login as auth_login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import PasswordChangeForm
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import JsonResponse
 from django.contrib import messages
-from django.db.models import Count
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import JsonResponse, HttpResponse
+from django.db.models import Count, Q, Avg
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from django.conf import settings
-from django.db.models import Q
-import requests
-from datetime import datetime
-
-from django.urls import reverse  # Thêm import reverse để sử dụng hàm reverse
-from django import forms
-
-from .models import Feedback, DiseaseLibrary, UserProfile, PredictionHistory, Notification, DeletedObject, BlogPost, BlogComment
 from django.core import serializers as django_serializers
+from django.core.files import File
+from django.urls import reverse
+from django import forms
+import time
+
+# Python standard library imports
 import os
+import re
+import csv
+import json
+import random
+import difflib
+import traceback
+import threading
+import zipfile
+import mimetypes
+import glob
+import uuid
+from datetime import datetime
+from pathlib import Path
+
+# Third-party imports
+import requests
 import torch
 import torch.nn as nn
-from torchvision import models, transforms
+from torchvision import transforms
+from torchvision.models import efficientnet_b4, EfficientNet_B4_Weights
+import numpy as np
 from PIL import Image
-import json
-import difflib
-import re
+from ultralytics import YOLO
+import django
+
+# Local imports
+from .utils import calculate_blur_score, calculate_image_hash
+from .models import (
+    Feedback, DiseaseLibrary, UserProfile, PredictionHistory, 
+    Notification, DeletedObject, BlogPost, BlogComment,
+    TrainingDataset, TrainingDatasetImage, ExportTask,
+    PlantTypeModel, DiseaseModel, SegmentationModel
+)
 
 # Đọc group_classes.json
 with open(os.path.join(settings.BASE_DIR, 'plant_health_app', 'notebook', 'plant_disease', 'group_classes.json'), 'r', encoding='utf-8') as f:
@@ -47,6 +72,20 @@ def _normalize_name(s: str) -> str:
     if not s:
         return ''
     return re.sub(r'[^a-z0-9]', '', s.lower())
+
+
+def normalize_plant_type(value: str) -> str:
+    if not value:
+        return value
+    raw_value = value.strip()
+    if raw_value.lower() == 'auto':
+        return 'auto'
+    normalized = _normalize_name(raw_value)
+    if normalized == 'potatofield':
+        return 'Potato'
+    if normalized == 'potato':
+        return 'Potato'
+    return raw_value
 
 
 def get_disease_details_dict(disease_name, plant_type):
@@ -122,24 +161,10 @@ def get_disease_details_dict(disease_name, plant_type):
         'db_obj': None,
     }
 
-
-def _backup_deleted_instance(obj, deleted_by=None):
-    """Serialize and store a deleted object in DeletedObject for possible undo.
-
-    Best-effort: if serialization or saving fails, we continue with permanent delete.
-    """
-    try:
-        json_data = django_serializers.serialize('json', [obj])
-        model_label = f"{obj._meta.app_label}.{obj._meta.model_name}"
-        return DeletedObject.objects.create(model_label=model_label, object_pk=str(obj.pk), data=json_data, deleted_by=deleted_by)
-    except Exception as e:
-        print(f"Failed to backup deleted instance {obj}: {e}")
-        return None
-
 # Định nghĩa biến đổi ảnh
 data_transforms = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
+    transforms.Resize(400),
+    transforms.CenterCrop(380),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
@@ -149,16 +174,62 @@ disease_models = {}
 plant_type_model = None
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+# Load YOLO model for Potato leaf detection
+YOLO_POTATO_MODEL = None
+YOLO_POTATO_MODEL_PATH = os.path.join(
+    settings.BASE_DIR,
+    'plant_health_app',
+    'notebook',
+    'preprocessing',
+    'models',
+    'yolo_potato.pt'
+)
+try:
+    YOLO_POTATO_MODEL = YOLO(YOLO_POTATO_MODEL_PATH)
+    print("Đã tải YOLO Potato model")
+except Exception as e:
+    print(f"Lỗi khi tải YOLO Potato model: {e}")
+
 def load_plant_type_model():
     global plant_type_model
     if plant_type_model is None:
-        # Sử dụng EfficientNet-B0 (khớp với model đã train)
-        from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
-        plant_type_model = efficientnet_b0(weights=None)
-        # Use PLANT_TYPE_CLASSES (order must match training) to determine num_classes
-        num_classes = len(PLANT_TYPE_CLASSES)  # Số loại cây (9 classes)
+        # Try to load from database (default model)
+        default_model = PlantTypeModel.objects.filter(
+            is_default=True,
+            is_active=True
+        ).first()
+        
+        if default_model:
+            # Load from database
+            file_path = default_model.file_path
+            if os.path.isabs(file_path):
+                model_path = file_path
+            else:
+                model_path = os.path.join(settings.BASE_DIR, file_path)
+                if not os.path.exists(model_path):
+                    media_path = os.path.join(settings.MEDIA_ROOT, file_path)
+                    if os.path.exists(media_path):
+                        model_path = media_path
+            num_classes = default_model.num_classes
+            print(f"Loading Plant Type model from DB: {default_model.name}")
+        else:
+            # Fallback to old path
+            model_path = os.path.join(
+                settings.BASE_DIR, 
+                'plant_health_app', 
+                'notebook', 
+                'plant_type', 
+                'models', 
+                'best', 
+                'plant_type_model.pth'
+            )
+            num_classes = len(PLANT_TYPE_CLASSES)
+            print(f"No default model in DB, using fallback path: {model_path}")
+        
+        # Sử dụng EfficientNet-B4 (khớp với model đã train)
+        plant_type_model = efficientnet_b4(weights=None)
         plant_type_model.classifier[1] = nn.Linear(plant_type_model.classifier[1].in_features, num_classes)
-        model_path = os.path.join(settings.BASE_DIR, 'plant_health_app', 'notebook', 'plant_type', 'models', 'best', 'plant_type_model.pth')
+
         print(f"Đang kiểm tra đường dẫn: {model_path}")
         if not os.path.exists(model_path):
             print(f"File không tồn tại tại: {model_path}")
@@ -166,7 +237,7 @@ def load_plant_type_model():
             plant_type_model.load_state_dict(torch.load(model_path, map_location=device))
             plant_type_model = plant_type_model.to(device)
             plant_type_model.eval()
-            print(f"Đã tải mô hình EfficientNet-B0 phân loại cây từ {model_path}")
+            print(f"Đã tải mô hình EfficientNet-B4 phân loại cây từ {model_path}")
         except Exception as e:
             print(f"Lỗi khi tải mô hình phân loại cây: {e}")
             plant_type_model = None
@@ -174,13 +245,85 @@ def load_plant_type_model():
 
 def load_disease_model(plant_type):
     global disease_models
+    plant_type = normalize_plant_type(plant_type)
+    
+    # BƯỚC 1: ĐỌC DỮ LIỆU TỪ FILE JSON ĐỂ LẤY NHÃN ĐỘNG
+    json_path = os.path.join(settings.BASE_DIR, 'plant_health_app', 'notebook', 'plant_disease', 'group_classes.json')
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            groups_data = json.load(f)
+    except Exception as e:
+        print(f"Lỗi khi đọc file group_classes.json: {e}")
+        groups_data = {}
+
+    # BƯỚC 2: TÌM BẢN GHI MÔ HÌNH TRONG DB
+    default_model = DiseaseModel.objects.filter(
+        plant_type__iexact=plant_type,  # Case-insensitive
+        is_default=True,
+        is_active=True
+    ).first()
+    
+    if not default_model:
+        default_model = DiseaseModel.objects.filter(plant_type__iexact=plant_type, is_active=True).last()
+
+    # BƯỚC 3: XÁC ĐỊNH BỘ NHÃN (Dựa vào label_group hoặc dùng plant_type làm mặc định)
+    if default_model and getattr(default_model, 'label_group', None):
+        target_group_key = default_model.label_group
+    else:
+        target_group_key = plant_type
+        
+    class_names = groups_data.get(target_group_key, [])
+
+    # BƯỚC 4: LOAD TRỌNG SỐ VÀO BIẾN CACHE
     if plant_type not in disease_models:
-        # Sử dụng EfficientNet-B0 (khớp với model đã train)
-        from torchvision.models import efficientnet_b0, EfficientNet_B0_Weights
-        model = efficientnet_b0(weights=None)
-        num_classes = len(GROUPS.get(plant_type, []))
+        if default_model:
+            # Load from database - file_path is relative to BASE_DIR, not MEDIA_ROOT
+            file_path = default_model.file_path
+            if os.path.isabs(file_path):
+                model_path = file_path
+            else:
+                model_path = os.path.join(settings.BASE_DIR, file_path)
+                if not os.path.exists(model_path):
+                    media_path = os.path.join(settings.MEDIA_ROOT, file_path)
+                    if os.path.exists(media_path):
+                        model_path = media_path
+            
+            # Ưu tiên lấy num_classes từ DB, nếu không có thì lấy số lượng class từ JSON
+            num_classes = default_model.num_classes or len(class_names)
+            print(f"Loading {plant_type} Disease model from DB: {default_model.name}")
+            print(f"Model path: {model_path}")
+        else:
+            # Fallback to old path
+            model_filename = f'{plant_type.lower()}_model.pth'
+            model_path = os.path.join(
+                settings.BASE_DIR,
+                'plant_health_app',
+                'notebook',
+                'plant_disease',
+                'models',
+                'best',
+                model_filename
+            )
+            if not os.path.exists(model_path):
+                alt_filename = f'{plant_type.lower()}.pth'
+                alt_path = os.path.join(
+                    settings.BASE_DIR,
+                    'plant_health_app',
+                    'notebook',
+                    'plant_disease',
+                    'models',
+                    'best',
+                    alt_filename
+                )
+                if os.path.exists(alt_path):
+                    model_path = alt_path
+            
+            num_classes = len(class_names)
+            print(f"No default {plant_type} model in DB, using fallback: {model_path}")
+        
+        # Sử dụng EfficientNet-B4 (khớp với model đã train)
+        model = efficientnet_b4(weights=None)
         model.classifier[1] = nn.Linear(model.classifier[1].in_features, num_classes)
-        model_path = os.path.join(settings.BASE_DIR, 'plant_health_app', 'notebook', 'plant_disease', 'models', 'best', f'{plant_type.lower()}_model.pth')
         try:
             # Try to load a state_dict first
             state = torch.load(model_path, map_location=device)
@@ -227,59 +370,111 @@ def load_disease_model(plant_type):
             else:
                 print(f"Lỗi khi tải mô hình bệnh cho {plant_type}: {reason}")
                 disease_models[plant_type] = None
-    return disease_models.get(plant_type)
+                
+    # QUAN TRỌNG: Trả về Tuple (model, class_names) thay vì chỉ mỗi model
+    return disease_models.get(plant_type), class_names, target_group_key
 
 def predict_disease(image_path, user_plant_type):
     try:
+        def _run_disease_model(plant_key, pil_image):
+            # 1. ĐÓN NHẬN CẢ MODEL VÀ NHÃN TỪ HÀM ĐÃ NÂNG CẤP
+            disease_model, class_names, used_key = load_disease_model(plant_key)
+            
+            if disease_model is None:
+                raise Exception(f"Không thể tải mô hình bệnh cho {plant_key}.")
+            if not class_names:
+                raise Exception(f"LỖI ÁNH XẠ: Database yêu cầu bộ nhãn có tên là '{used_key}', nhưng trong file group_classes.json KHÔNG CÓ chữ này!")
+
+            tensor_image = data_transforms(pil_image).unsqueeze(0).to(device)
+            with torch.no_grad():
+                outputs = disease_model(tensor_image)
+                probabilities = torch.softmax(outputs, dim=1)
+                confidence, predicted_idx = torch.max(probabilities, 1)
+                
+                # 2. SỬ DỤNG BỘ NHÃN ĐỘNG (CLASS_NAMES) THAY VÌ GROUPS
+                disease = class_names[predicted_idx.item()]
+                disease_confidence = confidence.item() * 100
+
+                print(f"Probabilities for {plant_key} diseases:")
+                for i, prob in enumerate(probabilities[0]):
+                    print(f"Class {class_names[i]}: {prob.item() * 100:.2f}%")
+
+            return {
+                'disease': disease,
+                'confidence': disease_confidence,
+                'plant_type': plant_key,
+            }
+
+        def _save_cropped_image(pil_image):
+            crop_dir = os.path.join(settings.MEDIA_ROOT, 'potato_crops')
+            os.makedirs(crop_dir, exist_ok=True)
+            filename = f"potato_crop_{uuid.uuid4().hex}.jpg"
+            abs_path = os.path.join(crop_dir, filename)
+            pil_image.save(abs_path, format='JPEG')
+            rel_path = os.path.join('potato_crops', filename).replace('\\', '/')
+            return abs_path, f"{settings.MEDIA_URL}{rel_path}"
+
         image = Image.open(image_path).convert('RGB')
-        image = data_transforms(image)
-        image = image.unsqueeze(0).to(device)
+        user_plant_type = normalize_plant_type(user_plant_type)
 
         # Nếu user_plant_type là 'auto', dự đoán loại cây trước
         if user_plant_type.lower() == 'auto':
             plant_model = load_plant_type_model()
             if plant_model is None:
                 raise Exception("Không thể tải mô hình phân loại cây.")
+            tensor_image = data_transforms(image).unsqueeze(0).to(device)
             with torch.no_grad():
-                outputs = plant_model(image)
+                outputs = plant_model(tensor_image)
                 probabilities = torch.softmax(outputs, dim=1)
                 confidence, predicted_idx = torch.max(probabilities, 1)
-                # Map predicted index to plant name using PLANT_TYPE_CLASSES (the same order used in training)
                 try:
                     plant_type = PLANT_TYPE_CLASSES[predicted_idx.item()]
                 except Exception:
-                    # fallback to GROUPS keys order but warn
+                    # Giữ nguyên fallback của bạn nếu GROUPS còn tồn tại ở đầu file
                     plant_type = list(GROUPS.keys())[predicted_idx.item()]
                     print("Warning: predicted index mapped using GROUPS keys as fallback; consider regenerating plant_classes.json to match training order.")
+                plant_type = normalize_plant_type(plant_type)
                 plant_confidence = confidence.item() * 100
                 print(f"Dự đoán loại cây: {plant_type} ({plant_confidence:.2f}%)")
         else:
-            plant_type = user_plant_type
+            plant_type = normalize_plant_type(user_plant_type)
             plant_confidence = None
 
-        # Kiểm tra xem plant_type có trong GROUPS không
-        if plant_type not in GROUPS:
-            raise Exception(f"Loại cây {plant_type} không được hỗ trợ.")
+        cropped_image_abs_path = None
+        image_for_prediction = image
 
-        # Tải mô hình bệnh tương ứng
-        disease_model = load_disease_model(plant_type)
-        if disease_model is None:
-            raise Exception(f"Không thể tải mô hình bệnh cho {plant_type}.")
+        if plant_type == 'Potato':
+            cropped_image_for_display = image
+            image_for_prediction = image
 
-        # Dự đoán bệnh
-        with torch.no_grad():
-            outputs = disease_model(image)
-            probabilities = torch.softmax(outputs, dim=1)
-            confidence, predicted_idx = torch.max(probabilities, 1)
-            disease = GROUPS[plant_type][predicted_idx.item()]
-            disease_confidence = confidence.item() * 100
+            if YOLO_POTATO_MODEL is not None:
+                try:
+                    results = YOLO_POTATO_MODEL(image_path, verbose=False)
+                    boxes = results[0].boxes
+                    if boxes is not None and len(boxes) > 0:
+                        confs = boxes.conf.cpu().numpy()
+                        best_idx = confs.argmax()
+                        xyxy = boxes.xyxy[best_idx].cpu().numpy().astype(int)
+                        x1, y1, x2, y2 = xyxy.tolist()
+                        
+                        # 1. CẮT ẢNH SẠCH (Nguyên bản) để đưa vào EfficientNet chẩn đoán bệnh
+                        image_for_prediction = image.crop((x1, y1, x2, y2))
+                        
+                        # 2. VẼ BOUNDING BOX & MASK ĐỂ HIỂN THỊ LÊN WEB
+                        plotted_array = results[0].plot() 
+                        plotted_image = Image.fromarray(plotted_array[..., ::-1]) # Chuyển BGR sang RGB
+                        cropped_image_for_display = plotted_image.crop((x1, y1, x2, y2))
+                    else:
+                        print("YOLO không phát hiện được lá khoai tây, sử dụng ảnh gốc.")
+                except Exception as e:
+                    print(f"YOLO detection error: {e}")
 
-            # Debug: In xác suất cho mỗi lớp
-            print(f"Probabilities for {plant_type} diseases:")
-            for i, prob in enumerate(probabilities[0]):
-                print(f"Class {GROUPS[plant_type][i]}: {prob.item() * 100:.2f}%")
-
-        return disease, disease_confidence, plant_type, plant_confidence
+            # Lưu ảnh ĐÃ VẼ MASK vào thư mục potato_crops và Database
+            cropped_image_abs_path, _ = _save_cropped_image(cropped_image_for_display)
+        disease_result = _run_disease_model(plant_type, image_for_prediction)
+        
+        # Trả về nguyên bản 5 biến để không làm hỏng các hàm khác đang gọi predict_disease
+        return disease_result['disease'], disease_result['confidence'], plant_type, plant_confidence, cropped_image_abs_path
     except Exception as e:
         raise Exception(f"Lỗi khi dự đoán: {str(e)}")
 
@@ -677,6 +872,13 @@ def register(request):
 @login_required
 def prediction(request):
     """Bước 1: Upload ảnh & AI dự đoán (Gợi ý)"""
+    
+    # 1. KHAI BÁO CỨNG DANH SÁCH 9 CÂY CHUẨN (Dành cho trang upload)
+    BASE_PLANT_TYPES = [
+        'Apple', 'Cherry', 'Corn', 'Grape', 
+        'Peach', 'Pepper', 'Potato', 'Strawberry', 'Tomato'
+    ]
+
     if request.method == 'POST':
         image = request.FILES.get('plant_image')
         user_plant_type = request.POST.get('plant_type', 'auto')
@@ -684,7 +886,7 @@ def prediction(request):
         if not image:
             messages.error(request, 'Vui lòng chọn một ảnh để dự đoán.')
             return render(request, 'prediction.html', {
-                'PLANT_TYPE_CLASSES': PLANT_TYPE_CLASSES,
+                'PLANT_TYPE_CLASSES': BASE_PLANT_TYPES,  # ĐÃ SỬA: Chỉ truyền 9 cây
                 'GROUPS': GROUPS
             })
 
@@ -693,7 +895,7 @@ def prediction(request):
         if ext not in valid_extensions:
             messages.error(request, 'Vui lòng tải file ảnh (.jpg, .jpeg, .png).')
             return render(request, 'prediction.html', {
-                'PLANT_TYPE_CLASSES': PLANT_TYPE_CLASSES,
+                'PLANT_TYPE_CLASSES': BASE_PLANT_TYPES,  # ĐÃ SỬA: Chỉ truyền 9 cây
                 'GROUPS': GROUPS
             })
 
@@ -710,12 +912,28 @@ def prediction(request):
             image_path = plant_image.image.path
             image_path = image_path.replace('\\', '/').replace('rain/', 'train/')
 
+            start_time = time.perf_counter()
+            
             # AI dự đoán
-            disease, disease_confidence, plant_type, plant_confidence = predict_disease(image_path, user_plant_type)
+            disease, disease_confidence, plant_type, plant_confidence, cropped_image_path = predict_disease(
+                image_path,
+                user_plant_type
+            )
+            
+            end_time = time.perf_counter()
+            latency = end_time - start_time
 
             plant_image.disease = disease
             plant_image.confidence = disease_confidence
             plant_image.plant_type = plant_type
+            plant_image.inference_latency = latency
+            if cropped_image_path and os.path.exists(cropped_image_path):
+                with open(cropped_image_path, 'rb') as cropped_file:
+                    plant_image.cropped_image.save(
+                        os.path.basename(cropped_image_path),
+                        File(cropped_file),
+                        save=False
+                    )
             plant_image.save()
 
             disease_details = get_disease_details_dict(disease, plant_type)
@@ -732,6 +950,7 @@ def prediction(request):
             context = {
                 'prediction_id': plant_image.id,
                 'image_url': plant_image.image.url,
+                'cropped_image_url': plant_image.cropped_image.url if plant_image.cropped_image else None,
                 'prediction': {
                     'disease': disease,
                     'disease_confidence': disease_confidence,
@@ -740,7 +959,7 @@ def prediction(request):
                     'disease_details': disease_details,
                     'is_low_confidence': is_low_confidence,
                 },
-                'PLANT_TYPE_CLASSES': PLANT_TYPE_CLASSES,  # Danh sách loại cây
+                'PLANT_TYPE_CLASSES': BASE_PLANT_TYPES,  # ĐÃ SỬA: Chỉ truyền 9 cây
                 'GROUPS': GROUPS,  # Dict {plant_type: [diseases]}
                 'all_diseases': sorted(list(set([d for diseases in GROUPS.values() for d in diseases]))),  # Tất cả bệnh
             }
@@ -748,15 +967,15 @@ def prediction(request):
 
         except Exception as e:
             messages.error(request, f'Lỗi khi xử lý ảnh: {str(e)}')
-            import traceback
             traceback.print_exc()
             return render(request, 'prediction.html', {
-                'PLANT_TYPE_CLASSES': PLANT_TYPE_CLASSES,
+                'PLANT_TYPE_CLASSES': BASE_PLANT_TYPES,  # ĐÃ SỬA: Chỉ truyền 9 cây
                 'GROUPS': GROUPS
             })
 
+    # GET request - hiển thị trang ban đầu
     return render(request, 'prediction.html', {
-        'PLANT_TYPE_CLASSES': PLANT_TYPE_CLASSES,
+        'PLANT_TYPE_CLASSES': BASE_PLANT_TYPES,  # ĐÃ SỬA: Chỉ truyền 9 cây chuẩn
         'GROUPS': GROUPS
     })
 
@@ -788,10 +1007,20 @@ def result(request):
 
                 image_path = plant_image.image.path
                 image_path = image_path.replace('\\', '/').replace('rain/', 'train/')
-                disease, disease_confidence, plant_type, plant_confidence = predict_disease(image_path, user_plant_type)
+                disease, disease_confidence, plant_type, plant_confidence, cropped_image_path = predict_disease(
+                    image_path,
+                    user_plant_type
+                )
                 plant_image.disease = disease
                 plant_image.confidence = disease_confidence
                 plant_image.plant_type = plant_type
+                if cropped_image_path and os.path.exists(cropped_image_path):
+                    with open(cropped_image_path, 'rb') as cropped_file:
+                        plant_image.cropped_image.save(
+                            os.path.basename(cropped_image_path),
+                            File(cropped_file),
+                            save=False
+                        )
                 plant_image.save()
 
                 disease_details = get_disease_details_dict(disease, plant_type)
@@ -813,6 +1042,7 @@ def result(request):
                 context = {
                     'prediction_id': plant_image.id,
                     'image_url': plant_image.image.url,
+                    'cropped_image_url': plant_image.cropped_image.url if plant_image.cropped_image else None,
                     'prediction': {
                         'disease': disease,
                         'disease_confidence': disease_confidence,
@@ -842,10 +1072,20 @@ def result(request):
             if not latest_image.disease:
                 image_path = latest_image.image.path
                 image_path = image_path.replace('\\', '/').replace('rain/', 'train/')
-                disease, disease_confidence, plant_type, plant_confidence = predict_disease(image_path, 'auto')
+                disease, disease_confidence, plant_type, plant_confidence, cropped_image_path = predict_disease(
+                    image_path,
+                    'auto'
+                )
                 latest_image.disease = disease
                 latest_image.confidence = disease_confidence
                 latest_image.plant_type = plant_type
+                if cropped_image_path and os.path.exists(cropped_image_path):
+                    with open(cropped_image_path, 'rb') as cropped_file:
+                        latest_image.cropped_image.save(
+                            os.path.basename(cropped_image_path),
+                            File(cropped_file),
+                            save=False
+                        )
                 latest_image.save()
             else:
                 disease_confidence = latest_image.confidence
@@ -861,6 +1101,7 @@ def result(request):
             context = {
                 'prediction_id': latest_image.id,
                 'image_url': latest_image.image.url,
+                'cropped_image_url': latest_image.cropped_image.url if latest_image.cropped_image else None,
                 'prediction': {
                     'disease': latest_image.disease,
                     'disease_confidence': disease_confidence,
@@ -1015,7 +1256,8 @@ def prediction_detail(request, prediction_id):
 
     context = {
         'prediction_id': prediction.id,
-        'image_url': prediction.image.url,
+        'image_url': prediction.image.url, 
+        'cropped_image_url': prediction.cropped_image.url if prediction.cropped_image else None,
         'prediction': {
             'disease': prediction.disease,
             'disease_confidence': prediction.confidence,
@@ -1290,12 +1532,16 @@ def admin_dashboard(request):
     # Pending blog posts for quick approval - CHỈ ACTIVE
     pending_blog_posts = BlogPost.objects.filter(status='pending', is_active=True).order_by('-created_at')[:5]
 
+    avg_latency_obj = PredictionHistory.objects.filter(is_active=True, inference_latency__isnull=False).aggregate(Avg('inference_latency'))
+    avg_latency = avg_latency_obj['inference_latency__avg'] or 0.0
+
     context = {
         'users': user_page_obj,
         'prediction_history': prediction_page_obj,
         'feedbacks': feedback_page_obj,
         'current_date': timezone.now(),
         'pending_blog_posts': pending_blog_posts,
+        'avg_latency': avg_latency,
         # Thống kê cho biểu đồ
         'plant_type_chart': {
             'labels': plant_type_labels,
@@ -1479,19 +1725,52 @@ def upload_plant_image(request):
                     'error': 'Định dạng ảnh không hỗ trợ. Vui lòng chọn JPG, PNG hoặc GIF.'
                 })
 
+            segmentation_model = None
+            if YOLO_POTATO_MODEL is not None:
+                segmentation_model, _ = SegmentationModel.objects.get_or_create(
+                    file_path=YOLO_POTATO_MODEL_PATH,
+                    defaults={
+                        'name': 'YOLO Potato Segmentation',
+                        'description': 'YOLO model for potato leaf segmentation.',
+                        'is_default': True,
+                        'is_active': True,
+                    }
+                )
+
             # Lưu ảnh vào PredictionHistory (chưa có dự đoán)
             prediction = PredictionHistory(
                 user=request.user,
                 image=image,
-                uploaded_at=timezone.now()
+                uploaded_at=timezone.now(),
+                segmentation_model=segmentation_model
             )
             prediction.save()
+
+            segment_data = []
+            if YOLO_POTATO_MODEL is not None:
+                try:
+                    results = YOLO_POTATO_MODEL(prediction.image.path, verbose=False)
+                    masks = getattr(results[0], 'masks', None)
+                    if masks is not None and masks.xy is not None:
+                        for idx, mask in enumerate(masks.xy):
+                            points = [[int(x), int(y)] for x, y in mask.tolist()]
+                            if len(points) >= 3:
+                                segment_data.append({
+                                    'id': idx,
+                                    'points': points,
+                                })
+                except Exception as e:
+                    print(f"YOLO segmentation error: {e}")
+
+            prediction.segment_data = {'segments': segment_data}
+            prediction.save(update_fields=['segment_data'])
 
             return JsonResponse({
                 'success': True,
                 'id': prediction.id,
                 'image_url': prediction.image.url,
-                'uploaded_at': prediction.uploaded_at.strftime('%d/%m/%Y %H:%M')
+                'uploaded_at': prediction.uploaded_at.strftime('%d/%m/%Y %H:%M'),
+                'segment_data': segment_data
             })
         except Exception as e:
             return JsonResponse({
@@ -1502,6 +1781,34 @@ def upload_plant_image(request):
         'success': False,
         'error': 'Yêu cầu không hợp lệ.'
     })
+
+
+@login_required
+def select_segment(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Yêu cầu không hợp lệ.'}, status=400)
+
+    try:
+        image_id = request.POST.get('image_id')
+        selected_segment = request.POST.get('selected_segment')
+        if not image_id or not selected_segment:
+            return JsonResponse({'success': False, 'error': 'Thiếu dữ liệu vùng chọn.'}, status=400)
+
+        prediction = get_object_or_404(PredictionHistory, id=image_id, user=request.user)
+        selected_payload = json.loads(selected_segment)
+
+        segment_data = prediction.segment_data or {}
+        if isinstance(segment_data, list):
+            segment_data = {'segments': segment_data}
+        segment_data['selected'] = selected_payload
+        prediction.segment_data = segment_data
+        prediction.save(update_fields=['segment_data'])
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        return redirect('prediction')
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @login_required
 def disease_library(request):
@@ -2065,86 +2372,6 @@ def blog_comment_delete(request, comment_id):
 
 
 @login_required
-def confirm_contribution(request, prediction_id):
-    """Bước 2: Xử lý xác nhận của người dùng"""
-    if request.method != 'POST':
-        return redirect('prediction_history')
-    
-    prediction = get_object_or_404(PredictionHistory, id=prediction_id, user=request.user)
-    
-    # Lấy lựa chọn của user
-    action = request.POST.get('action')  # 'consulting' hoặc 'contributing'
-    
-    if action == 'consulting':
-        # User chỉ xem, không đóng góp
-        prediction.contribution_type = PredictionHistory.ContributionType.CONSULTING
-        prediction.save()
-        messages.success(request, 'Cảm ơn bạn đã sử dụng dịch vụ!')
-        return redirect('prediction_history')
-    
-    elif action == 'contributing':
-        # User muốn đóng góp
-        user_choice = request.POST.get('user_disease_choice')  # 'agree_with_ai' hoặc 'custom'
-        
-        # Kiểm tra confidence threshold (70%)
-        if prediction.confidence and prediction.confidence < 70:
-            if user_choice == 'agree_with_ai':
-                messages.error(request, 
-                    'AI không chắc chắn về ảnh này (độ tin cậy < 70%). '
-                    'Bạn chỉ được đóng góp nếu bạn tự gán nhãn thủ công.')
-                return redirect('prediction_detail', prediction_id=prediction_id)
-        
-        if user_choice == 'agree_with_ai':
-            # User đồng ý với AI
-            prediction.contribution_type = PredictionHistory.ContributionType.CONTRIBUTING
-            prediction.user_agreed_with_ai = True
-            prediction.user_confirmed_disease = prediction.disease
-            prediction.approval_status = PredictionHistory.ApprovalStatus.PENDING
-            prediction.save()
-            
-            # Thông báo cho admin
-            admins = User.objects.filter(is_staff=True)
-            for admin in admins:
-                Notification.objects.create(
-                    recipient=admin,
-                    message=f"User {request.user.username} đóng góp ảnh (đồng ý với AI: {prediction.disease})",
-                    link=reverse('admin_moderation')
-                )
-            
-            messages.success(request, 'Ảnh của bạn đã được gửi đến admin để phê duyệt. Cảm ơn bạn đã đóng góp!')
-            
-        elif user_choice == 'custom':
-            # User tự chọn nhãn
-            custom_disease = request.POST.get('custom_disease')
-            
-            if not custom_disease:
-                messages.error(request, 'Vui lòng chọn bệnh chính xác.')
-                return redirect('prediction_detail', prediction_id=prediction_id)
-            
-            prediction.contribution_type = PredictionHistory.ContributionType.CONTRIBUTING
-            prediction.user_agreed_with_ai = False
-            prediction.user_confirmed_disease = custom_disease
-            prediction.approval_status = PredictionHistory.ApprovalStatus.PENDING
-            prediction.save()
-            
-            # Thông báo cho admin với ghi chú user đã sửa nhãn
-            admins = User.objects.filter(is_staff=True)
-            for admin in admins:
-                Notification.objects.create(
-                    recipient=admin,
-                    message=f"User {request.user.username} đóng góp ảnh (sửa nhãn: {prediction.disease} → {custom_disease})",
-                    link=reverse('admin_moderation')
-                )
-            
-            messages.success(request, 
-                f'Ảnh của bạn đã được gửi đến admin để phê duyệt với nhãn "{custom_disease}". Cảm ơn bạn đã đóng góp!')
-        
-        return redirect('prediction_history')
-    
-    messages.error(request, 'Yêu cầu không hợp lệ.')
-    return redirect('prediction_history')
-
-
 @login_required
 @user_passes_test(is_admin)
 def admin_moderation(request):
@@ -2267,3 +2494,1012 @@ def reject_contribution(request, prediction_id):
 def mark_all_notifications_read(request):
     Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
     return redirect('all_notifications')
+
+
+# ==================== DATASET MANAGEMENT ====================
+@login_required
+def manage_datasets(request):
+    """View for managing training datasets."""
+    if not request.user.is_staff:
+        messages.error(request, 'Bạn không có quyền truy cập trang này.')
+        return redirect('home')
+    
+    datasets = TrainingDataset.objects.all()
+    
+    context = {
+        'datasets': datasets,
+    }
+    return render(request, 'manage_datasets.html', context)
+
+
+@login_required
+def create_dataset(request):
+    """Create a new training dataset."""
+    if not request.user.is_staff:
+        messages.error(request, 'Bạn không có quyền truy cập.')
+        return redirect('home')
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description', '')
+        dataset_type = request.POST.get('dataset_type', 'DISEASE')
+        plant_type = request.POST.get('plant_type', '')
+        
+        remove_duplicates = request.POST.get('remove_duplicates') == 'on'
+        remove_blurry = request.POST.get('remove_blurry') == 'on'
+        
+        # Handle blur_threshold safely
+        blur_threshold_str = request.POST.get('blur_threshold', '100').strip()
+        try:
+            blur_threshold = float(blur_threshold_str) if blur_threshold_str else 100.0
+        except ValueError:
+            blur_threshold = 100.0
+        
+        # Handle sample_size safely
+        sample_size_str = request.POST.get('sample_size', '').strip()
+        sample_size = int(sample_size_str) if sample_size_str else None
+        
+        # Source data options
+        include_new_contributions = request.POST.get('include_new_contributions') == 'on'
+        include_original_dataset = request.POST.get('include_original_dataset') == 'on'
+        original_dataset_path = request.POST.get('original_dataset_path', '')
+        
+        # Validate plant_type for DISEASE dataset
+        if dataset_type == 'DISEASE' and not plant_type:
+            messages.error(request, 'Vui lòng chọn loại cây cho Dataset phân loại bệnh.')
+            return redirect('create_dataset')
+        
+        # Create dataset
+        dataset = TrainingDataset.objects.create(
+            name=name,
+            description=description,
+            created_by=request.user,
+            dataset_type=dataset_type,
+            plant_type=plant_type if dataset_type == 'DISEASE' else None,
+            remove_duplicates=remove_duplicates,
+            remove_blurry=remove_blurry,
+            blur_threshold=blur_threshold,
+            sample_size=sample_size,
+            include_new_contributions=include_new_contributions,
+            include_original_dataset=include_original_dataset,
+            original_dataset_path=original_dataset_path if include_original_dataset else None,
+            status='PREPARING'
+        )
+        
+        messages.success(request, f'Đã tạo dataset "{name}". Đang phân tích dữ liệu...')
+        return redirect('process_dataset', dataset_id=dataset.id)
+    
+    # Get statistics for new contributions
+    total_new_images = PredictionHistory.objects.filter(
+        approval_status=PredictionHistory.ApprovalStatus.ACCEPTED,
+        is_active=True
+    ).count()
+    
+    # Get stats by plant_type (for Disease dataset)
+    plant_types = ['Apple', 'Cherry', 'Corn', 'Grape', 'Peach', 'Pepper', 'Potato', 'Strawberry', 'Tomato']
+    plant_type_stats = {}
+    for pt in plant_types:
+        count = PredictionHistory.objects.filter(
+            approval_status=PredictionHistory.ApprovalStatus.ACCEPTED,
+            is_active=True,
+            plant_type__iexact=pt
+        ).count()
+        plant_type_stats[pt] = count
+    
+    context = {
+        'total_new_images': total_new_images,
+        'plant_types': plant_types,
+        'plant_type_stats': plant_type_stats,
+    }
+    return render(request, 'create_dataset.html', context)
+
+
+@login_required
+def process_dataset(request, dataset_id):
+    """Process dataset: detect blur, duplicates, and select images from multiple sources."""
+    if not request.user.is_staff:
+        messages.error(request, 'Bạn không có quyền truy cập.')
+        return redirect('home')
+    
+    import glob
+    from PIL import Image as PILImage
+    
+    dataset = get_object_or_404(TrainingDataset, id=dataset_id)
+    
+    all_image_paths = []  # List of (image_path, source_type, metadata)
+    
+    # Source 1: New contributions from users
+    if dataset.include_new_contributions:
+        approved_images = PredictionHistory.objects.filter(
+            approval_status=PredictionHistory.ApprovalStatus.ACCEPTED,
+            is_active=True
+        )
+        
+        # Filter by plant_type for DISEASE dataset
+        if dataset.dataset_type == 'DISEASE' and dataset.plant_type:
+            approved_images = approved_images.filter(plant_type__iexact=dataset.plant_type)
+        
+        for pred in approved_images:
+            all_image_paths.append({
+                'path': pred.image.path,
+                'source': 'NEW_CONTRIBUTION',
+                'prediction_history': pred,
+                'label': pred.user_confirmed_disease or pred.disease,
+                'plant_type': pred.plant_type
+            })
+    
+    # Source 2: Original dataset (87000 ảnh)
+    if dataset.include_original_dataset and dataset.original_dataset_path:
+        original_path = os.path.join(settings.BASE_DIR, dataset.original_dataset_path)
+        
+        # Iterate through folders (each folder is a class)
+        if os.path.exists(original_path):
+            for class_folder in os.listdir(original_path):
+                class_path = os.path.join(original_path, class_folder)
+                if os.path.isdir(class_path):
+                    # Extract plant_type and disease from folder name
+                    # Format: "Apple___Apple_scab" or "Tomato___Tomato_mosaic_virus"
+                    parts = class_folder.split('___')
+                    if len(parts) == 2:
+                        plant_type_orig, disease_orig = parts
+                        
+                        # Filter by plant_type for DISEASE dataset
+                        if dataset.dataset_type == 'DISEASE' and dataset.plant_type:
+                            if plant_type_orig.lower() != dataset.plant_type.lower():
+                                continue
+                        
+                        # Get all images in this class folder
+                        for img_file in glob.glob(os.path.join(class_path, '*.jpg')) + \
+                                       glob.glob(os.path.join(class_path, '*.JPG')) + \
+                                       glob.glob(os.path.join(class_path, '*.png')):
+                            all_image_paths.append({
+                                'path': img_file,
+                                'source': 'ORIGINAL_DATASET',
+                                'prediction_history': None,
+                                'label': disease_orig,
+                                'plant_type': plant_type_orig
+                            })
+    
+    # Step 1: Random sampling from all sources
+    total_available = len(all_image_paths)
+    if dataset.sample_size and total_available > dataset.sample_size:
+        # Random sample before processing (to save time)
+        all_image_paths = random.sample(all_image_paths, dataset.sample_size)
+        messages.info(request, f'Đã chọn ngẫu nhiên {dataset.sample_size} ảnh từ {total_available} ảnh.')
+    
+    # Step 2: Process images (blur detection, duplicate detection)
+    image_hashes = {}
+    processed_count = 0
+    
+    for img_data in all_image_paths:
+        img_path = img_data['path']
+        
+        # For new contributions, create TrainingDatasetImage
+        if img_data['source'] == 'NEW_CONTRIBUTION':
+            dataset_image, created = TrainingDatasetImage.objects.get_or_create(
+                dataset=dataset,
+                prediction_history=img_data['prediction_history']
+            )
+        else:
+            # For original dataset, we don't have PredictionHistory
+            # Skip creating TrainingDatasetImage for now (or create a placeholder)
+            dataset_image = None
+            created = True
+        
+        if created:
+            try:
+                # Calculate blur score
+                blur_score = calculate_blur_score(Path(img_path))
+                is_blurry = False
+                if dataset.remove_blurry and blur_score and blur_score < dataset.blur_threshold:
+                    is_blurry = True
+                
+                # Calculate hash for duplicate detection
+                is_duplicate = False
+                if dataset.remove_duplicates:
+                    img_hash = calculate_image_hash(Path(img_path))
+                    if img_hash:
+                        if img_hash in image_hashes:
+                            is_duplicate = True
+                        else:
+                            image_hashes[img_hash] = img_path
+                
+                # Update dataset_image if exists
+                if dataset_image:
+                    dataset_image.blur_score = blur_score
+                    dataset_image.is_blurry = is_blurry
+                    dataset_image.is_duplicate = is_duplicate
+                    dataset_image.included = not (is_blurry or is_duplicate)
+                    dataset_image.save()
+                
+                # Track included images
+                if not is_blurry and not is_duplicate:
+                    processed_count += 1
+            
+            except Exception as e:
+                messages.warning(request, f'Lỗi xử lý ảnh {img_path}: {e}')
+                continue
+    
+    # Update dataset status
+    dataset.total_images = processed_count
+    dataset.status = 'READY'
+    dataset.save()
+    
+    messages.success(request, f'Dataset đã xử lý xong! Tổng số ảnh: {processed_count}')
+    return redirect('view_dataset', dataset_id=dataset.id)
+
+
+@login_required
+def view_dataset(request, dataset_id):
+    """View dataset details and images."""
+    if not request.user.is_staff:
+        messages.error(request, 'Bạn không có quyền truy cập.')
+        return redirect('home')
+    
+    from .models import TrainingDataset, TrainingDatasetImage
+    
+    dataset = get_object_or_404(TrainingDataset, id=dataset_id)
+    
+    # Get statistics
+    total_images = TrainingDatasetImage.objects.filter(dataset=dataset).count()
+    included_images = TrainingDatasetImage.objects.filter(dataset=dataset, included=True).count()
+    duplicate_count = TrainingDatasetImage.objects.filter(dataset=dataset, is_duplicate=True).count()
+    blurry_count = TrainingDatasetImage.objects.filter(dataset=dataset, is_blurry=True).count()
+    
+    # Get sample images
+    dataset_images = TrainingDatasetImage.objects.filter(
+        dataset=dataset,
+        included=True
+    ).select_related('prediction_history')[:50]
+    
+    context = {
+        'dataset': dataset,
+        'total_images': total_images,
+        'included_images': included_images,
+        'duplicate_count': duplicate_count,
+        'blurry_count': blurry_count,
+        'dataset_images': dataset_images,
+    }
+    return render(request, 'view_dataset.html', context)
+
+
+@login_required
+def delete_dataset(request, dataset_id):
+    """Delete a dataset."""
+    if not request.user.is_staff:
+        messages.error(request, 'Bạn không có quyền truy cập.')
+        return redirect('home')
+    
+    from .models import TrainingDataset
+    
+    dataset = get_object_or_404(TrainingDataset, id=dataset_id)
+    dataset_name = dataset.name
+    dataset.delete()
+    
+    messages.success(request, f'Đã xóa dataset "{dataset_name}".')
+    return redirect('manage_datasets')
+
+
+# ==================== MODEL MANAGEMENT ====================
+@login_required
+def manage_models(request):
+    """View for managing model versions."""
+    if not request.user.is_staff:
+        messages.error(request, 'Bạn không có quyền truy cập trang này.')
+        return redirect('home')
+    
+    from .models import PlantTypeModel, DiseaseModel, SegmentationModel
+    
+    # Get ALL plant type models (not just default)
+    plant_type_models = PlantTypeModel.objects.filter(is_active=True).order_by('-is_default', '-created_at')
+    
+    # Get disease models grouped by plant_type
+    disease_models_grouped = {}
+    plant_types = ['Apple', 'Cherry', 'Corn', 'Grape', 'Peach', 'Pepper', 'Potato', 'Strawberry', 'Tomato']
+    
+    for plant_type in plant_types:
+        models = DiseaseModel.objects.filter(
+            plant_type__iexact=plant_type,
+            is_active=True
+        ).order_by('-is_default', '-created_at')
+        
+        # Only add to dict if there are models for this plant type
+        if models.exists():
+            disease_models_grouped[plant_type] = models
+
+    segmentation_models = SegmentationModel.objects.filter(is_active=True).order_by('-is_default', '-created_at')
+    
+    context = {
+        'plant_type_models': plant_type_models,
+        'disease_models_grouped': disease_models_grouped,
+        'plant_types': plant_types,
+        'segmentation_models': segmentation_models,
+    }
+    return render(request, 'manage_models.html', context)
+
+
+@login_required
+def add_model(request):
+    """Add a new model version."""
+    if not request.user.is_staff:
+        messages.error(request, 'Bạn không có quyền truy cập.')
+        return redirect('home')
+    
+    from .models import PlantTypeModel, DiseaseModel, SegmentationModel, TrainingDataset
+    from django.utils import timezone # Đảm bảo timezone được import
+    
+    if request.method == 'POST':
+        model_type = request.POST.get('model_type')
+        name = request.POST.get('name')
+        description = request.POST.get('description', '')
+        architecture = request.POST.get('architecture')
+        optimizer = request.POST.get('optimizer')
+        file_path = request.POST.get('file_path')
+        dataset_id = request.POST.get('dataset')
+        training_accuracy = request.POST.get('training_accuracy')
+        validation_accuracy = request.POST.get('validation_accuracy')
+        is_default = request.POST.get('is_default') == 'on'
+        
+        # THÊM TRƯỜNG LẤY TỪ FORM (chỉ dùng cho Disease Model)
+        label_group = request.POST.get('label_group')
+        
+        # Create appropriate model based on type
+        if model_type == 'PLANT_TYPE':
+            num_classes = request.POST.get('num_classes', 9)
+            model = PlantTypeModel.objects.create(
+                name=name,
+                description=description,
+                architecture=architecture,
+                optimizer=optimizer,
+                file_path=file_path,
+                dataset_id=dataset_id if dataset_id else None,
+                num_classes=int(num_classes) if num_classes else 9,
+                training_accuracy=float(training_accuracy) if training_accuracy else None,
+                validation_accuracy=float(validation_accuracy) if validation_accuracy else None,
+                is_default=is_default,
+                created_by=request.user,
+                training_date=timezone.now()
+            )
+        elif model_type == 'DISEASE':
+            plant_type = request.POST.get('plant_type')
+            num_classes = request.POST.get('num_classes')
+            
+            if not plant_type:
+                messages.error(request, 'Vui lòng chọn loại cây cho Disease Model.')
+                return redirect('add_model')
+            
+            model = DiseaseModel.objects.create(
+                name=name,
+                description=description,
+                plant_type=plant_type,
+                label_group=label_group,  # THÊM VÀO ĐÂY ĐỂ LƯU XUỐNG DB
+                architecture=architecture,
+                optimizer=optimizer,
+                file_path=file_path,
+                dataset_id=dataset_id if dataset_id else None,
+                num_classes=int(num_classes) if num_classes else None,
+                training_accuracy=float(training_accuracy) if training_accuracy else None,
+                validation_accuracy=float(validation_accuracy) if validation_accuracy else None,
+                is_default=is_default,
+                created_by=request.user,
+                training_date=timezone.now()
+            )
+        elif model_type == 'SEGMENTATION':
+            model = SegmentationModel.objects.create(
+                name=name,
+                description=description,
+                file_path=file_path,
+                is_default=is_default,
+                created_by=request.user,
+            )
+        else:
+            messages.error(request, 'Vui lòng chọn loại model hợp lệ.')
+            return redirect('add_model')
+        
+        messages.success(request, f'Đã thêm mô hình "{name}".')
+        
+        # Send notification to all admins
+        admins = User.objects.filter(is_staff=True)
+        for admin in admins:
+            Notification.objects.create(
+                recipient=admin,
+                message=f'Mô hình mới "{name}" đã được thêm vào hệ thống.',
+                link=reverse('manage_models')
+            )
+        
+        return redirect('manage_models')
+    
+    datasets = TrainingDataset.objects.filter(status='READY')
+    
+    # Plant types for disease models
+    plant_types = [
+        'Apple', 'Cherry', 'Corn', 'Grape', 
+        'Peach', 'Pepper', 'Potato', 'Strawberry', 'Tomato'
+    ]
+    
+    context = {
+        'datasets': datasets,
+        'plant_types': plant_types,
+    }
+    return render(request, 'add_model.html', context)
+
+
+@login_required
+def set_default_model(request, model_type, model_id):
+    """Set a model as default for web predictions.
+    
+    Args:
+        model_type: 'plant_type', 'disease', or 'segmentation'
+        model_id: ID of the model to set as default
+    """
+    if not request.user.is_staff:
+        messages.error(request, 'Bạn không có quyền truy cập.')
+        return redirect('home')
+    
+    from .models import PlantTypeModel, DiseaseModel, SegmentationModel
+    
+    if model_type == 'plant_type':
+        model = get_object_or_404(PlantTypeModel, id=model_id)
+        # Unset all other plant type defaults
+        PlantTypeModel.objects.filter(is_default=True).update(is_default=False)
+        model.is_default = True
+        model.save()
+        model_name = f"Plant Type - {model.name}"
+    elif model_type == 'disease':
+        model = get_object_or_404(DiseaseModel, id=model_id)
+        # Unset other defaults for this plant_type only
+        DiseaseModel.objects.filter(
+            plant_type=model.plant_type,
+            is_default=True
+        ).update(is_default=False)
+        model.is_default = True
+        model.save()
+        model_name = f"{model.plant_type} Disease - {model.name}"
+    else:  # segmentation
+        model = get_object_or_404(SegmentationModel, id=model_id)
+        SegmentationModel.objects.filter(is_default=True).update(is_default=False)
+        model.is_default = True
+        model.save()
+        model_name = f"Segmentation - {model.name}"
+    
+    messages.success(request, f'Đã chọn mô hình "{model_name}" làm mô hình mặc định.')
+    
+    # Send notification to all admins
+    admins = User.objects.filter(is_staff=True)
+    for admin in admins:
+        Notification.objects.create(
+            recipient=admin,
+            message=f'Mô hình "{model_name}" đã được chọn làm mô hình mặc định.',
+            link=reverse('manage_models')
+        )
+    
+    return redirect('manage_models')
+
+
+@login_required
+def delete_model(request, model_type, model_id):
+    """Delete (deactivate) a model version.
+    
+    Args:
+        model_type: 'plant_type', 'disease', or 'segmentation'
+        model_id: ID of the model to delete
+    """
+    if not request.user.is_staff:
+        messages.error(request, 'Bạn không có quyền truy cập.')
+        return redirect('home')
+    
+    from .models import PlantTypeModel, DiseaseModel, SegmentationModel
+    
+    if model_type == 'plant_type':
+        model = get_object_or_404(PlantTypeModel, id=model_id)
+        model_name = f"Plant Type - {model.name}"
+    elif model_type == 'disease':
+        model = get_object_or_404(DiseaseModel, id=model_id)
+        model_name = f"{model.plant_type} Disease - {model.name}"
+    else:  # segmentation
+        model = get_object_or_404(SegmentationModel, id=model_id)
+        model_name = f"Segmentation - {model.name}"
+    
+    if model.is_default:
+        messages.error(request, 'Không thể xóa mô hình đang được sử dụng. Vui lòng chọn mô hình khác làm mặc định trước.')
+        return redirect('manage_models')
+    
+    model.is_active = False
+    model.save()
+    
+    messages.success(request, f'Đã xóa mô hình "{model_name}".')
+    return redirect('manage_models')
+
+
+@login_required
+def edit_model(request, model_type, model_id):
+    """Edit a model version.
+    
+    Args:
+        model_type: 'plant_type', 'disease', or 'segmentation'
+        model_id: ID of the model to edit
+    """
+    if not request.user.is_staff:
+        messages.error(request, 'Bạn không có quyền truy cập.')
+        return redirect('home')
+    
+    from .models import PlantTypeModel, DiseaseModel, SegmentationModel, TrainingDataset
+    
+    if model_type == 'plant_type':
+        model = get_object_or_404(PlantTypeModel, id=model_id, is_active=True)
+    elif model_type == 'disease':
+        model = get_object_or_404(DiseaseModel, id=model_id, is_active=True)
+    else:  # segmentation
+        model = get_object_or_404(SegmentationModel, id=model_id, is_active=True)
+    
+    if request.method == 'POST':
+        # Update model fields
+        model.name = request.POST.get('name')
+        model.description = request.POST.get('description', '')
+        model.file_path = request.POST.get('file_path')
+
+        if model_type in ['plant_type', 'disease']:
+            model.architecture = request.POST.get('architecture')
+            model.optimizer = request.POST.get('optimizer')
+
+            dataset_id = request.POST.get('dataset')
+            if dataset_id:
+                model.dataset_id = int(dataset_id)
+            else:
+                model.dataset = None
+
+            training_accuracy = request.POST.get('training_accuracy')
+            validation_accuracy = request.POST.get('validation_accuracy')
+
+            if training_accuracy:
+                model.training_accuracy = float(training_accuracy)
+            if validation_accuracy:
+                model.validation_accuracy = float(validation_accuracy)
+
+            # Update model-specific fields
+            if model_type == 'plant_type':
+                num_classes = request.POST.get('num_classes')
+                if num_classes:
+                    model.num_classes = int(num_classes)
+            else:  # disease
+                plant_type = request.POST.get('plant_type')
+                if plant_type:
+                    model.plant_type = plant_type
+                num_classes = request.POST.get('num_classes')
+                if num_classes:
+                    model.num_classes = int(num_classes)
+                
+                # THÊM LOGIC LƯU LABEL GROUP
+                label_group = request.POST.get('label_group')
+                if label_group is not None:
+                    model.label_group = label_group
+        
+        model.save()
+        
+        messages.success(request, f'Đã cập nhật mô hình "{model.name}".')
+        return redirect('manage_models')
+    
+    # GET request - show edit form
+    datasets = TrainingDataset.objects.filter(status='READY')
+    plant_types = [
+        'Apple', 'Cherry', 'Corn', 'Grape', 
+        'Peach', 'Pepper', 'Potato', 'Strawberry', 'Tomato'
+    ]
+    
+    context = {
+        'model': model,
+        'model_type': model_type,
+        'datasets': datasets,
+        'plant_types': plant_types,
+    }
+    return render(request, 'edit_model.html', context)
+
+
+# ==================== DATASET EXPORT ====================
+
+def _generate_dataset_zip(task_id):
+    """Background function to generate dataset ZIP file.
+    Updates ExportTask progress in database.
+    """
+    from .models import TrainingDataset, TrainingDatasetImage, ExportTask
+    import zipfile
+    import json
+    import os
+    import random
+    import csv
+    from django.conf import settings
+    from django.utils import timezone
+    import traceback
+    import django
+    import re
+    
+    # Setup Django for thread
+    django.setup()
+    
+    def normalize_label(plant_type, disease):
+        """Normalize label to consistent format: PlantType___disease_name
+        Ensures old and new images are grouped in same folder.
+        """
+        if not disease:
+            return plant_type.replace(' ', '_').replace('/', '_').replace('\\', '_')
+        
+        # Normalize plant type and disease to lowercase with underscores
+        plant = plant_type.replace(' ', '_').replace('/', '_').replace('\\', '_')
+        disease_normalized = disease.replace(' ', '_').replace('/', '_').replace('\\', '_').lower()
+        
+        return f"{plant}___{disease_normalized}"
+    
+    try:
+        task = ExportTask.objects.get(id=task_id)
+        task.status = 'PROCESSING'
+        task.started_at = timezone.now()
+        task.progress = 0
+        task.current_step = 'Khởi tạo...'
+        task.save()
+        
+        print(f"[EXPORT] Starting export for task {task_id}")
+        
+        dataset = task.dataset
+        
+        # Create temp ZIP file
+        temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_exports')
+        os.makedirs(temp_dir, exist_ok=True)
+        zip_filename = f"{dataset.name}_{task.id}.zip"
+        zip_path = os.path.join(temp_dir, zip_filename)
+        
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            train_data = []
+            val_data = []
+            total_processed = 0
+            
+            # Estimate total images
+            estimated_total = dataset.sample_size if dataset.sample_size else 10000
+            
+            task.progress = 5
+            task.current_step = 'Đang đọc dataset gốc...'
+            task.save()
+            
+            # ==================== PART 1: Process Original Dataset ====================
+            if dataset.include_original_dataset and dataset.original_dataset_path:
+                try:
+                    csv_path = os.path.join(settings.BASE_DIR, dataset.original_dataset_path, 'plant_data.csv')
+                    
+                    if os.path.exists(csv_path):
+                        original_images_added = 0
+                        max_original_images = dataset.sample_size if dataset.sample_size else None
+                        
+                        with open(csv_path, 'r', encoding='utf-8') as csvfile:
+                            reader = csv.DictReader(csvfile)
+                            
+                            for row in reader:
+                                if max_original_images and original_images_added >= max_original_images:
+                                    break
+                                
+                                image_rel_path = row.get('image', '')
+                                disease = row.get('disease', '')
+                                plant_type = row.get('plant_type', '')
+                                split_type = row.get('dataset_type', 'train')
+                                
+                                if dataset.plant_type and plant_type != dataset.plant_type:
+                                    continue
+                                
+                                image_rel_path = image_rel_path.replace('/', os.sep).replace('\\', os.sep)
+                                
+                                if image_rel_path.startswith(f'plant_images{os.sep}'):
+                                    image_rel_path = image_rel_path[len(f'plant_images{os.sep}'):]
+                                
+                                image_abs_path = os.path.join(settings.BASE_DIR, dataset.original_dataset_path, image_rel_path)
+                                
+                                if os.path.exists(image_abs_path):
+                                    # Extract folder name from original path to preserve naming convention
+                                    # e.g., "images/train/Apple___Apple_scab/img.jpg" → "Apple___Apple_scab"
+                                    path_parts = image_rel_path.replace('/', os.sep).split(os.sep)
+                                    if len(path_parts) >= 2:
+                                        # Get the class folder name from path
+                                        original_folder_name = path_parts[-2]
+                                    else:
+                                        # Fallback to normalized label if path structure is unexpected
+                                        original_folder_name = normalize_label(plant_type, disease)
+                                    
+                                    if split_type == 'valid' or split_type == 'val':
+                                        filename = f"val/{original_folder_name}/{os.path.basename(image_abs_path)}"
+                                        zip_file.write(image_abs_path, filename)
+                                        val_data.append({
+                                            'filename': filename,
+                                            'label': original_folder_name,
+                                            'disease': disease,
+                                            'plant_type': plant_type,
+                                            'source': 'original_dataset',
+                                        })
+                                    else:
+                                        filename = f"train/{original_folder_name}/{os.path.basename(image_abs_path)}"
+                                        zip_file.write(image_abs_path, filename)
+                                        train_data.append({
+                                            'filename': filename,
+                                            'label': original_folder_name,
+                                            'disease': disease,
+                                            'plant_type': plant_type,
+                                            'source': 'original_dataset',
+                                        })
+                                    
+                                    original_images_added += 1
+                                    total_processed += 1
+                                    
+                                    # Update progress every 100 images
+                                    if total_processed % 100 == 0:
+                                        progress = min(5 + int((total_processed / estimated_total) * 60), 65)
+                                        task.progress = progress
+                                        task.current_step = f'Đã xử lý {total_processed} ảnh từ dataset gốc...'
+                                        task.save()
+                                        
+                except Exception as e:
+                    task.error_message = f'Lỗi xử lý dataset gốc: {str(e)}'
+                    task.save()
+            
+            task.progress = 70
+            task.current_step = 'Đang xử lý ảnh mới đóng góp...'
+            task.save()
+            
+            # Build mapping from disease names to folder names from original dataset
+            disease_to_folder = {}
+            for item in train_data + val_data:
+                disease = item.get('disease', '').strip().lower()
+                folder = item.get('label', '')
+                if disease and folder:
+                    disease_to_folder[disease] = folder
+            
+            # ==================== PART 2: Process New Contributions ====================
+            if dataset.include_new_contributions:
+                new_images = list(TrainingDatasetImage.objects.filter(dataset=dataset))
+                random.shuffle(new_images)
+                
+                split_index = int(len(new_images) * 0.8)
+                train_new = new_images[:split_index]
+                val_new = new_images[split_index:]
+                
+                for img in train_new:
+                    pred = img.prediction_history
+                    img_path = pred.image.path
+                    
+                    if os.path.exists(img_path):
+                        # Match folder name from original dataset or use normalized label
+                        plant_type = pred.plant_type or 'Unknown'
+                        disease = pred.disease or ''
+                        disease_key = disease.strip().lower()
+                        
+                        # Use existing folder name from original dataset if available
+                        folder_name = disease_to_folder.get(disease_key)
+                        if not folder_name:
+                            # Fallback to normalized label for new diseases
+                            folder_name = normalize_label(plant_type, disease)
+                        
+                        filename = f"train/{folder_name}/{os.path.basename(img_path)}"
+                        
+                        zip_file.write(img_path, filename)
+                        train_data.append({
+                            'filename': filename,
+                            'label': folder_name,
+                            'disease': pred.disease,
+                            'plant_type': pred.plant_type,
+                            'confidence': float(pred.confidence) if pred.confidence else None,
+                            'source': 'new_contribution',
+                        })
+                
+                for img in val_new:
+                    pred = img.prediction_history
+                    img_path = pred.image.path
+                    
+                    if os.path.exists(img_path):
+                        # Match folder name from original dataset or use normalized label
+                        plant_type = pred.plant_type or 'Unknown'
+                        disease = pred.disease or ''
+                        disease_key = disease.strip().lower()
+                        
+                        # Use existing folder name from original dataset if available
+                        folder_name = disease_to_folder.get(disease_key)
+                        if not folder_name:
+                            # Fallback to normalized label for new diseases
+                            folder_name = normalize_label(plant_type, disease)
+                        
+                        filename = f"val/{folder_name}/{os.path.basename(img_path)}"
+                        
+                        zip_file.write(img_path, filename)
+                        val_data.append({
+                            'filename': filename,
+                            'label': folder_name,
+                            'disease': pred.disease,
+                            'plant_type': pred.plant_type,
+                            'confidence': float(pred.confidence) if pred.confidence else None,
+                            'source': 'new_contribution',
+                        })
+            
+            task.progress = 85
+            task.current_step = 'Đang tạo metadata...'
+            task.save()
+            
+            # ==================== PART 3: Create Metadata ====================
+            train_original = sum(1 for d in train_data if d.get('source') == 'original_dataset')
+            train_new = sum(1 for d in train_data if d.get('source') == 'new_contribution')
+            val_original = sum(1 for d in val_data if d.get('source') == 'original_dataset')
+            val_new = sum(1 for d in val_data if d.get('source') == 'new_contribution')
+            
+            metadata = {
+                'dataset_id': dataset.id,
+                'dataset_name': dataset.name,
+                'description': dataset.description,
+                'dataset_type': dataset.dataset_type,
+                'plant_type': dataset.plant_type,
+                'total_images': len(train_data) + len(val_data),
+                'train_images': len(train_data),
+                'val_images': len(val_data),
+                'split_ratio': {
+                    'train': round(len(train_data) / (len(train_data) + len(val_data)), 2) if (len(train_data) + len(val_data)) > 0 else 0,
+                    'val': round(len(val_data) / (len(train_data) + len(val_data)), 2) if (len(train_data) + len(val_data)) > 0 else 0,
+                },
+                'sources': {
+                    'train': {'original_dataset': train_original, 'new_contributions': train_new, 'total': len(train_data)},
+                    'val': {'original_dataset': val_original, 'new_contributions': val_new, 'total': len(val_data)},
+                },
+                'export_date': timezone.now().isoformat(),
+                'exported_by': task.created_by.username,
+            }
+            
+            zip_file.writestr('metadata.json', json.dumps(metadata, indent=2, ensure_ascii=False))
+            
+            # Create README
+            readme_content = f"""# {dataset.name} Dataset Export
+
+## Dataset Information
+- **Type**: {dataset.dataset_type}
+- **Plant Type**: {dataset.plant_type or 'All'}
+- **Total Images**: {len(train_data) + len(val_data)}
+- **Train Images**: {len(train_data)} ({round(len(train_data) / (len(train_data) + len(val_data)) * 100, 1) if (len(train_data) + len(val_data)) > 0 else 0}%)
+- **Validation Images**: {len(val_data)} ({round(len(val_data) / (len(train_data) + len(val_data)) * 100, 1) if (len(train_data) + len(val_data)) > 0 else 0}%)
+
+## Data Sources
+### Training Set
+- Original Dataset: {train_original} images
+- New Contributions: {train_new} images
+
+### Validation Set
+- Original Dataset: {val_original} images
+- New Contributions: {val_new} images
+
+## Directory Structure
+```
+dataset/
+├── train/
+│   ├── class1/
+│   ├── class2/
+│   └── ...
+├── val/
+│   ├── class1/
+│   ├── class2/
+│   └── ...
+├── metadata.json
+└── README.md
+```
+
+## Usage
+1. Unzip this file
+2. Upload to Google Colab or your training environment
+3. Use the train/ and val/ folders for model training
+4. Check metadata.json for detailed information
+
+Exported on: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
+Exported by: {task.created_by.username}
+"""
+            zip_file.writestr('README.md', readme_content)
+        
+        print(f"[EXPORT] ZIP file created successfully: {zip_path}")
+        print(f"[EXPORT] Total images: {len(train_data) + len(val_data)}")
+        
+        # Update task with results
+        task.status = 'COMPLETED'
+        task.progress = 100
+        task.current_step = 'Hoàn thành!'
+        task.file_path = zip_path
+        task.file_size = os.path.getsize(zip_path)
+        task.total_images = len(train_data) + len(val_data)
+        task.completed_at = timezone.now()
+        task.save()
+        
+        print(f"[EXPORT] Task completed successfully")
+        
+    except Exception as e:
+        print(f"[EXPORT ERROR] {str(e)}")
+        print(traceback.format_exc())
+        
+        try:
+            task = ExportTask.objects.get(id=task_id)
+            task.status = 'FAILED'
+            task.error_message = f"{str(e)}\n\n{traceback.format_exc()}"
+            task.completed_at = timezone.now()
+            task.save()
+        except Exception as save_error:
+            print(f"[EXPORT ERROR] Could not save error to task: {save_error}")
+
+
+@login_required
+def export_dataset(request, dataset_id):
+    """Start background export task and return task_id"""
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    
+    from .models import TrainingDataset, ExportTask
+    import threading
+    
+    dataset = get_object_or_404(TrainingDataset, id=dataset_id)
+    
+    # Create export task
+    task = ExportTask.objects.create(
+        dataset=dataset,
+        created_by=request.user,
+        status='PENDING',
+        progress=0
+    )
+    
+    # Start background thread
+    thread = threading.Thread(target=_generate_dataset_zip, args=(task.id,))
+    thread.daemon = True
+    thread.start()
+    
+    # Return task_id for polling
+    return JsonResponse({
+        'task_id': str(task.id),
+        'status': 'started'
+    })
+
+
+@login_required
+def export_progress(request, dataset_id, task_id):
+    """API endpoint to check export progress"""
+    from .models import ExportTask
+    
+    try:
+        task = ExportTask.objects.get(id=task_id, dataset_id=dataset_id)
+        
+        response_data = {
+            'status': task.status,
+            'progress': task.progress,
+            'current_step': task.current_step,
+            'total_images': task.total_images,
+        }
+        
+        if task.status == 'COMPLETED':
+            response_data['download_url'] = f'/admin/datasets/{task.dataset.id}/download/{task.id}/'
+            response_data['file_size'] = task.file_size
+        elif task.status == 'FAILED':
+            response_data['error'] = task.error_message
+            
+        return JsonResponse(response_data)
+        
+    except ExportTask.DoesNotExist:
+        return JsonResponse({'error': 'Task not found'}, status=404)
+
+
+@login_required
+def download_export(request, dataset_id, task_id):
+    """Download completed export file"""
+    from .models import ExportTask
+    import mimetypes
+    
+    if not request.user.is_staff:
+        messages.error(request, 'Bạn không có quyền truy cập.')
+        return redirect('home')
+    
+    task = get_object_or_404(ExportTask, id=task_id, dataset_id=dataset_id)
+    
+    if task.status != 'COMPLETED' or not task.file_path:
+        messages.error(request, 'File export chưa sẵn sàng.')
+        return redirect('view_dataset', dataset_id=dataset_id)
+    
+    if not os.path.exists(task.file_path):
+        messages.error(request, 'File không tồn tại.')
+        return redirect('view_dataset', dataset_id=dataset_id)
+    
+    # Stream file to download
+    with open(task.file_path, 'rb') as f:
+        response = HttpResponse(f.read(), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{task.dataset.name}_export.zip"'
+        return response

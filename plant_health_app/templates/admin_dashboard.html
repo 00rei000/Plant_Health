@@ -345,13 +345,13 @@
                     <div class="stat-label">Phản Hồi</div>
                 </div>
             </a>
-            
-            <div class="admin-stat-card">
-                <div class="stat-icon">
-                    <i class="bi bi-clock-history"></i>
+
+            <div class="admin-stat-card" style="border-top-color: #E91E63; text-decoration: none; color: inherit;">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%);">
+                    <i class="bi bi-stopwatch-fill"></i>
                 </div>
-                <div class="stat-value" style="font-size: 1.5rem;">{{ current_date|date:"H:i" }}</div>
-                <div class="stat-label">{{ current_date|date:"d/m/Y" }}</div>
+                <div class="stat-value">{{ avg_latency|floatformat:2|default:"0.00" }}s</div>
+                <div class="stat-label">Độ Trễ Trung Bình</div>
             </div>
         </div>
         
@@ -381,6 +381,28 @@
                     <div class="text-start">
                         <div>Thư viện bệnh</div>
                         <small style="opacity: 0.9; font-size: 0.85rem; font-weight: 400;">Quản lý dữ liệu bệnh</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- AI Management Section -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <a href="{% url 'manage_datasets' %}" class="btn w-100 p-3" style="background: linear-gradient(135deg, #3F51B5 0%, #283593 100%); color: white; border: none; border-radius: 15px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.1rem;">
+                    <i class="bi bi-database-fill" style="font-size: 1.5rem;"></i>
+                    <div class="text-start">
+                        <div>Quản lý Dataset</div>
+                        <small style="opacity: 0.9; font-size: 0.85rem; font-weight: 400;">Tạo dataset huấn luyện</small>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-6 mb-3">
+                <a href="{% url 'manage_models' %}" class="btn w-100 p-3" style="background: linear-gradient(135deg, #673AB7 0%, #512DA8 100%); color: white; border: none; border-radius: 15px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.1rem;">
+                    <i class="bi bi-cpu-fill" style="font-size: 1.5rem;"></i>
+                    <div class="text-start">
+                        <div>Quản lý Model AI</div>
+                        <small style="opacity: 0.9; font-size: 0.85rem; font-weight: 400;">Chọn model mặc định</small>
                     </div>
                 </a>
             </div>
@@ -596,12 +618,12 @@
                 <table class="table admin-table mb-0">
                     <thead>
                         <tr>
-                            <th>Hình ảnh</th>
+                            <th>Hình ảnh (Gốc & YOLO)</th>
                             <th>Người dùng</th>
                             <th>Loại cây</th>
                             <th>Bệnh</th>
                             <th>Độ tin cậy</th>
-                            <th>Ngày tải lên</th>
+                            <th>Độ trễ</th> <th>Ngày tải lên</th>
                             <th>Hành động</th>
                         </tr>
                     </thead>
@@ -609,13 +631,27 @@
                         {% for image in prediction_history %}
                         <tr id="admin-prediction-{{ image.id }}">
                             <td style="color: #333333 !important;">
-                                <img src="{{ image.image.url }}" alt="Plant Image" class="img-fluid rounded" style="max-width: 80px; max-height: 80px; object-fit: cover;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="{{ image.image.url }}" alt="Original Image" class="img-fluid rounded" style="max-width: 60px; max-height: 60px; object-fit: cover; border: 1px solid #ddd;" title="Ảnh gốc">
+                                    
+                                    {% if image.cropped_image %}
+                                        <i class="bi bi-arrow-right-short text-muted"></i>
+                                        <img src="{{ image.cropped_image.url }}" alt="Cropped Mask" class="img-fluid rounded" style="max-width: 60px; max-height: 60px; object-fit: cover; border: 2px dashed #4CAF50;" title="Vùng YOLO trích xuất">
+                                    {% endif %}
+                                </div>
                             </td>
                             <td style="color: #333333 !important;"><strong style="color: #2E7D32 !important;">{{ image.user.username|default:"Ẩn danh" }}</strong></td>
                             <td style="color: #333333 !important;">{{ image.plant_type|default:"Không xác định" }}</td>
                             <td style="color: #333333 !important;">{{ image.disease|default:"Chưa dự đoán" }}</td>
                             <td style="color: #333333 !important;">
                                 <span class="badge bg-success">{{ image.confidence|floatformat:1|default:"N/A" }}%</span>
+                            </td>
+                            <td style="color: #333333 !important;">
+                                {% if image.inference_latency %}
+                                    <span class="badge" style="background-color: #E91E63;">{{ image.inference_latency|floatformat:2 }}s</span>
+                                {% else %}
+                                    <span class="text-muted small">N/A</span>
+                                {% endif %}
                             </td>
                             <td style="color: #333333 !important;">{{ image.uploaded_at|date:"d/m/Y H:i" }}</td>
                             <td style="color: #333333 !important;">
@@ -627,7 +663,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-4">
+                            <td colspan="8" class="text-center py-4">
                                 <i class="bi bi-inbox" style="font-size: 2rem; color: #A5D6A7;"></i>
                                 <p class="mb-0 mt-2">Không có lịch sử dự đoán.</p>
                             </td>

@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}Thêm Model Mới{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="margin-top: 100px !important;">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="bi bDD`i-cpu-fill"></i> Thêm Model AI Mới</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="model_type" class="form-label">Loại Model <span class="text-danger">*</span></label>
+                            <select class="form-select" id="model_type" name="model_type" required onchange="togglePlantTypeField()">
+                                <option value="">-- Chọn loại model --</option>
+                                <option value="PLANT_TYPE">Phân loại cây (Plant Type Classification)</option>
+                                <option value="DISEASE">Phân loại bệnh (Disease Classification)</option>
+                                <option value="SEGMENTATION">Segmentation (Phân vùng lá/cây)</option>
+                            </select>
+                            <small class="text-muted">
+                                <strong>Phân loại cây:</strong> Model nhận diện 9 loại cây (Apple, Cherry, Corn, v.v.)<br>
+                                <strong>Phân loại bệnh:</strong> Model nhận diện bệnh cho 1 loại cây cụ thể<br>
+                                <strong>Segmentation:</strong> Model tách vùng lá/cây (ví dụ YOLO segmentation)
+                            </small>
+                        </div>
+
+                        <!-- Plant Type Selection (only for Disease Model) -->
+                        <div class="mb-3" id="plant_type_field" style="display: none;">
+                            <label for="plant_type" class="form-label">Loại cây áp dụng <span class="text-danger">*</span></label>
+                            <select class="form-select" id="plant_type" name="plant_type">
+                                <option value="">-- Chọn loại cây --</option>
+                                {% for pt in plant_types %}
+                                    <option value="{{ pt }}">{{ pt }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Model này sẽ phân loại bệnh cho loại cây được chọn</small>
+                        </div>
+
+                        <div class="mb-3" id="segmentation_hint" style="display: none;">
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-bounding-box"></i> Segmentation model chỉ cần tên, mô tả và đường dẫn file.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Tên Model <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   placeholder="VD: EfficientNet-B4 Apple Disease v1.0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Mô tả</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" 
+                                      placeholder="Mô tả về model này..."></textarea>
+                        </div>
+
+                        <div id="technical_section">
+                            <hr>
+                            <h5 class="mb-3">Thông tin kỹ thuật</h5>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="architecture" class="form-label">Kiến trúc <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="architecture" name="architecture" required>
+                                        <option value="">-- Chọn kiến trúc --</option>
+                                        <option value="ResNet50">ResNet50</option>
+                                        <option value="MobileNetV2">MobileNetV2</option>
+                                        <option value="EfficientNet-B4" selected>EfficientNet-B4</option>
+                                        <option value="VGG16">VGG16</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="optimizer" class="form-label">Optimizer <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="optimizer" name="optimizer" required>
+                                        <option value="">-- Chọn optimizer --</option>
+                                        <option value="SGD">SGD</option>
+                                        <option value="Adam" selected>Adam</option>
+                                        <option value="AdamW">AdamW</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="num_classes" class="form-label">Số lớp phân loại <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="num_classes" name="num_classes" 
+                                           min="2" value="9" required>
+                                    <small class="text-muted" id="num_classes_hint">
+                                        Plant Type: 9 lớp | Disease Model: phụ thuộc vào loại cây
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3" id="label_group_field">
+                            <label for="label_group" class="form-label">Tên bộ nhãn (JSON Group) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="label_group" name="label_group" placeholder="VD: Potato_3, Potato_7, Apple...">
+                            <small class="text-muted">Nhập chính xác tên key trong file group_classes.json</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="file_path" class="form-label">Đường dẫn file model (.pth) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="file_path" name="file_path" required 
+                                   placeholder="VD: plant_health_app/test_models/plant_type.pth">
+                            <small class="text-muted">Đường dẫn tương đối từ thư mục gốc project</small>
+                        </div>
+
+                        <div class="mb-3" id="dataset_section">
+                            <label for="dataset" class="form-label">Dataset (tùy chọn)</label>
+                            <select class="form-select" id="dataset" name="dataset">
+                                <option value="">-- Không chọn dataset --</option>
+                                {% for ds in datasets %}
+                                    <option value="{{ ds.id }}">{{ ds.name }} ({{ ds.total_images }} ảnh)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div id="accuracy_section">
+                            <hr>
+                            <h5 class="mb-3">Độ chính xác (tùy chọn)</h5>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="training_accuracy" class="form-label">Training Accuracy (%)</label>
+                                    <input type="number" class="form-control" id="training_accuracy" name="training_accuracy" 
+                                           step="0.01" min="0" max="100" placeholder="VD: 95.5">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="validation_accuracy" class="form-label">Validation Accuracy (%)</label>
+                                    <input type="number" class="form-control" id="validation_accuracy" name="validation_accuracy" 
+                                           step="0.01" min="0" max="100" placeholder="VD: 93.2">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="is_default" name="is_default">
+                            <label class="form-check-label" for="is_default">
+                                <strong>Đặt làm model mặc định</strong>
+                                <small class="text-muted d-block">Model này sẽ được sử dụng cho các dự đoán mới</small>
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'manage_models' %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Hủy
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle"></i> Thêm Model
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePlantTypeField() {
+    const modelType = document.getElementById('model_type').value;
+    const plantTypeField = document.getElementById('plant_type_field');
+    const plantTypeSelect = document.getElementById('plant_type');
+    const numClassesInput = document.getElementById('num_classes');
+    const numClassesHint = document.getElementById('num_classes_hint');
+    const nameInput = document.getElementById('name');
+    const technicalSection = document.getElementById('technical_section');
+    const datasetSection = document.getElementById('dataset_section');
+    const accuracySection = document.getElementById('accuracy_section');
+    const segmentationHint = document.getElementById('segmentation_hint');
+    const architectureSelect = document.getElementById('architecture');
+    const optimizerSelect = document.getElementById('optimizer');
+    
+    if (modelType === 'DISEASE') {
+        // Show plant type selection for Disease Model
+        plantTypeField.style.display = 'block';
+        plantTypeSelect.setAttribute('required', 'required');
+        segmentationHint.style.display = 'none';
+        technicalSection.style.display = 'block';
+        datasetSection.style.display = 'block';
+        accuracySection.style.display = 'block';
+        architectureSelect.setAttribute('required', 'required');
+        optimizerSelect.setAttribute('required', 'required');
+        numClassesInput.setAttribute('required', 'required');
+        numClassesInput.value = '';
+        numClassesHint.textContent = 'Số lớp bệnh cho loại cây được chọn (thường 4-38 lớp)';
+        nameInput.placeholder = 'VD: EfficientNet-B4 Apple Disease v1.0';
+    } else if (modelType === 'PLANT_TYPE') {
+        // Hide plant type for Plant Type Model
+        plantTypeField.style.display = 'none';
+        plantTypeSelect.removeAttribute('required');
+        plantTypeSelect.value = '';
+        segmentationHint.style.display = 'none';
+        technicalSection.style.display = 'block';
+        datasetSection.style.display = 'block';
+        accuracySection.style.display = 'block';
+        architectureSelect.setAttribute('required', 'required');
+        optimizerSelect.setAttribute('required', 'required');
+    numClassesInput.setAttribute('required', 'required');
+        numClassesInput.value = 9;
+        numClassesHint.textContent = 'Plant Type Model luôn có 9 lớp (9 loại cây)';
+        nameInput.placeholder = 'VD: EfficientNet-B4 Plant Type v1.0';
+    } else if (modelType === 'SEGMENTATION') {
+        plantTypeField.style.display = 'none';
+        plantTypeSelect.removeAttribute('required');
+        plantTypeSelect.value = '';
+        segmentationHint.style.display = 'block';
+        technicalSection.style.display = 'none';
+        datasetSection.style.display = 'none';
+        accuracySection.style.display = 'none';
+        architectureSelect.removeAttribute('required');
+        optimizerSelect.removeAttribute('required');
+        numClassesInput.removeAttribute('required');
+        numClassesInput.value = '';
+        numClassesHint.textContent = 'Segmentation model không dùng số lớp phân loại';
+        nameInput.placeholder = 'VD: YOLO Potato Segmentation v1.0';
+    } else {
+        plantTypeField.style.display = 'none';
+        plantTypeSelect.removeAttribute('required');
+        plantTypeSelect.value = '';
+        segmentationHint.style.display = 'none';
+        technicalSection.style.display = 'block';
+        datasetSection.style.display = 'block';
+        accuracySection.style.display = 'block';
+        architectureSelect.setAttribute('required', 'required');
+        optimizerSelect.setAttribute('required', 'required');
+        numClassesInput.setAttribute('required', 'required');
+        numClassesInput.value = '';
+        numClassesHint.textContent = 'Plant Type: 9 lớp | Disease Model: phụ thuộc vào loại cây';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    togglePlantTypeField();
+});
+</script>
+{% endblock %}

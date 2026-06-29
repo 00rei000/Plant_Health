@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Quản lý Dataset{% endblock %}
+
+{% block content %}
+<style>
+    .dataset-container {
+        padding: 2rem 0;
+        margin-top: 80px;
+    }
+    
+    .dataset-header {
+        background: linear-gradient(135deg, #1B5E20 0%, #0D3012 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(27, 94, 32, 0.4);
+    }
+    
+    .dataset-header h1 {
+        font-weight: 800;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        color: white !important;
+    }
+    
+    .dataset-header p {
+        font-size: 1.1rem;
+        opacity: 0.95;
+        margin: 0;
+        color: white !important;
+    }
+    
+    .dataset-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .dataset-table {
+        margin-bottom: 0;
+    }
+    
+    .dataset-table thead {
+        background: #F1F8E9;
+        border-bottom: 2px solid #4CAF50;
+    }
+    
+    .dataset-table thead th {
+        color: #1B5E20 !important;
+        font-weight: 700;
+        padding: 1rem;
+        border: none;
+    }
+    
+    .dataset-table tbody tr {
+        transition: all 0.3s ease;
+    }
+    
+    .dataset-table tbody tr:hover {
+        background: #F1F8E9;
+    }
+    
+    .dataset-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        color: #333 !important;
+    }
+</style>
+
+<div class="dataset-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="dataset-header">
+            <h1><i class="bi bi-database-fill"></i> Quản lý Dataset Huấn Luyện</h1>
+            <p>Tạo và quản lý các tập dữ liệu để huấn luyện mô hình AI</p>
+        </div>
+
+        <div class="text-end mb-3">
+            <a href="{% url 'create_dataset' %}" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-circle"></i> Tạo Dataset Mới
+            </a>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary btn-lg">
+                <i class="bi bi-arrow-left"></i> Quay lại Dashboard
+            </a>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="dataset-card">
+            <div class="card-body">
+                {% if datasets %}
+                    <div class="table-responsive">
+                        <table class="table dataset-table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Tên Dataset</th>
+                                    <th>Mô tả</th>
+                                    <th>Số ảnh</th>
+                                    <th>Trạng thái</th>
+                                    <th>Người tạo</th>
+                                    <th>Ngày tạo</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dataset in datasets %}
+                                    <tr>
+                                        <td><strong>{{ dataset.name }}</strong></td>
+                                        <td>{{ dataset.description|truncatewords:10 }}</td>
+                                        <td>
+                                            <span class="badge bg-info">{{ dataset.total_images }} ảnh</span>
+                                        </td>
+                                        <td>
+                                            {% if dataset.status == 'READY' %}
+                                                <span class="badge bg-success">{{ dataset.get_status_display }}</span>
+                                            {% elif dataset.status == 'USED' %}
+                                                <span class="badge bg-secondary">{{ dataset.get_status_display }}</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">{{ dataset.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ dataset.created_by.username }}</td>
+                                        <td>{{ dataset.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            <a href="{% url 'view_dataset' dataset.id %}" class="btn btn-sm btn-info" title="Xem chi tiết">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{% url 'delete_dataset' dataset.id %}" 
+                                               class="btn btn-sm btn-danger" 
+                                               onclick="return confirm('Bạn có chắc muốn xóa dataset này?')"
+                                               title="Xóa">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-database fa-3x text-muted mb-3" style="font-size: 3rem;"></i>
+                        <p class="text-muted">Chưa có dataset nào. Tạo dataset đầu tiên để bắt đầu!</p>
+                        <a href="{% url 'create_dataset' %}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-plus-circle"></i> Tạo Dataset Mới
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

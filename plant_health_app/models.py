@@ -3,9 +3,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-from django.utils.text import slugify
 from django.conf import settings
-from .utils import PLANT_TYPE_MAPPING  # Import PLANT_TYPE_MAPPING
 
 def get_image_path(instance, filename):
     """
@@ -133,6 +131,32 @@ class DiseaseLibrary(models.Model):
         self.save()
 
 
+class SegmentationModel(models.Model):
+    """Segmentation model registry (e.g. YOLO)."""
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    file_path = models.CharField(max_length=500, unique=True)
+
+    is_active = models.BooleanField(default=True, db_index=True)
+    is_default = models.BooleanField(default=False, help_text="Model đang được sử dụng cho segmentation")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Segmentation Model'
+        verbose_name_plural = 'Segmentation Models'
+
+    def __str__(self):
+        status = " ✓ Đang dùng" if self.is_default else ""
+        return f"Segmentation - {self.name}{status}"
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            SegmentationModel.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
+
+
 class PredictionHistory(models.Model):
     """Model lưu lịch sử dự đoán với workflow kiểm duyệt"""
     
@@ -150,12 +174,29 @@ class PredictionHistory(models.Model):
     # Thông tin người dùng và ảnh
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     image = models.ImageField(upload_to=get_image_path, max_length=255)
+    cropped_image = models.ImageField(upload_to='plant_images/cropped/', null=True, blank=True, max_length=255)
+    segmentation_model = models.ForeignKey(
+        'SegmentationModel',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='predictions'
+    )
+    segment_data = models.JSONField(null=True, blank=True)
     
     # Kết quả AI prediction
     disease = models.CharField(max_length=100, blank=True)  # Tương ứng với class_name
     plant_type = models.CharField(max_length=100, blank=True)
     dataset_type = models.CharField(max_length=50, blank=True)
     confidence = models.FloatField(null=True, blank=True)
+
+    # ---- [TRƯỜNG MỚI ĐỂ ĐO ĐỘ TRỄ] ----
+    inference_latency = models.FloatField(
+        null=True, 
+        blank=True,
+        help_text="Thời gian suy luận toàn trình đo bằng giây (End-to-End Inference Latency)"
+    )
+    # -----------------------------------
     
     # Thông tin đóng góp của user
     contribution_type = models.CharField(
@@ -425,3 +466,205 @@ class BlogComment(models.Model):
         elif self.author.groups.filter(name='Farmer').exists():
             return 'Farmer'
         return 'User'
+
+
+class TrainingDataset(models.Model):
+    """Model for managing training datasets."""
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Dataset type and filters
+    DATASET_TYPE_CHOICES = [
+        ('PLANT_TYPE', 'Phân loại cây'),
+        ('DISEASE', 'Phân loại bệnh'),
+    ]
+    dataset_type = models.CharField(max_length=20, choices=DATASET_TYPE_CHOICES, default='DISEASE')
+    plant_type = models.CharField(max_length=100, blank=True, null=True, help_text='Loại cây (chỉ cho Disease dataset)')
+    
+    # Filter settings
+    remove_duplicates = models.BooleanField(default=True)
+    remove_blurry = models.BooleanField(default=True)
+    blur_threshold = models.FloatField(default=100.0)  # Laplacian variance threshold
+    
+    # Source data settings
+    include_new_contributions = models.BooleanField(default=True, help_text='Bao gồm ảnh mới từ user đóng góp')
+    include_original_dataset = models.BooleanField(default=False, help_text='Bao gồm ảnh từ dataset gốc (87000 ảnh)')
+    original_dataset_path = models.CharField(max_length=500, blank=True, null=True, 
+                                            help_text='Đường dẫn đến dataset gốc (plant_health_app/data/plant_images/)')
+    
+    # Sample settings
+    total_images = models.IntegerField(default=0, help_text='Tổng số ảnh sau khi filter')
+    sample_size = models.IntegerField(null=True, blank=True, help_text='Số ảnh cần lấy (để trống = lấy tất cả)')
+    
+    # Status
+    # PREPARING: Đang tạo dataset, chưa xử lý
+    # READY: Đã xử lý xong, có thể dùng để train
+    # USED: Đã được sử dụng để train model
+    STATUS_CHOICES = [
+        ('PREPARING', 'Đang chuẩn bị'),
+        ('READY', 'Sẵn sàng'),
+        ('USED', 'Đã sử dụng'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PREPARING')
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Training Dataset'
+        verbose_name_plural = 'Training Datasets'
+    
+    def __str__(self):
+        type_label = dict(self.DATASET_TYPE_CHOICES).get(self.dataset_type, '')
+        plant_info = f" - {self.plant_type}" if self.plant_type else ""
+        return f"{self.name} ({type_label}{plant_info}, {self.total_images} ảnh)"
+
+
+class TrainingDatasetImage(models.Model):
+    """Images selected for a training dataset."""
+    dataset = models.ForeignKey(TrainingDataset, on_delete=models.CASCADE, related_name='images')
+    prediction_history = models.ForeignKey('PredictionHistory', on_delete=models.CASCADE)
+    is_duplicate = models.BooleanField(default=False)
+    is_blurry = models.BooleanField(default=False)
+    blur_score = models.FloatField(null=True, blank=True)
+    included = models.BooleanField(default=True)  # Whether included in final dataset
+    
+    class Meta:
+        unique_together = ['dataset', 'prediction_history']
+        verbose_name = 'Dataset Image'
+        verbose_name_plural = 'Dataset Images'
+    
+    def __str__(self):
+        return f"{self.dataset.name} - {self.prediction_history.id}"
+
+
+class PlantTypeModel(models.Model):
+    """Model for Plant Type Classification (Tầng 1 - Dự đoán loại cây)."""
+    name = models.CharField(max_length=200, help_text="Tên phiên bản model (VD: EfficientNet-B0 AdamW v1)")
+    description = models.TextField(blank=True)
+    
+    # Model info
+    architecture = models.CharField(max_length=100, default='EfficientNet-B0')  # ResNet50, MobileNetV2, EfficientNet-B0
+    optimizer = models.CharField(max_length=50)  # SGD, Adam, AdamW
+    file_path = models.CharField(max_length=500, help_text="Đường dẫn file .pth (VD: models/plant_type_v1.pth)")
+    
+    # Training info
+    dataset = models.ForeignKey(TrainingDataset, on_delete=models.SET_NULL, null=True, blank=True)
+    training_accuracy = models.FloatField(null=True, blank=True)
+    validation_accuracy = models.FloatField(null=True, blank=True)
+    num_classes = models.IntegerField(default=9, help_text="Số lượng loại cây (mặc định 9)")
+    training_date = models.DateTimeField(null=True, blank=True)
+    
+    # Status
+    is_active = models.BooleanField(default=True, db_index=True)
+    is_default = models.BooleanField(default=False, help_text="Model đang được sử dụng cho web")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Plant Type Model'
+        verbose_name_plural = 'Plant Type Models'
+    
+    def __str__(self):
+        status = " ✓ Đang dùng" if self.is_default else ""
+        return f"Plant Type - {self.name}{status}"
+    
+    def save(self, *args, **kwargs):
+        # Only one default plant type model
+        if self.is_default:
+            PlantTypeModel.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
+
+
+class DiseaseModel(models.Model):
+    """Model for Disease Classification (Tầng 2 - Dự đoán bệnh theo từng loại cây)."""
+    name = models.CharField(max_length=200, help_text="Tên phiên bản model")
+    description = models.TextField(blank=True)
+    
+    # Plant type specific
+    plant_type = models.CharField(
+        max_length=100,
+        db_index=True,
+        help_text="Loại cây (Tomato, Potato, Apple, Cherry, Corn, Grape, Peach, Pepper, Strawberry)"
+    )
+    
+    # Model info
+    architecture = models.CharField(max_length=100, default='EfficientNet-B0')
+    optimizer = models.CharField(max_length=50)  # SGD, Adam, AdamW
+    file_path = models.CharField(max_length=500, help_text="Đường dẫn file .pth (VD: models/tomato_disease_v1.pth)")
+    label_group = models.CharField(max_length=100, blank=True, null=True, 
+                                   help_text="Ví dụ: Potato_3, Potato_7, Apple")
+    # Training info
+    dataset = models.ForeignKey(TrainingDataset, on_delete=models.SET_NULL, null=True, blank=True)
+    training_accuracy = models.FloatField(null=True, blank=True)
+    validation_accuracy = models.FloatField(null=True, blank=True)
+    num_classes = models.IntegerField(null=True, blank=True, help_text="Số lượng bệnh cho loại cây này")
+    training_date = models.DateTimeField(null=True, blank=True)
+    
+    # Status
+    is_active = models.BooleanField(default=True, db_index=True)
+    is_default = models.BooleanField(default=False, help_text="Model đang được sử dụng cho loại cây này")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['plant_type', '-created_at']
+        verbose_name = 'Disease Model'
+        verbose_name_plural = 'Disease Models'
+        indexes = [
+            models.Index(fields=['plant_type', 'is_default']),
+        ]
+    
+    def __str__(self):
+        status = " ✓ Đang dùng" if self.is_default else ""
+        return f"{self.plant_type} Disease - {self.name}{status}"
+    
+    def save(self, *args, **kwargs):
+        # Only one default per plant_type
+        if self.is_default:
+            DiseaseModel.objects.filter(
+                plant_type=self.plant_type,
+                is_default=True
+            ).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
+
+
+class ExportTask(models.Model):
+    """Track export progress for background tasks"""
+    STATUS_CHOICES = [
+        ('PENDING', 'Chờ xử lý'),
+        ('PROCESSING', 'Đang xử lý'),
+        ('COMPLETED', 'Hoàn thành'),
+        ('FAILED', 'Thất bại'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    dataset = models.ForeignKey(TrainingDataset, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    progress = models.IntegerField(default=0)  # 0-100
+    current_step = models.CharField(max_length=200, blank=True)
+    
+    # Results
+    file_path = models.CharField(max_length=500, blank=True)  # Path to generated ZIP
+    file_size = models.BigIntegerField(null=True, blank=True)  # Size in bytes
+    total_images = models.IntegerField(default=0)
+    
+    # Error tracking
+    error_message = models.TextField(blank=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"Export {self.dataset.name} - {self.status} ({self.progress}%)"
